@@ -151,12 +151,12 @@ class GradDotExplainer(Explainer):
 
         self.dir=dir
         self.dimensions=dimensions
+        self.random_matrix=None
+
 
     def train(self):
         t0=time()
-        if self.dimensions is not None:
-            self.random_matrix=None
-        else:
+        if self.dimensions:
             file_path=os.path.join(self.dir,"random_matrix_tensor")
             if os.path.isfile(file_path):
                 self.random_matrix=torch.load(file_path,map_location=self.device)
@@ -195,7 +195,7 @@ class GradDotExplainer(Explainer):
         out = self.model(x[None, :, :])
         self.model.zero_grad()
         if self.loss:
-            output=torch.nn.functional.cross_entropy(out,torch.tensor([index]))
+            output=torch.nn.functional.cross_entropy(out,torch.tensor([index],device=self.device))
         else:
             output=out[0][index]
         output.backward()
