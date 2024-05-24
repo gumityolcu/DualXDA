@@ -15,10 +15,10 @@ def load_explainer(xai_method, model_path, save_dir, learning_rates, dataset_nam
         'representer': (RepresenterPointsExplainer, {}),
         'rp_similarity': (RPSimilarityExplainer, {"dir": save_dir, 'dimensions': 128}),
         #'tracin': (TracInExplainer, {"ckpt_dir": os.path.dirname(model_path)}),
-        'trak': (TRAK, {'proj_dim': 512}),
+        'trak': (TRAK, {'proj_dim': 512, "dir":save_dir}),
         'dualview': (DualView, {"dir": save_dir}),
         'gradprod': (GradientProductExplainer, {"dir":save_dir, "dimensions":100}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.basename(model_path), 'learning_rates':learning_rates, 'dir':save_dir, 'dimensions':100}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'learning_rates':learning_rates, 'dir':save_dir, 'dimensions':100}),
         'influence': (InfluenceFunctionExplainer,
                       {'depth': 50, 'repeat': 1200} if dataset_name == "MNIST" else {'depth': 50, 'repeat': 1000})
     }

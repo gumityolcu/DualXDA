@@ -2,11 +2,12 @@ from trak import TRAKer
 from trak.projectors import CudaProjector, ChunkedCudaProjector
 from utils.explainers import Explainer
 from trak.projectors import ProjectionType
+import os
 import torch
 
 class TRAK(Explainer):
     name = "TRAK"
-    def __init__(self, model, dataset, device, proj_dim=100, batch_size=32):
+    def __init__(self, model, dataset, dir, device, proj_dim=100, batch_size=32):
         super(TRAK, self).__init__(model, dataset, device)
         self.dataset=dataset
         self.batch_size=batch_size
@@ -18,7 +19,7 @@ class TRAK(Explainer):
             self.number_of_params += nn
         projector_dict = {"cuda": CudaProjector(grad_dim=self.number_of_params,proj_dim=proj_dim,seed=21,device=device, proj_type=ProjectionType.normal, max_batch_size=32), "cpu": None}
         self.traker = TRAKer(model=model, task='image_classification', train_set_size=len(dataset),
-                             projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42)
+                             projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"))
 
 
     def train(self):

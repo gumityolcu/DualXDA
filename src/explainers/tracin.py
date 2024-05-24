@@ -12,7 +12,7 @@ class TracInExplainer(Explainer):
     @staticmethod
     def load_explainers(model, dataset, save_dir, ckpt_dir, learning_rates, dimensions, device):
         explainers=[]
-        assert os.path.isdir(ckpt_dir), f"Given checkpoint path f{ckpt_dir} is not a directory."
+        assert os.path.isdir(ckpt_dir), f"Given checkpoint path {ckpt_dir} is not a directory."
         ckpt_files=[f for f in os.listdir(ckpt_dir) if "best" not in f]
         if isinstance(float,learning_rates):
             learning_rates=[learning_rates for _ in range(len(ckpt_files))]
