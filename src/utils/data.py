@@ -208,8 +208,9 @@ class FeatureDataset(Dataset):
         self.labels = torch.empty(size=(0,), device=self.device)
         loader = torch.utils.data.DataLoader(dataset, batch_size=32)
         super().__init__()
-        if dir is not None:
-            self.load_from_file(file)
+        if os.path.exists(os.path.join(dir,"samples_tensor")):
+            self.samples = torch.load(os.path.join(dir, "samples_tensor"), map_location=self.device)
+            self.labels = torch.load(os.path.join(dir, "labels_tensor"), map_location=self.device)
         else:
             for x, y in tqdm(iter(loader)):
                 x = x.to(self.device)
@@ -224,10 +225,6 @@ class FeatureDataset(Dataset):
 
     def __getitem__(self, item):
         return self.samples[item], self.labels[item]
-
-    def load_from_file(self, file):
-            self.samples = torch.load(os.path.join(file, "samples_tensor"), map_location=self.device)
-            self.labels = torch.load(os.path.join(file, "labels_tensor"), map_location=self.device)
 
 
 class RestrictedDataset(Dataset):

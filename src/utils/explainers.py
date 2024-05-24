@@ -195,7 +195,7 @@ class GradDotExplainer(Explainer):
         out = self.model(x[None, :, :])
         self.model.zero_grad()
         if self.loss:
-            output=torch.nn.functional.cross_entropy(out,[index])
+            output=torch.nn.functional.cross_entropy(out,torch.tensor([index]))
         else:
             output=out[0][index]
         output.backward()
