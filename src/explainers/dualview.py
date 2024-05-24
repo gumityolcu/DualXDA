@@ -11,10 +11,7 @@ from tqdm import tqdm
 class DualView(FeatureKernelExplainer):
     name = "DualViewExplainer"
     def __init__(self, model, dataset, device, dir, C=1.0, normalize=True):
-        if os.path.isfile(os.path.join(dir,"labels_tensor")) and os.path.isfile(os.path.join(dir,"samples_tensor")):
-            super().__init__(model, dataset, device, dir, normalize=normalize)
-        else:
-            super().__init__(model, dataset, device, os.path.join(dir, "data.csv"), normalize=normalize)
+        super().__init__(model, dataset, device, dir, normalize=normalize)
         self.C=C
         if dir[-1]=="\\":
             dir=dir[:-1]

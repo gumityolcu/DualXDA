@@ -31,13 +31,13 @@ class Explainer(ABC):
 
 
 class FeatureKernelExplainer(Explainer):
-    def __init__(self, model, dataset, device, file=None,normalize=True):
+    def __init__(self, model, dataset, device, dir=None,normalize=True):
         super().__init__(model, dataset, device)
         # self.sanity_check = sanity_check
-        if file is not None:
-            if not os.path.isfile(file) and not os.path.isdir(file):
-                file = None
-        feature_ds = FeatureDataset(self.model, dataset, device, file)
+        if dir is not None:
+            if not os.path.isdir(dir):
+                dir = None
+        feature_ds = FeatureDataset(self.model, dataset, device, dir)
         self.coefficients = None  # the coefficients for each training datapoint x class
         self.learned_weights = None
         self.normalize=normalize
@@ -195,7 +195,7 @@ class GradDotExplainer(Explainer):
         out = self.model(x[None, :, :])
         self.model.zero_grad()
         if self.loss:
-            output=self.loss(out,[index])
+            output=torch.nn.functional.cross_entropy(out,[index])
         else:
             output=out[0][index]
         output.backward()
