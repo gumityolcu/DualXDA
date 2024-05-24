@@ -13,20 +13,20 @@ class TracInExplainer(Explainer):
     def load_explainers(model, dataset, save_dir, ckpt_dir, learning_rates, dimensions, device):
         explainers=[]
         assert os.path.isdir(ckpt_dir), f"Given checkpoint path f{ckpt_dir} is not a directory."
-        ckpt_files=[f for f in os.listdir(ckpt_dir) if f[-5]==".ckpt"]
+        ckpt_files=[f for f in os.listdir(ckpt_dir) if "best" not in f]
         for i, ckpt, lr in enumerate(zip(ckpt_files,learning_rates)):
             modelcopy=deepcopy(model)
             checkpoint=torch.load(ckpt)
             modelcopy.load_state_dict(checkpoint["model_state"])
             dir_path=os.path.join(save_dir,f"_{i}")
             os.makedirs(dir_path,exist_ok=True)
-            explainers.append((lr,GradDotExplainer(modelcopy,dataset,dir_path,device)))
+            explainers.append((lr,GradDotExplainer(modelcopy,dataset,dir=dir_path,dimensions=dimensions,loss=True,device=device)))
         return explainers
 
-    def __init__(self,model,dataset, save_dir, ckpt_dir, learning_rates, dimensions, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self,model,dataset, dir, ckpt_dir, learning_rates, dimensions, device="cuda" if torch.cuda.is_available() else "cpu"):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
-        self.explainers=TracInExplainer.load_explainers(model,dataset,save_dir, ckpt_dir, learning_rates,dimensions,device)
+        self.explainers=TracInExplainer.load_explainers(model,dataset,dir, ckpt_dir, learning_rates,dimensions,device)
         assert len(self.explainers)==len(learning_rates)
     
     def explain(self, x, xpl_targets):
