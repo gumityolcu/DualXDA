@@ -111,7 +111,6 @@ if __name__ == "__main__":
                   batch_size=train_config.get('batch_size', None),
                   save_dir=train_config.get('save_dir', None),
                   validation_size=train_config.get('validation_size', 2000),
-                  accuracy=train_config.get('accuracy', False),
                   num_batches_per_file=train_config.get('num_batches_per_file', 10),
                   start_file=train_config.get('start_file', 0),
                   num_files=train_config.get('num_files', 100),
