@@ -17,8 +17,8 @@ def load_explainer(xai_method, model_path, save_dir, learning_rates, dataset_nam
         #'tracin': (TracInExplainer, {"ckpt_dir": os.path.dirname(model_path)}),
         'trak': (TRAK, {'proj_dim': 512}),
         'dualview': (DualView, {"dir": save_dir}),
-        'gradprod': (GradientProductExplainer, {"dir":save_dir}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.basename(model_path), 'learning_rates':learning_rates, 'dir':save_dir}),
+        'gradprod': (GradientProductExplainer, {"dir":save_dir, "dimensions":100}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.basename(model_path), 'learning_rates':learning_rates, 'dir':save_dir, 'dimensions':100}),
         'influence': (InfluenceFunctionExplainer,
                       {'depth': 50, 'repeat': 1200} if dataset_name == "MNIST" else {'depth': 50, 'repeat': 1000})
     }
@@ -28,7 +28,7 @@ def load_explainer(xai_method, model_path, save_dir, learning_rates, dataset_nam
 def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
                   save_dir, validation_size, num_batches_per_file,
-                  start_file, num_files, xai_method, accuracy,
+                  start_file, num_files, xai_method, learning_rates,
                   num_classes, C_margin, imagenet_class_ids, testsplit):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
@@ -65,7 +65,7 @@ def explain_model(model_name, model_path, device, class_groups,
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
-    explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, dataset_name)
+    explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, learning_rates, dataset_name)
     if C_margin is not None:
         kwargs["C"] = C_margin
     print(f"Generating explanations with {explainer_cls.name}")
@@ -119,5 +119,6 @@ if __name__ == "__main__":
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
                   imagenet_class_ids=train_config.get('imagenet_class_ids', [i for i in range(397)]),
-                  testsplit=train_config.get('testsplit', "test")
+                  testsplit=train_config.get('testsplit', "test"),
+                  learning_rates=train_config.get('learning_rates', None)
                   )

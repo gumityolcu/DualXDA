@@ -211,4 +211,4 @@ class GradDotExplainer(Explainer):
 class GradCosExplainer(GradDotExplainer):
     def get_param_grad(self, x, index):
         grad = super().get_param_grad(x, index)
-        return grad/grad.norm()
+        return grad/grad.norm
