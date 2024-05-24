@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from torch.cuda import is_available
 from utils.data import FeatureDataset
 import torch
-import time
+from time import time
 from utils.data import ReduceLabelDataset, CorruptLabelDataset, GroupLabelDataset, MarkDataset
 from math import sqrt
 from tqdm import tqdm
@@ -152,6 +152,8 @@ class GradDotExplainer(Explainer):
         self.dir=dir
         self.dimensions=dimensions
         self.random_matrix=None
+        self.train_grads=None
+
 
 
     def train(self):

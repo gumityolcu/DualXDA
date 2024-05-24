@@ -1,7 +1,7 @@
 import argparse
 import torch
 from utils import xplain
-from utils.explainers import GradientProductExplainer
+from utils.explainers import GradientProductExplainer, GradDotExplainer
 from explainers import TRAK, DualView, RepresenterPointsExplainer, RPSimilarityExplainer, InfluenceFunctionExplainer, TracInExplainer
 from utils.data import load_datasets_reduced
 from utils.models import compute_accuracy, load_model, load_cifar_model
@@ -17,7 +17,7 @@ def load_explainer(xai_method, model_path, save_dir, learning_rates, dataset_nam
         #'tracin': (TracInExplainer, {"ckpt_dir": os.path.dirname(model_path)}),
         'trak': (TRAK, {'proj_dim': 512, "dir":save_dir}),
         'dualview': (DualView, {"dir": save_dir}),
-        'gradprod': (GradientProductExplainer, {"dir":save_dir, "dimensions":100}),
+        'graddot': (GradDotExplainer, {"dir":save_dir, "dimensions":100}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'learning_rates':learning_rates, 'dir':save_dir, 'dimensions':100}),
         'influence': (InfluenceFunctionExplainer,
                       {'depth': 50, 'repeat': 1200} if dataset_name == "MNIST" else {'depth': 50, 'repeat': 1000})
