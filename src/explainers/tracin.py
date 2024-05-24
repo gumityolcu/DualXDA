@@ -19,7 +19,7 @@ class TracInExplainer(Explainer):
         elif learning_rates is None:
             learning_rates=[1. for _ in range(len(ckpt_files))]
         
-        for i, ckpt, lr in enumerate(zip(ckpt_files,learning_rates)):
+        for i, (ckpt, lr) in enumerate(zip(ckpt_files,learning_rates)):
             modelcopy=deepcopy(model)
             checkpoint=torch.load(ckpt)
             modelcopy.load_state_dict(checkpoint["model_state"])
