@@ -14,7 +14,7 @@ class TracInExplainer(Explainer):
         explainers=[]
         assert os.path.isdir(ckpt_dir), f"Given checkpoint path {ckpt_dir} is not a directory."
         ckpt_files=[f for f in os.listdir(ckpt_dir) if "best" not in f]
-        if isinstance(float,learning_rates):
+        if isinstance(learning_rates,float):
             learning_rates=[learning_rates for _ in range(len(ckpt_files))]
         elif learning_rates is None:
             learning_rates=[1. for _ in range(len(ckpt_files))]
