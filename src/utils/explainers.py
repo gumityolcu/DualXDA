@@ -1,5 +1,7 @@
 import os.path
 from abc import ABC, abstractmethod
+
+from torch.cuda import is_available
 from utils.data import FeatureDataset
 import torch
 import time
@@ -66,7 +68,7 @@ class FeatureKernelExplainer(Explainer):
     def save_coefs(self, dir):
         torch.save(self.coefficients, os.path.join(dir, f"{self.name}_coefs"))
 
-
+# this class is to be deleted when graddot is seen to work
 class GradientProductExplainer(Explainer):
     name = "GradientProductExplainer"
 
@@ -178,10 +180,7 @@ class GradDotExplainer(Explainer):
         grad_dim=self.number_of_params if self.dimensions is None else self.dimensions
         train_grads=torch.empty(len(self.dataset),grad_dim,device=self.device)
         for i,(x,y) in tqdm(enumerate(self.dataset)):
-            grad=self.get_param_grad(x,y)
-            if self.normalize:
-                grad=grad/grad.norm()
-            train_grads[i]=grad/grad.norm()
+            train_grads[i]=self.get_param_grad(x,y)
         return train_grads
 
     def explain(self, x, xpl_targets):
@@ -207,3 +206,9 @@ class GradDotExplainer(Explainer):
         if self.random_matrix is not None:
             cumul_grads=torch.matmul(self.random_matrix,cumul_grads)
         return cumul_grads
+    
+
+class GradCosExplainer(GradDotExplainer):
+    def get_param_grad(self, x, index):
+        grad = super().get_param_grad(x, index)
+        return grad/grad.norm()
