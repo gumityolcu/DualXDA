@@ -31,7 +31,7 @@ class TracInExplainer(Explainer):
     def __init__(self,model,dataset, dir, ckpt_dir, learning_rates, dimensions, device="cuda" if torch.cuda.is_available() else "cpu"):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
-
+        self.dataset=dataset
         self.explainers=TracInExplainer.load_explainers(model,dataset,dir, ckpt_dir, learning_rates,dimensions,device)
     
     def explain(self, x, xpl_targets):
