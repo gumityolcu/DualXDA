@@ -33,6 +33,10 @@ class TracInExplainer(Explainer):
         super().__init__(model,dataset,device)
         self.dataset=dataset
         self.explainers=TracInExplainer.load_explainers(model,dataset,dir, ckpt_dir, learning_rates,dimensions,device)
+
+    def train(self):
+        for _, x in self.explainers:
+            x.train() 
     
     def explain(self, x, xpl_targets):
         attr=torch.zeros((x.shape[0], len(self.dataset)))
