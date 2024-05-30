@@ -91,7 +91,7 @@ def evaluate(model_name, model_path, device, class_groups,
             xpl.to(device)
             xpl_all = torch.cat((xpl_all, xpl), 0)
 
-        metric(xpl)
+        metric(xpl_all)
         metric.get_result(save_dir, f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}_eval_results.json")
 
     else:
