@@ -13,7 +13,7 @@ def load_metric(dataset_type, train, test, device, coef_root, model):
                 "switched": SwitchMetric,
                 "add_batch_in": CumAddBatchIn, "add_batch_in_neg": CumAddBatchInNeg, 
                 "leave_out": LeaveBatchOut, "only_batch": OnlyBatch,
-                "lds": LinearDatamodelingScore}
+                "lds": LinearDatamodelingScore, "labelflip": LabelFlipMetric}
     if dataset_type not in ret_dict.keys():
         return SameClassMetric(train, test, device)
     metric_cls = ret_dict[dataset_type]
@@ -23,7 +23,7 @@ def load_metric(dataset_type, train, test, device, coef_root, model):
         ret = metric_cls(train, test, model, device)
     elif dataset_type == "switched":
         ret = metric_cls(device)
-    elif dataset_type in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds"]:
+    elif dataset_type in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
         ret = metric_cls(train, test, model, device=device)
     else:
         ret = metric_cls(train, test, device=device)
@@ -48,7 +48,7 @@ def evaluate(model_name, model_path, device, class_groups,
         model = load_cifar_model(model_path, dataset_type, num_classes, device)
     else:
         model = load_model(model_name, dataset_name, num_classes).to(device)
-        if dataset_type not in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds"]:
+        if dataset_type not in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
             checkpoint = torch.load(model_path, map_location=device)
             model.load_state_dict(checkpoint["model_state"])
     model.to(device)
@@ -83,7 +83,7 @@ def evaluate(model_name, model_path, device, class_groups,
             metric(xpl, cur_index)
         cur_index = cur_index + len_xpl
         num_files=num_files-1
-    if dataset_type in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds"]:
+    if dataset_type in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
         xpl_all = torch.empty(0, device=device)
         for i in range(num_files):
             fname = os.path.join(xpl_root, f"{file_root}_{i}")

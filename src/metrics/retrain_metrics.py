@@ -2,7 +2,7 @@ from utils import Metric
 import torch
 from torch.utils.data import DataLoader
 import copy
-from utils.data import RestrictedDataset
+from utils.data import RestrictedDataset, FlipLabelDataset
 from train import load_loss, load_optimizer, load_scheduler, load_augmentation
 from tqdm import tqdm
 import numpy as np
@@ -19,7 +19,7 @@ class RetrainMetric(Metric):
 
     def load_retraining_parameters(self): #only for now, this will need to be loaded depending on the model
         self.num_classes = 10
-        self.epochs = 5
+        self.epochs = 1
         self.batch_size = 64
         self.lr = 0.005
         self.augmentation = None
@@ -412,6 +412,57 @@ class LinearDatamodelingScore(RetrainMetric):
         spearman = SpearmanCorrCoef()
         resdict = {'metric': self.name, 'sample attributions': self.sample_attributions, 'sample accuracies': self.sample_accuracies,
                    'correlation score': spearman(torch.from_numpy(self.sample_attributions), torch.from_numpy(self.sample_accuracies))}
+        if dir is not None:
+            self.write_result(resdict, dir, file_name)
+        return resdict
+
+class LabelFlipMetric(RetrainMetric):
+    name = "LabelFlipMetric"
+
+    def __init__(self, train, test, model, num_classes=10, batch_nr=10, device="cuda"):
+        super().__init__(train, test, model, device)
+        self.num_classes = num_classes
+        self.flip_most_relevant=torch.empty(batch_nr+1, dtype=torch.float, device=self.device)
+        self.flip_least_relevant=torch.empty(batch_nr+1, dtype=torch.float, device=self.device)
+        self.batch_nr = batch_nr
+        self.batchsize = len(self.train) // batch_nr
+        self.load_retraining_parameters()
+
+    def __call__(self, xpl):
+        xpl.to(self.device)
+        combined_xpl = xpl.sum(dim=0)
+        indices_sorted = combined_xpl.argsort(descending=True)
+        evalds = self.test
+        ds_most = FlipLabelDataset(self.train, [])
+        ds_least = FlipLabelDataset(self.train, [])
+        retrained_model = self.retrain(ds_most)
+        eval_accuracy = self.evaluate(retrained_model, evalds, num_classes=self.num_classes)
+        self.flip_most_relevant[0] = eval_accuracy
+        self.flip_least_relevant[0] = eval_accuracy
+        for i in range(self.batch_nr):
+            ds_most.corrupt(indices_sorted[i*self.batch_size:(i+1)*self.batch_size])
+            ds_least.corrupt(indices_sorted[-(i+1)*self.batch_size:-i*self.batch_size]) if i!= 0 else ds_least.corrupt(indices_sorted[-self.batch_size:]) 
+            retrained_model_most = self.retrain(ds_most)
+            retrained_model_least = self.retrain(ds_least)
+            eval_accuracy_most = self.evaluate(retrained_model_most, evalds, num_classes=self.num_classes)
+            eval_accuracy_least = self.evaluate(retrained_model_least, evalds, num_classes=self.num_classes)
+            self.flip_most_relevant[i] = eval_accuracy_most
+            self.flip_least_relevant[i] = eval_accuracy_least
+        
+
+    def get_result(self, dir=None, file_name=None):
+        # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
+        #avg_scores = self.scores.mean(dim=0).to('cpu').detach().numpy()
+        #self.scores = self.scores.to('cpu').detach().numpy()
+        #resdict = {'metric': self.name, 'all_batch_scores': self.scores, 'all_batch_scores_avg': avg_scores,
+        #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
+        #           'num_batches': self.scores.shape[0]}
+        self.flip_most_relevant = self.flip_most_relevant.to('cpu').detach().numpy()
+        self.flip_least_relevant = self.flip_least_relevant.to('cpu').detach().numpy()
+        resdict = {'metric': self.name,
+                   'accuracies_flip_most_relevant': self.flip_most_relevant,
+                   'accuracies_flip_least_relevant': self.flip_least_relevant,
+                   'accuracies_delta': self.flip_least_relevant - self.flip_most_relevant}
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict

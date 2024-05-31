@@ -256,6 +256,58 @@ class RestrictedDataset(Dataset):
             return d, self.indices[item]
         return d
 
+class FlipLabelDataset(Dataset):
+    def corrupt_label(self, y):
+        ret = y
+        while ret == y:
+            ret = torch.randint(0, len(self.dataset.classes), (1,))
+        return ret
+
+    def __init__(self, dataset, indices):
+        super().__init__()
+        self.corrupt_samples = indices
+        self.class_labels = dataset.class_labels
+        torch.manual_seed(420)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
+        self.inverse_transform = dataset.inverse_transform
+        self.dataset = dataset
+        if hasattr(dataset, "class_groups"):
+            self.class_groups = dataset.class_groups
+        self.classes = dataset.classes
+        self.true_labels = []
+        self.corrupt_labels = []
+
+        for i in range(len(self.dataset)):
+            _, y = self.dataset.__getitem__(i)
+            self.true_labels.append(y)
+            if i in self.corrupt_samples:
+                self.corrupt_labels.append(self.corrupt_label(y))
+            else:
+                self.corrupt_labels.append(y)
+        self.true_labels = torch.tensor(self.true_labels)
+        self.corrupt_labels = torch.tensor(self.corrupt_labels)
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, item):
+        x, y_true = self.dataset.__getitem__(item)
+        y = y_true
+        if self.dataset.split == "train": #only change to corrupted label for training datapoints
+            y = self.corrupt_labels[item]
+        return x, y
+    
+    def getitem_true(self, item):
+        x, y_true = self.dataset.__getitem__(item)
+        return x, y_true
+    
+    def uncorrupt(self, indices):
+        for i in indices:
+            self.corrupt_labels[i] = self.true_labels[i]
+
+    def corrupt(self, indices):
+        for i in indices:
+            if self.corrupt_labels[i] == self.true_labels[i]:
+                self.corrupt_labels[i] = self.corrupt_label(self.corrupt_labels[i])
 
 def load_datasets(dataset_name, dataset_type, **kwparams):
     ds = None
