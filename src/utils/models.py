@@ -61,21 +61,22 @@ def load_model(model_name, dataset_name, num_classes):
     params=params[dataset_name]
     return BasicConvModel(input_shape=params['input_shape'], convs=params['convs'], fc=params['fc'], num_classes=num_classes, bias=bias)
 
-def load_cifar_model(model_path,dataset_type,num_classes,device):
+def load_cifar_model(model_path,dataset_type,num_classes,device, train=False):
     model=resnet18()
     model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_classes, bias=False)
-    checkpoint = torch.load(model_path, map_location=device)
-    checkpoint={key[6:]: value for key,value in checkpoint['state_dict'].items()}
-
-    model.load_state_dict(checkpoint)
+    if train==False:
+        checkpoint = torch.load(model_path, map_location=device)
+        checkpoint={key[6:]: value for key,value in checkpoint['state_dict'].items()}
+        model.load_state_dict(checkpoint)
     model.eval()
     return CIFARResNet(model,device=device)
 
-def load_awa_model(model_path,dataset_type,num_classes,device):
+def load_awa_model(model_path,dataset_type,num_classes,device,train=False):
     model=resnet50(model_path)
     model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_classes, bias=False)
-    checkpoint = torch.load(model_path, map_location=device)
-    model.load_state_dict(checkpoint)
+    if train == False:
+        checkpoint = torch.load(model_path, map_location=device)
+        model.load_state_dict(checkpoint)
     model.eval()
     return AWAResNet(model,device=device)
 

@@ -1,14 +1,14 @@
 import argparse
 import math
 import logging
-from models import BasicConvModel, BasicFCModel
+from models import BasicConvModel
 import os
 import json
 import sys
 import yaml
 from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
-from utils.models import load_model
+from utils.models import load_model, load_cifar_model, load_awa_model
 from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, CorruptLabelDataset
 import torch
 import matplotlib.pyplot as plt
@@ -82,7 +82,12 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         device="cpu"
     if dataset_type=="group":
         num_classes=len(class_groups)
-    model = load_model(model_name, dataset_name, num_classes).to(device)
+    if model_name == "resnet18":
+        model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
+    elif model_name == "resnet50":
+        model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
+    else:
+        model = load_model(model_name, dataset_name, num_classes).to(device)
     tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
     tensorboarddir = os.path.join(save_dir, tensorboarddir)
     writer = SummaryWriter(tensorboarddir)
