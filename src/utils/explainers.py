@@ -38,6 +38,7 @@ class FeatureKernelExplainer(Explainer):
         self.learned_weights = None
         self.normalize=normalize
         self.samples = feature_ds.samples.to(self.device)
+        self.preds=list(self.model.classifier(self.samples))
         self.mean = self.samples.sum(0) / self.samples.shape[0]
         #self.mean = torch.zeros_like(self.mean)
         self.stdvar = torch.sqrt(torch.sum((self.samples - self.mean) ** 2, dim=0) / self.samples.shape[0])

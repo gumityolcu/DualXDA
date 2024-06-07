@@ -37,6 +37,7 @@ class DualView(FeatureKernelExplainer):
         self.dual_variables = torch.tensor(self.dual_variables[:, :-1],device=self.device)
 
     def train(self):
+        print(f"DIR IS {self.dir}")
         tstart = time.time()
         normalized_samples=self.normalize_features(self.samples)
         
@@ -52,7 +53,7 @@ class DualView(FeatureKernelExplainer):
         with open(os.path.join(self.dir,"labels.shark"),"wb+") as flabels:
             print("Writing labels")
             flabels.write(pack('I', self.normalized_samples.shape[1])) #first line is the number of features
-            flabels.write(pack(f'{len(self.labels)}I', *self.labels))
+            flabels.write(pack(f'{len(self.labels)}I', *self.preds))
 
         #if not os.path.isfile(os.path.join(self.dir, "data.csv")):
             #write_data(normalized_samples, self.labels, os.path.join(self.dir, "data.csv"))

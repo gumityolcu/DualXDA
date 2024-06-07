@@ -17,7 +17,7 @@ def load_explainer(xai_method, model_path, save_dir, dataset_name):
         'rp_similarity': (RPSimilarityExplainer, {"dir": save_dir, 'dimensions': 128}),
         #'tracin': (TracInExplainer, {"ckpt_dir": os.path.dirname(model_path)}),
         'trak': (TRAK, {'proj_dim': 512}),
-        'mcsvm': (DualView, {"dir": save_dir}),
+        'dualview': (DualView, {"dir": save_dir}),
         # 'gradprod': (GradientProductExplainer, {}),
         'influence': (InfluenceFunctionExplainer,
                       {'depth': 50, 'repeat': 1200} if dataset_name == "MNIST" else {'depth': 50, 'repeat': 1000})
@@ -65,23 +65,24 @@ def explain_model(model_name, model_path, device, class_groups,
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
-    explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, dataset_name)
-    if C_margin is not None:
-        kwargs["C"] = C_margin
-    print(f"Generating explanations with {explainer_cls.name}")
-    xplain(
-        model=model,
-        train=train,
-        test=test,
-        device=device,
-        explainer_cls=explainer_cls,
-        kwargs=kwargs,
-        batch_size=batch_size,
-        num_batches_per_file=num_batches_per_file,
-        save_dir=save_dir,
-        start_file=start_file,
-        num_files=num_files
-    )
+    for k in [-5,-4,-3,-2,-1,0,1]:
+        C_save_dir = os.path.join(save_dir,f"C_1e{k}")
+        explainer_cls, kwargs = load_explainer(xai_method, model_path, C_save_dir, dataset_name) 
+        kwargs["C"]=10**k
+        os.makedirs(C_save_dir,exist_ok=True)
+        xplain(
+            model=model,
+            train=train,
+            test=test,
+            device=device,
+            explainer_cls=explainer_cls,
+            kwargs=kwargs,
+            batch_size=batch_size,
+            num_batches_per_file=num_batches_per_file,
+            save_dir=C_save_dir,
+            start_file=start_file,
+            num_files=num_files
+        )
 
 
 if __name__ == "__main__":
