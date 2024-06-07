@@ -42,5 +42,5 @@ class TracInExplainer(Explainer):
         attr=torch.zeros((x.shape[0], len(self.dataset)))
         for rate,xplainer in self.explainers:
             attr=attr+rate*xplainer.explain(x,xpl_targets)
-        return attr
+        return attr/len(self.explainers)
             
