@@ -71,7 +71,7 @@ def load_optimizer(name, model, lr):
 def load_augmentation(name):
     return lambda x:x
 
-def load_loss():
+def load_loss(name):
     return CrossEntropyLoss()
 
 def start_training(model_name, device, num_classes, class_groups, data_root, epochs,
@@ -83,7 +83,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     if dataset_type=="group":
         num_classes=len(class_groups)
     model = load_model(model_name, dataset_name, num_classes).to(device)
-    tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
+    tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_{augmentation}' if augmentation is not None else ''}"
     tensorboarddir = os.path.join(save_dir, tensorboarddir)
     writer = SummaryWriter(tensorboarddir)
 
@@ -93,7 +93,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     validation_epochs = []
     val_acc = []
     train_acc = []
-    loss=load_loss()
+    loss=load_loss(loss)
     optimizer = load_optimizer(optimizer, model, lr)
     scheduler = load_scheduler(scheduler, optimizer)
     if augmentation is not None:

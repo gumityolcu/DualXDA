@@ -153,8 +153,6 @@ class CIFARResNet(Module):
     def influence_named_parameters(self):
        return [("classifier.weight", self.classifier.weight)]
 
-
-
 class ResNetWrapper(Module):
     def __init__(self, model, device):
         super().__init__()
