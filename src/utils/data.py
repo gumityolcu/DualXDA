@@ -37,7 +37,7 @@ class CorruptLabelDataset(Dataset):
     def __init__(self, dataset, p=0.3):
         super().__init__()
         self.class_labels = dataset.class_labels
-        torch.manual_seed(420)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
+        torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
         self.inverse_transform = dataset.inverse_transform
         self.dataset = dataset
         if hasattr(dataset, "class_groups"):
