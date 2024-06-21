@@ -277,18 +277,18 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             if group:
                 save_dict["classes"] = ds.dataset.classes
             save_id = f"{dataset_name}_{model_name}_{base_epoch + e}"
-            path = os.path.join(save_dir, save_id)
+            model_save_path = os.path.join(save_dir, save_id)
             if not os.path.isdir(save_dir):
                 os.makedirs(save_dir, exist_ok=True)
-            torch.save(save_dict, path)
-            saved_files.append((path, save_id))
+            torch.save(save_dict, model_save_path)
+            saved_files.append((model_save_path, save_id))
 
             print(f"\n\nValidation loss: {validation_loss}\n\n")
             writer.add_scalar('Loss/val', validation_loss, base_epoch + e)
             valeval = evaluate_model(model_name=model_name, device=device, num_classes=num_classes,
                                      data_root=data_root,
                                      batch_size=batch_size, num_batches_to_process=num_batches_eval,
-                                     load_path=model, dataset_name=dataset_name, dataset_type=dataset_type,
+                                     load_path=model_save_path, dataset_name=dataset_name, dataset_type=dataset_type,
                                      validation_size=validation_size,
                                      image_set="val", class_groups=class_groups
                                      )
