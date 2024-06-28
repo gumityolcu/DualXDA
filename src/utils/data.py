@@ -259,11 +259,12 @@ def load_datasets(dataset_name, dataset_type, **kwparams):
     class_groups = kwparams['class_groups']
     validation_size = kwparams['validation_size']
     set = kwparams['image_set']
+    transform=kwparams['transform']
 
     if dataset_name in ds_dict.keys():
         dscls = ds_dict[dataset_name]
-        ds = dscls(root=data_root, split="train", validation_size=validation_size)
-        evalds = dscls(root=data_root, split=set, validation_size=validation_size)
+        ds = dscls(root=data_root, split="train", validation_size=validation_size, transform=transform)
+        evalds = dscls(root=data_root, split=set, validation_size=validation_size, transform=transform)
     else:
         raise NameError(f"Unresolved dataset name : {dataset_name}.")
     if dataset_type == "group":

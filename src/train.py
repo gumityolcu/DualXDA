@@ -176,7 +176,8 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         'class_groups': class_groups,
         'image_set': "val",
         'validation_size': validation_size,
-        'only_train': True
+        'only_train': True,
+        'transform': augmentation
     }
     corrupt = (dataset_type == "corrupt")
     group = (dataset_type == "group")
@@ -221,9 +222,6 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             inputs = inputs.to(device)
             targets = targets.to(device)
         
-            if augmentation is not None:
-                inputs=augmentation(inputs)
-
             y_true = torch.cat((y_true, targets), 0)
 
             optimizer.zero_grad()
