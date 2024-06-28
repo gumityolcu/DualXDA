@@ -29,6 +29,8 @@ class CIFAR(CIFAR10):
     ):
         if transform is None:
             transform=CIFAR.default_transform
+        else:
+            transform=transforms.Compose([transform, CIFAR.default_transform])
         if inv_transform is None:
             inv_transform=CIFAR.inverse_transform
         train=(split=="train")

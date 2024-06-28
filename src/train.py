@@ -9,8 +9,8 @@ import yaml
 from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 from utils.models import load_model
-from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, CorruptLabelDataset
 import torch
+from torchvision.transforms import Compose, RandomResizedCrop, RandomHorizontalFlip, RandomApply, RandomEqualize, RandomRotation, AutoAugment, AutoAugmentPolicy
 import matplotlib.pyplot as plt
 from datasets.MNIST import MNIST
 from torch.utils.data import DataLoader
@@ -23,23 +23,23 @@ from utils.data import load_datasets_reduced
 def test_models_in_dir(model_root_path, model_name, device, num_classes, class_groups, data_root, batch_size,
                    num_batches_to_process, dataset_name, dataset_type, validation_size, save_dir):
     #model_root_path=os.path.join(model_root_path, dataset_name)
-    filelist=[file for file in os.listdir(model_root_path) if not os.path.isdir(os.path.join(model_root_path, file))]
+    filelist=[file for file in os.listdir(model_root_path) if not os.path.isdir(os.path.join(model_root_path, file)) and not ".out" in file and not ".tgz" in file]
     
-    model1=load_model("basic_conv", "MNIST", 10)
-    model2=load_model("basic_conv", "MNIST", 10)
-    model1.load_state_dict(torch.load(os.path.join(model_root_path,"MNIST_basic_conv_119"),map_location="cpu")["model_state"])
-    model2.load_state_dict(torch.load(os.path.join(model_root_path,"MNIST_basic_conv_149"),map_location="cpu")["model_state"])
-    for name, param1 in model1.named_parameters():
-        param2=model1.state_dict()[name]
-        pass
+    # model1=load_model("basic_conv", "MNIST", 10)
+    # model2=load_model("basic_conv", "MNIST", 10)
+    # model1.load_state_dict(torch.load(os.path.join(model_root_path,"MNIST_basic_conv_119"),map_location="cpu")["model_state"])
+    # model2.load_state_dict(torch.load(os.path.join(model_root_path,"MNIST_basic_conv_149"),map_location="cpu")["model_state"])
+    # for name, param1 in model1.named_parameters():
+    #     param2=model1.state_dict()[name]
+    #     pass
     results_dict={}
     for fname in filelist:
         print(f"Testing: {fname}")       
         results_dict[fname]={}
         spl=fname.split("_")
         model_path=os.path.join(model_root_path, fname)
-        dataset_type="std"
-        num_classes=10
+        dataset_type=fname.split("_")[-1]
+        num_classes=5 if dataset_type=="group" else 10 
         train_acc=evaluate_model(
             model_name=model_name,
             device=device,
@@ -69,13 +69,12 @@ def test_models_in_dir(model_root_path, model_name, device, num_classes, class_g
             image_set="test"
         )
         print(f"train: {train_acc} - test: {test_acc}")
-        results_dict[fname]["train"]=train_acc
-        results_dict[fname]["test"]=test_acc
+        results_dict[fname]["train"]=train_acc.item()
+        results_dict[fname]["test"]=test_acc.item()
     save_dir=os.path.join(save_dir,"results.json")
     with open(save_dir, 'w') as file:
         json.dump(results_dict, file)
     return results_dict
-
 
 def parse_report(rep, num_classes):
     print(rep)
@@ -102,7 +101,6 @@ def parse_report(rep, num_classes):
             ret[key][spl[0].strip().replace(' ', '_')] = float(spl[i + 1].strip())
     return ret
 
-
 def get_validation_loss(model, ds, loss, device):
     model.eval()
     loader = DataLoader(ds, batch_size=64)
@@ -125,9 +123,26 @@ def load_scheduler(name, optimizer):
 def load_optimizer(name, model, lr):
     return SGD(model.parameters(), lr=lr, momentum=0.9)
 
-def load_augmentation(name):
-    return lambda x:x
-
+def load_augmentation(name, dataset_name):
+    if name is None:
+        return lambda x:x
+    shapes={
+        "MNIST": (28,28),
+        "CIFAR": (32,32)
+    }
+    trans_arr=[]
+    trans_dict={
+        "crop": RandomApply(RandomResizedCrop(size=shapes[dataset_name], ), p=0.5),
+        "flip": RandomHorizontalFlip(),
+        "eq": RandomEqualize(),
+        "rotate": RandomApply(RandomRotation(degrees=(0,180)),p=0.5),
+        "cifar": AutoAugment(AutoAugmentPolicy.CIFAR10),
+        "imagenet": AutoAugment(AutoAugmentPolicy.IMAGENET)
+    }
+    for trans in name.split("_"):
+        if trans in trans_dict.keys():
+            trans_arr.append(trans_dict[trans])
+    return Compose(trans_arr)
 def load_loss(name):
     return CrossEntropyLoss()
 
@@ -154,7 +169,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     optimizer = load_optimizer(optimizer, model, lr)
     scheduler = load_scheduler(scheduler, optimizer)
     if augmentation is not None:
-        augmentation = load_augmentation(augmentation)
+        augmentation = load_augmentation(augmentation, dataset_name)
 
     kwargs = {
         'data_root': data_root,
@@ -315,7 +330,6 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     writer.close()
     save_id = os.path.basename(best_model_yet)
 
-
 def evaluate_model(model_name, device, num_classes, class_groups, data_root, batch_size,
                    num_batches_to_process, load_path, dataset_name, dataset_type, validation_size, image_set):
     if not torch.cuda.is_available():
@@ -447,7 +461,7 @@ if __name__ == "__main__":
     #    validation_size=train_config.get('validation_size', 2000)
     # )
     # test_models_in_dir(
-    #    model_root_path="/home/fe/yolcu/Documents/Code/DualView-wip/test_output/MNIST-basic_conv_std_0.005.yaml-output_data/outputs",
+    #    model_root_path="/home/fe/yolcu/Documents/Code/DualView-wip/test_output/MNIST",
     #    model_name=train_config.get('model_name', 'basic_conv'),
     #    device=train_config.get('device', 'cuda'),
     #    num_classes=train_config.get('num_classes', None),
@@ -460,7 +474,7 @@ if __name__ == "__main__":
     #    num_batches_to_process=train_config.get('num_batches_eval', None),
     #    validation_size=train_config.get('validation_size', 2000)
     # )
-    #exit()
+    # exit()
 
     start_training(model_name=train_config.get('model_name', None),
                    model_path=train_config.get('model_path', None),

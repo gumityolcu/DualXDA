@@ -14,6 +14,7 @@ class_groups:
 data_root: /mnt/dataset/
 dataset_name: CIFAR
 dataset_type: corrupt
+augmentation: cifar
 device: cuda
 epochs: 150
 lr: 0.005
