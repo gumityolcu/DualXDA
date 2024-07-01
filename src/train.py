@@ -236,7 +236,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             valeval = evaluate_model(model_name=model_name, device=device, num_classes=num_classes,
                                      data_root=data_root,
                                      batch_size=batch_size, num_batches_to_process=num_batches_eval,
-                                     load_path=best_model_yet, dataset_name=dataset_name, dataset_type=dataset_type,
+                                     load_path=path, dataset_name=dataset_name, dataset_type=dataset_type,
                                      validation_size=validation_size,
                                      image_set="val", class_groups=class_groups
                                      )
