@@ -153,6 +153,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         for inputs, targets in tqdm(iter(loader)):
             inputs = inputs.to(device)
             targets = targets.to(device)
+            targets = targets.type(torch.LongTensor)
         
             if augmentation is not None:
                 inputs=augmentation(inputs)
