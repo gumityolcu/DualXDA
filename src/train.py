@@ -54,6 +54,7 @@ def get_validation_loss(model, ds, loss, device):
     # count = 0
     for inputs, targets in tqdm(iter(loader)):
         inputs = inputs.to(torch.device(device))
+        targets = targets.long()
         targets = targets.to(torch.device(device))
         with torch.no_grad():
             y = model(inputs)
