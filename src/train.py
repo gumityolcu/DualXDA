@@ -148,12 +148,13 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir,exist_ok=True)
     for e in range(epochs):
+        torch.cuda.empty_cache()
         y_true = torch.empty(0, device=device)
         y_out = torch.empty((0, num_classes), device=device)
         cum_loss = 0
         cnt = 0
         for inputs, targets in tqdm(iter(loader)):
-            torch.cuda.empty_cache()
+            #torch.cuda.empty_cache()
             inputs = inputs.to(device)
             targets = targets.long()
             targets = targets.to(device)
