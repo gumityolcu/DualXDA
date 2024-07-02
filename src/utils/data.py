@@ -4,6 +4,7 @@ from torch.utils.data.dataset import Dataset
 from datasets.MNIST import MNIST, FashionMNIST
 from datasets.CIFAR import CIFAR
 from datasets.AWA import AWA
+from datasets.AWA_sub import AWA_sub
 import matplotlib.pyplot as plt
 import os
 
