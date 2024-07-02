@@ -53,7 +53,6 @@ def get_validation_loss(model, ds, loss, device):
     l = torch.tensor(0.0)
     # count = 0
     for inputs, targets in tqdm(iter(loader)):
-        torch.cuda.empty_cache()
         inputs = inputs.to(torch.device(device))
         targets = targets.to(torch.device(device))
         with torch.no_grad():
@@ -153,6 +152,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         cum_loss = 0
         cnt = 0
         for inputs, targets in tqdm(iter(loader)):
+            torch.cuda.empty_cache()
             inputs = inputs.to(device)
             targets = targets.long()
             targets = targets.to(device)
