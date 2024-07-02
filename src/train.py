@@ -48,10 +48,12 @@ def parse_report(rep, num_classes):
 
 def get_validation_loss(model, ds, loss, device):
     model.eval()
-    loader = DataLoader(ds, batch_size=64)
+    #loader = DataLoader(ds, batch_size=64)
+    loader = DataLoader(ds, batch_size=8)
     l = torch.tensor(0.0)
     # count = 0
     for inputs, targets in tqdm(iter(loader)):
+        torch.cuda.empty_cache()
         inputs = inputs.to(torch.device(device))
         targets = targets.to(torch.device(device))
         with torch.no_grad():
@@ -152,7 +154,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         cnt = 0
         for inputs, targets in tqdm(iter(loader)):
             inputs = inputs.to(device)
-            targets = targets.type(torch.LongTensor)
+            targets = targets.long()
             targets = targets.to(device)
         
             if augmentation is not None:
