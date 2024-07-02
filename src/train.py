@@ -49,7 +49,7 @@ def parse_report(rep, num_classes):
 def get_validation_loss(model, ds, loss, device):
     model.eval()
     #loader = DataLoader(ds, batch_size=64)
-    loader = DataLoader(ds, batch_size=8)
+    loader = DataLoader(ds, batch_size=32)
     l = torch.tensor(0.0)
     # count = 0
     for inputs, targets in tqdm(iter(loader)):
@@ -62,6 +62,7 @@ def get_validation_loss(model, ds, loss, device):
         # count = count + inputs.shape[0]
     # l = l / count
     model.train()
+    torch.cuda.empty_cache()
     return l
 
 def load_scheduler(name, optimizer):
@@ -148,13 +149,11 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir,exist_ok=True)
     for e in range(epochs):
-        torch.cuda.empty_cache()
         y_true = torch.empty(0, device=device)
         y_out = torch.empty((0, num_classes), device=device)
         cum_loss = 0
         cnt = 0
         for inputs, targets in tqdm(iter(loader)):
-            #torch.cuda.empty_cache()
             inputs = inputs.to(device)
             targets = targets.long()
             targets = targets.to(device)
@@ -256,6 +255,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
                     os.remove(best_model_yet)
                 best_model_yet = path
         writer.flush()
+        torch.cuda.empty_cache()
 
         # Save train and validation loss figures
         # plt.subplot(2, 1, 1)
