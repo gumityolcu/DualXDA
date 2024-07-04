@@ -55,6 +55,7 @@ def softmax_torch(temp,N):
 class RepresenterPointsExplainer(FeatureKernelExplainer):
     lmbd=0.003
     epoch=3000
+    #epoch=100 #changed for faster testing
     # implementation for backtracking line search
     @staticmethod
     def backtracking_line_search(optimizer, model, grad, x, y, val, beta, N,device):

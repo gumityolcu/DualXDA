@@ -1,6 +1,7 @@
 import torch.utils.data
-from models import BasicConvModel, CIFARResNet
-from torchvision.models.resnet import resnet18, resnet50, ResNet
+import torchvision
+from models import BasicConvModel, CIFARResNet, AWAResNet
+from models.resnet import resnet18, resnet50
 import tqdm
 
 class ResNetWrapper(torch.nn.Module):
@@ -87,15 +88,25 @@ def load_model(model_name, dataset_name, num_classes):
         else:
             return ResNetWrapper(resnet50(),output_dim=num_classes)
 
-def load_cifar_model(model_path,dataset_type,num_classes,device):
+def load_cifar_model(model_path,dataset_type,num_classes,device, train=False):
     model=resnet18()
     model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_classes, bias=False)
-    checkpoint = torch.load(model_path, map_location=device)
-    checkpoint={key[6:]: value for key,value in checkpoint['state_dict'].items()}
-
-    model.load_state_dict(checkpoint)
+    if train==False:
+        checkpoint = torch.load(model_path, map_location=device)
+        checkpoint={key[6:]: value for key,value in checkpoint['state_dict'].items()}
+        model.load_state_dict(checkpoint)
     model.eval()
     return CIFARResNet(model,device=device)
+
+def load_awa_model(model_path,dataset_type,num_classes,device,train=False):
+    model=resnet50(model_path)
+    model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_classes, bias=False)
+    if train == False:
+        checkpoint = torch.load(model_path, map_location=device)
+        model.load_state_dict(checkpoint)
+    model.eval()
+    return AWAResNet(model,device=device)
+
 
 def compute_accuracy(model, test, device):
     loader=torch.utils.data.DataLoader(test, 64, shuffle=False)

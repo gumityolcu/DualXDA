@@ -8,7 +8,9 @@ from metrics import *
 
 def load_metric(dataset_type, train, test, device, coef_root, model):
     ret_dict = {"std": SameClassMetric, "group": SameSubclassMetric, "corrupt": CorruptLabelMetric,
-                "mark": MarkImageMetric}
+                "mark": MarkImageMetric,
+                "stdk": TopKSameClassMetric, "groupk": TopKSameSubclassMetric,
+                "switched": SwitchMetric}
     if dataset_type not in ret_dict.keys():
         return SameClassMetric(train, test, device)
     metric_cls = ret_dict[dataset_type]
@@ -16,6 +18,8 @@ def load_metric(dataset_type, train, test, device, coef_root, model):
         ret = metric_cls(train, test, coef_root, device)
     elif dataset_type == "mark":
         ret = metric_cls(train, test, model, device)
+    elif dataset_type == "switched":
+        ret = metric_cls(device)
     else:
         ret = metric_cls(train, test, device=device)
     return ret
@@ -53,27 +57,46 @@ def evaluate(model_name, model_path, device, class_groups,
     cur_index = 0
     num_files=len(file_list)
     file_sizes=[]
+    if dataset_type == 'switched':
+        xpl_root_switched = xpl_root
+        xpl_root = xpl_root.replace('switched', 'std')
     if f"{file_root}_init" in file_list:
         fname = os.path.join(xpl_root, f"{file_root}_init")
         xpl = torch.load(fname, map_location=torch.device(device))
         xpl.to(device)
+        if dataset_type == 'switched':
+            fname_switched = os.path.join(xpl_root_switched, f"{file_root}_init")
+            xpl_switched = torch.load(fname_switched, map_location=torch.device(device)).T
+            xpl_switched.to(device)
         file_sizes.append(xpl.shape[0])
         assert not torch.any(xpl.isnan())
         len_xpl = xpl.shape[0]
-        metric(xpl, cur_index)
+        if dataset_type == 'switched':
+            metric(xpl, xpl_switched, cur_index)
+        else:
+            metric(xpl, cur_index)
         cur_index = cur_index + len_xpl
         num_files=num_files-1
     for i in range(num_files):
         fname = os.path.join(xpl_root, f"{file_root}_{i}")
         xpl = torch.load(fname, map_location=torch.device(device))
         xpl.to(device)
+        if dataset_type == 'switched':
+            fname_switched = os.path.join(xpl_root_switched, f"{file_root}_{i}")
+            xpl_switched = torch.load(fname_switched, map_location=torch.device(device)).T
+            xpl_switched.to(device)
         # limit explanations to 4k test samples
         if cur_index+xpl.shape[0]>4000:
             xpl=xpl[:4000-cur_index,...]
+            if dataset_type == 'switched':
+                xpl_switched=xpl_switched[:4000-cur_index,...]
         file_sizes.append(xpl.shape[0])
         assert not torch.any(xpl.isnan())
         len_xpl = xpl.shape[0]
-        metric(xpl, cur_index)
+        if dataset_type == 'switched':
+            metric(xpl, xpl_switched, cur_index)
+        else:
+            metric(xpl, cur_index)
         cur_index = cur_index + len_xpl
 
     metric.get_result(save_dir, f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}_eval_results.json")

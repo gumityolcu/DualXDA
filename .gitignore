@@ -1,0 +1,17 @@
+# config files (specific to the machine)
+config_files/comparison/
+config_files/evaluate/
+config_files/explain/
+config_files/surrogate_check/
+
+# files created form the repo
+explanations/
+surrogate_check/
+test_output/
+checkpoints/
+
+# ignore large files (for now)
+src/datasets/AWA_rawdata/
+
+# ignore changes to cpp files of library (linux vs. windows issues)
+src/solvers/libs/

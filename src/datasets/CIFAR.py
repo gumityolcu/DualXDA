@@ -24,7 +24,7 @@ class CIFAR(CIFAR10):
             transform=None,
             inv_transform=None,
             target_transform=None,
-            download=False,
+            download=True,
             validation_size=2000
     ):
         if transform is None:

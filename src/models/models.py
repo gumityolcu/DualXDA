@@ -142,21 +142,24 @@ class CIFARResNet(Module):
         x = self.classifier(x)
         return x
 
-    def xpl_parameters(self):
-        #return self.parameters()
-        return [self.classifier.weight]
-
     def sim_parameters(self):
         return self.parameters()
-        #return [self.classifier.weight]
 
     def influence_named_parameters(self):
-       return [("classifier.weight", self.classifier.weight)]
-
-class ResNetWrapper(Module):
+        return [("classifier.weight", self.classifier.weight)]
+    
+class AWAResNet(Module):
     def __init__(self, model, device):
         super().__init__()
         self.model = model
+
+        if os.path.isfile('models/resnet50_feature_indices'):
+            self.xpl_feature_indices = torch.load('models/resnet50_feature_indices', map_location="cpu")
+
+        else:
+            indices = torch.randint(low=0, high=512, size=(50,))
+            torch.save(indices, 'models/resnet50_feature_indices')
+            self.xpl_feature_indices = indices
 
         self.features = Sequential()
         self.features.add_module("conv1", model.conv1)
@@ -179,34 +182,8 @@ class ResNetWrapper(Module):
         x = self.classifier(x)
         return x
 
-    def xpl_parameters(self):
-        return [self.classifier.weight]
+    def sim_parameters(self):
+        return self.parameters()
 
-
-#   def xpl_named_parameters(self):
-#       return [("classifier.classifier1.weight", self.classifier.classifier1.weight)]
-
-if __name__ == '__main__':
-    model = BasicConvModel(input_shape=(1, 32, 32))
-    x = torch.rand(size=(100, 3, 32, 32))
-    print(model(x).shape)
-
-
-class BasicFCModel(BasicModel):
-    default_fc = {
-        'num': 5,
-        'features': [500, 300, 300, 200, 100]
-    }
-
-    def __init__(self, input_shape, num_classes, fc=None, bias=False, leaky=False):
-        if fc is None:
-            fc = BasicFCModel.default_fc
-
-        super(BasicFCModel, self).__init__(
-            num_classes=num_classes,
-            convs=None,
-            fc=fc,
-            bias=bias,
-            leaky=leaky,
-            input_shape=input_shape
-        )
+    def influence_named_parameters(self):
+        return [("classifier.weight", self.classifier.weight)]
