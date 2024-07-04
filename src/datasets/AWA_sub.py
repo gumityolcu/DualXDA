@@ -84,12 +84,12 @@ class AWA_sub(VisionDataset):
     @staticmethod
     def to_0_1(data, d0_max=d0_max, d0_min=d0_min, d1_max=d1_max, d1_min=d1_min, d2_max=d2_max, d2_min=d2_min):
         # function to unnormalize and turn into uint8
-        data[:,0,:,:] -= d0_min
-        data[:,1,:,:] -= d1_min
-        data[:,2,:,:] -= d2_min
-        data[:,0,:,:] /= (d0_max - d0_min)
-        data[:,1,:,:] /= (d1_max - d1_min)
-        data[:,2,:,:] /= (d2_max - d2_min)
+        data[0,:,:] -= d0_min
+        data[1,:,:] -= d1_min
+        data[2,:,:] -= d2_min
+        data[0,:,:] /= (d0_max - d0_min)
+        data[1,:,:] /= (d1_max - d1_min)
+        data[2,:,:] /= (d2_max - d2_min)
         return data
     
     def __init__(
@@ -113,37 +113,32 @@ class AWA_sub(VisionDataset):
         self.inverse_transform=inv_transform #MUST HAVE THIS FOR MARK DATASET TO WORK
         self.classes=[i for i in range(50)]
 
-        self.data = np.empty(shape=(3733,3,224,224), dtype=np.float32) 
-        self.targets = np.empty(shape=(3733))
-        self.data[:2987,:,:,:] = self.to_0_1(np.squeeze(np.load(os.path.join(root, 'AWA_rawdata/AWA_train_input_sub.npy'))))
-        self.targets[:2987] = np.squeeze(np.load(os.path.join(root, 'AWA_rawdata/AWA_train_label_sub.npy')))
-        self.data[2987:,:,:,:] = self.to_0_1(np.squeeze(np.load(os.path.join(root, 'AWA_rawdata/AWA_val_input_sub.npy'))))
-        self.targets[2987:] = np.squeeze(np.load(os.path.join(root, 'AWA_rawdata/AWA_val_label_sub.npy')))
-        '''
-        self.data = self.to_0_1(np.squeeze(np.load(os.path.join(root, 'AWA_val_input.npy'))))
-        self.targets = np.squeeze(np.load(os.path.join(root, 'AWA_val_label.npy')))
-        '''
+        # REMOVE THE LOADING OF THE ENTIRE DATASET SINCE IT TAKES TOO MUCH MEMORY
+        #self.data = np.empty(shape=(37322,3,224,224), dtype=np.float32) 
+        #self.targets = np.empty(shape=(37322))
+        #self.data[:29870,:,:,:] = self.to_0_1(np.squeeze(np.load(os.path.join(root, 'AWA_rawdata/AWA_train_input.npy'))))
+        #self.targets[:29870] = np.squeeze(np.load(os.path.join(root, 'AWA_rawdata/AWA_train_label.npy')))
+        #self.data[29870:,:,:,:] = self.to_0_1(np.squeeze(np.load(os.path.join(root, 'AWA_rawdata/AWA_val_input.npy'))))
+        #self.targets[29870:] = np.squeeze(np.load(os.path.join(root, 'AWA_rawdata/AWA_val_label.npy')))
 
-        # Recalculating max and min in each channel
-        #print("Dimension 0")
-        #print(self.data[:,0,:,:].max())
-        #print(self.data[:,0,:,:].min())
-        #print("Dimension 1")
-        #print(self.data[:,1,:,:].max())
-        #print(self.data[:,1,:,:].min())
-        #print("Dimension 2")
-        #print(self.data[:,2,:,:].max())
-        #print(self.data[:,2,:,:].min())
+        # SAVE THE PATHS INSTEAD
+        self.train_data_path = os.path.join(root, 'AWA_rawdata/AWA_train_input_sub.npy')
+        self.train_labels_path = os.path.join(root, 'AWA_rawdata/AWA_train_label_sub.npy')
+        self.val_data_path = os.path.join(root, 'AWA_rawdata/AWA_val_input_sub.npy')
+        self.val_labels_path = os.path.join(root, 'AWA_rawdata/AWA_val_label_sub.npy')
+
+        self.train_indices = np.arange(2987)
+        self.val_indices = np.arange(747)
         
-        N = len(self.targets)
 
+        # DON'T WE NEED A TRAIN / TEST / VAL SPLIT? -> SPLIT UP ORIGINAL VAL DATAPOINTS IN TEST AND VAL
         if not train:
-            if (os.path.isfile("AWA_val_sub_ids") and os.path.isfile("AWA_test_sub_ids")):
-                self.val_ids=torch.load("AWA_val_sub_ids")
-                self.test_ids=torch.load("AWA_test_sub_ids")
+            if (os.path.isfile("AWA_val_ids_sub") and os.path.isfile("AWA_test_ids_sub")):
+                self.val_ids=torch.load("AWA_val_ids_sub")
+                self.test_ids=torch.load("AWA_test_ids_sub")
             else:
                 torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
-                perm = torch.randperm(N)
+                perm = torch.randperm(len(self.val_indices))
                 self.val_ids = torch.tensor([i for i in perm[:validation_size]])
                 self.test_ids = torch.tensor([i for i in perm[validation_size:]])
                 #torch.save(self.val_ids, 'AWA_val_ids')
@@ -153,17 +148,33 @@ class AWA_sub(VisionDataset):
             print(self.val_ids)
             print("Test ids:")
             print(self.test_ids)
-            self.test_targets=torch.tensor(self.targets)[self.test_ids]
 
-    def __getitem__(self, item):
-        if self.split=="train":
-            id=item
-        elif self.split=="val":
-            id=self.val_ids[item]
+    def load_data(self, idx, split):
+        if split == "train":
+            data = np.load(self.train_data_path, mmap_mode='r')[idx]
+            target = np.load(self.train_labels_path, mmap_mode='r')[idx]
         else:
-            id=self.test_ids[item]
-        img, target = self.data[id], self.targets[id]
-        img = torch.from_numpy(img)
+            data = np.load(self.val_data_path, mmap_mode='r')[idx]
+            target = np.load(self.val_labels_path, mmap_mode='r')[idx]
+        #data = np.expand_dims(data, axis=0).astype(np.float32)
+        data = data.astype(np.float32)
+        data = self.to_0_1(data)
+        return data, target
+    
+    def __getitem__(self, item):
+        if self.split == "train":
+            id = item
+            data, target = self.load_data(id, "train")
+        elif self.split == "val":
+            id = self.val_ids[item]
+            data, target = self.load_data(id, "val")
+        else:
+            id = self.test_ids[item]
+            data, target = self.load_data(id, "val")
+        
+        img = torch.from_numpy(data)
+        target = torch.tensor(target, dtype=torch.long)
+        
         if self.transform is not None:
             img = self.transform(img)
         if self.target_transform is not None:
@@ -172,7 +183,7 @@ class AWA_sub(VisionDataset):
     
     def __len__(self):
         if self.split=="train":
-            return len(self.targets)
+            return len(self.train_indices)
         elif self.split=="val":
             return len(self.val_ids)
         else:
