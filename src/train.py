@@ -6,7 +6,7 @@ import os
 import json
 import sys
 import yaml
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, KLDivLoss, BCEWithLogitsLoss, MultiMarginLoss
 from tqdm import tqdm
 from utils.models import load_model, load_cifar_model, load_awa_model
 from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, CorruptLabelDataset
@@ -15,8 +15,8 @@ from torchvision.transforms import Compose, RandomResizedCrop, RandomHorizontalF
 import matplotlib.pyplot as plt
 from datasets.MNIST import MNIST
 from torch.utils.data import DataLoader
-from torch.optim import SGD
-from torch.optim.lr_scheduler import ConstantLR
+from torch.optim import SGD, Adam, RMSprop
+from torch.optim.lr_scheduler import ConstantLR, StepLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 from utils.data import load_datasets_reduced
 
@@ -120,18 +120,41 @@ def get_validation_loss(model, ds, loss, device):
     model.train()
     return l
 
-def load_scheduler(name, optimizer):
-    return ConstantLR(optimizer=optimizer, last_epoch=-1 ) 
+def load_scheduler(name, optimizer): #include warmup?
+    scheduler_dict = {
+        "constant": ConstantLR(optimizer=optimizer, last_epoch=-1),
+        "step": StepLR(optimizer=optimizer, step_size=50, gamma=0.1, last_epoch=-1),
+        "annealing": CosineAnnealingLR(optimizer=optimizer, last_epoch=-1)
+    }
+    scheduler = scheduler_dict.get(name, ConstantLR(optimizer=optimizer, last_epoch=-1 ))
+    return scheduler
 
-def load_optimizer(name, model, lr):
-    return SGD(model.parameters(), lr=lr, momentum=0.9)
+def load_optimizer(name, model, lr, momentum=0.9): #could add momentum as a variable
+    optimizer_dict = {
+        "sgd": SGD(model.parameters(), lr=lr, momentum=momentum),
+        "adam": Adam(model.parameters(), lr=lr),
+        "rmsprop": RMSprop(model.parameters(), lr=lr, momentum=momentum)
+    }
+    optimizer = optimizer_dict.get(name, SGD(model.parameters(), lr=lr, momentum=momentum))
+    return optimizer
+
+def load_loss(name):
+    loss_dict = {
+        "cross_entropy": CrossEntropyLoss(),
+        "kl": KLDivLoss(),
+        "bce": BCEWithLogitsLoss(),
+        "hinge": MultiMarginLoss()
+    }
+    loss = loss_dict.get(name, CrossEntropyLoss())
+    return loss
 
 def load_augmentation(name, dataset_name):
     if name is None:
         return lambda x:x
     shapes={
         "MNIST": (28,28),
-        "CIFAR": (32,32)
+        "CIFAR": (32,32),
+        "AWA": (224,224)
     }
     trans_arr=[]
     trans_dict={
@@ -146,11 +169,9 @@ def load_augmentation(name, dataset_name):
         if trans in trans_dict.keys():
             trans_arr.append(trans_dict[trans])
     return Compose(trans_arr)
-def load_loss(name):
-    return CrossEntropyLoss()
 
 def start_training(model_name, device, num_classes, class_groups, data_root, epochs,
-                   batch_size, lr, save_dir, save_each, model_path, base_epoch,
+                   batch_size, lr, momentum, save_dir, save_each, model_path, base_epoch,
                    dataset_name, dataset_type, num_batches_eval, validation_size,
                    augmentation, optimizer, scheduler, loss):
     if not torch.cuda.is_available():
@@ -499,6 +520,7 @@ if __name__ == "__main__":
                    epochs=train_config.get('epochs', None),
                    batch_size=train_config.get('batch_size', None),
                    lr=train_config.get('lr', 0.1),
+                   momentum=train_config.get('momentum', 0.9),
                    augmentation=train_config.get('augmentation', None),
                    loss=train_config.get('loss', None),
                    optimizer=train_config.get('optimizer', None),
