@@ -62,7 +62,6 @@ def get_validation_loss(model, ds, loss, device):
         # count = count + inputs.shape[0]
     # l = l / count
     model.train()
-    torch.cuda.empty_cache()
     return l
 
 def load_scheduler(name, optimizer):
@@ -255,7 +254,6 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
                     os.remove(best_model_yet)
                 best_model_yet = path
         writer.flush()
-        torch.cuda.empty_cache()
 
         # Save train and validation loss figures
         # plt.subplot(2, 1, 1)

@@ -139,8 +139,8 @@ class AWA(VisionDataset):
             else:
                 torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
                 perm = torch.randperm(len(self.val_indices))
-                self.val_ids = torch.tensor([i for i in perm[:validation_size]])
-                self.test_ids = torch.tensor([i for i in perm[validation_size:]])
+                self.val_ids = torch.tensor(perm[:validation_size].clone().detach())
+                self.test_ids = torch.tensor(perm[:validation_size].clone().detach())
                 #torch.save(self.val_ids, 'AWA_val_ids')
                 #torch.save(self.test_ids, 'AWA_test_ids')
 
