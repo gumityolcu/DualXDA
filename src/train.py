@@ -11,6 +11,7 @@ from tqdm import tqdm
 from utils.models import load_model, load_cifar_model, load_awa_model
 from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, CorruptLabelDataset
 import torch
+from torchvision.transforms import Compose, RandomResizedCrop, RandomHorizontalFlip, RandomApply, RandomEqualize, RandomRotation, AutoAugment, AutoAugmentPolicy
 import matplotlib.pyplot as plt
 from datasets.MNIST import MNIST
 from torch.utils.data import DataLoader
@@ -19,6 +20,62 @@ from torch.optim.lr_scheduler import ConstantLR
 from torch.utils.tensorboard import SummaryWriter
 from utils.data import load_datasets_reduced
 
+
+def test_models_in_dir(model_root_path, model_name, device, num_classes, class_groups, data_root, batch_size,
+                   num_batches_to_process, dataset_name, dataset_type, validation_size, save_dir):
+    #model_root_path=os.path.join(model_root_path, dataset_name)
+    filelist=[file for file in os.listdir(model_root_path) if not os.path.isdir(os.path.join(model_root_path, file)) and not ".out" in file and not ".tgz" in file]
+    
+    # model1=load_model("basic_conv", "MNIST", 10)
+    # model2=load_model("basic_conv", "MNIST", 10)
+    # model1.load_state_dict(torch.load(os.path.join(model_root_path,"MNIST_basic_conv_119"),map_location="cpu")["model_state"])
+    # model2.load_state_dict(torch.load(os.path.join(model_root_path,"MNIST_basic_conv_149"),map_location="cpu")["model_state"])
+    # for name, param1 in model1.named_parameters():
+    #     param2=model1.state_dict()[name]
+    #     pass
+    results_dict={}
+    for fname in filelist:
+        print(f"Testing: {fname}")       
+        results_dict[fname]={}
+        spl=fname.split("_")
+        model_path=os.path.join(model_root_path, fname)
+        dataset_type=fname.split("_")[-1]
+        num_classes=5 if dataset_type=="group" else 10 
+        train_acc=evaluate_model(
+            model_name=model_name,
+            device=device,
+            num_classes=num_classes,
+            class_groups=class_groups,
+            data_root=data_root,
+            batch_size=batch_size,
+            num_batches_to_process=num_batches_to_process,
+            load_path=model_path,
+            dataset_name=dataset_name,
+            dataset_type=dataset_type,
+            validation_size=validation_size,
+            image_set="train"
+        )
+        test_acc = evaluate_model(
+            model_name=model_name,
+            device=device,
+            num_classes=num_classes,
+            class_groups=class_groups,
+            data_root=data_root,
+            batch_size=batch_size,
+            num_batches_to_process=num_batches_to_process,
+            load_path=model_path,
+            dataset_name=dataset_name,
+            dataset_type=dataset_type,
+            validation_size=validation_size,
+            image_set="test"
+        )
+        print(f"train: {train_acc} - test: {test_acc}")
+        results_dict[fname]["train"]=train_acc.item()
+        results_dict[fname]["test"]=test_acc.item()
+    save_dir=os.path.join(save_dir,"results.json")
+    with open(save_dir, 'w') as file:
+        json.dump(results_dict, file)
+    return results_dict
 
 def parse_report(rep, num_classes):
     print(rep)
@@ -45,7 +102,6 @@ def parse_report(rep, num_classes):
             ret[key][spl[0].strip().replace(' ', '_')] = float(spl[i + 1].strip())
     return ret
 
-
 def get_validation_loss(model, ds, loss, device):
     model.eval()
     #loader = DataLoader(ds, batch_size=64)
@@ -70,10 +126,27 @@ def load_scheduler(name, optimizer):
 def load_optimizer(name, model, lr):
     return SGD(model.parameters(), lr=lr, momentum=0.9)
 
-def load_augmentation(name):
-    return lambda x:x
-
-def load_loss():
+def load_augmentation(name, dataset_name):
+    if name is None:
+        return lambda x:x
+    shapes={
+        "MNIST": (28,28),
+        "CIFAR": (32,32)
+    }
+    trans_arr=[]
+    trans_dict={
+        "crop": RandomApply(RandomResizedCrop(size=shapes[dataset_name], ), p=0.5),
+        "flip": RandomHorizontalFlip(),
+        "eq": RandomEqualize(),
+        "rotate": RandomApply(RandomRotation(degrees=(0,180)),p=0.5),
+        "cifar": AutoAugment(AutoAugmentPolicy.CIFAR10),
+        "imagenet": AutoAugment(AutoAugmentPolicy.IMAGENET)
+    }
+    for trans in name.split("_"):
+        if trans in trans_dict.keys():
+            trans_arr.append(trans_dict[trans])
+    return Compose(trans_arr)
+def load_loss(name):
     return CrossEntropyLoss()
 
 def start_training(model_name, device, num_classes, class_groups, data_root, epochs,
@@ -100,18 +173,19 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     validation_epochs = []
     val_acc = []
     train_acc = []
-    loss=load_loss()
+    loss=load_loss(loss)
     optimizer = load_optimizer(optimizer, model, lr)
     scheduler = load_scheduler(scheduler, optimizer)
     if augmentation is not None:
-        augmentation = load_augmentation(augmentation)
+        augmentation = load_augmentation(augmentation, dataset_name)
 
     kwargs = {
         'data_root': data_root,
         'class_groups': class_groups,
         'image_set': "val",
         'validation_size': validation_size,
-        'only_train': True
+        'only_train': True,
+        'transform': augmentation
     }
     corrupt = (dataset_type == "corrupt")
     group = (dataset_type == "group")
@@ -157,9 +231,6 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             targets = targets.long()
             targets = targets.to(device)
         
-            if augmentation is not None:
-                inputs=augmentation(inputs)
-
             y_true = torch.cat((y_true, targets), 0)
 
             optimizer.zero_grad()
@@ -228,18 +299,18 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             if group:
                 save_dict["classes"] = ds.dataset.classes
             save_id = f"{dataset_name}_{model_name}_{base_epoch + e}"
-            path = os.path.join(save_dir, save_id)
+            model_save_path = os.path.join(save_dir, save_id)
             if not os.path.isdir(save_dir):
                 os.makedirs(save_dir, exist_ok=True)
-            torch.save(save_dict, path)
-            saved_files.append((path, save_id))
+            torch.save(save_dict, model_save_path)
+            saved_files.append((model_save_path, save_id))
 
             print(f"\n\nValidation loss: {validation_loss}\n\n")
             writer.add_scalar('Loss/val', validation_loss, base_epoch + e)
             valeval = evaluate_model(model_name=model_name, device=device, num_classes=num_classes,
                                      data_root=data_root,
                                      batch_size=batch_size, num_batches_to_process=num_batches_eval,
-                                     load_path=path, dataset_name=dataset_name, dataset_type=dataset_type,
+                                     load_path=model_save_path, dataset_name=dataset_name, dataset_type=dataset_type,
                                      validation_size=validation_size,
                                      image_set="val", class_groups=class_groups
                                      )
@@ -266,9 +337,10 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     writer.close()
     save_id = os.path.basename(best_model_yet)
 
-
 def evaluate_model(model_name, device, num_classes, class_groups, data_root, batch_size,
                    num_batches_to_process, load_path, dataset_name, dataset_type, validation_size, image_set):
+    if not torch.cuda.is_available():
+        device="cpu"
     if dataset_name == 'CIFAR':
         model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True)
     elif dataset_name == 'AWA':
@@ -317,7 +389,7 @@ def evaluate_model(model_name, device, num_classes, class_groups, data_root, bat
     model.train()
     return (y_true == y_pred).sum() / y_out.shape[0]
 
-def test_all_models(model_root_path, device, num_classes, class_groups, data_root, batch_size,
+def test_all_models(model_root_path, model_name, device, num_classes, class_groups, data_root, batch_size,
                    num_batches_to_process, dataset_name, dataset_type, validation_size, save_dir):
     model_root_path=os.path.join(model_root_path, dataset_name)
     dirlist=[direc for direc in os.listdir(model_root_path) if ((os.path.isdir(os.path.join(model_root_path, direc))) and (direc != "results_all"))]
@@ -326,9 +398,10 @@ def test_all_models(model_root_path, device, num_classes, class_groups, data_roo
         print(f"Testing: {dir_name}")       
         results_dict[dir_name]={}
         spl=dir_name.split("_")
-        model_name=f"{spl[0]}_{spl[1]}"
         model_path=os.path.join(model_root_path, dir_name)
         model_path=os.path.join(model_path,f"{dataset_name}_{model_name}")
+        dataset_type=dir_name
+        num_classes=5 if dataset_type=="group" else 10
         train_acc=evaluate_model(
             model_name=model_name,
             device=device,
@@ -384,8 +457,9 @@ if __name__ == "__main__":
 
     save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
 
-    #test_all_models(
-    #    model_root_path="/home/fe/yolcu/Documents/Code/THESIS/checkpoints",
+    # test_all_models(
+    #    model_root_path="/home/fe/yolcu/Documents/Code/DualView-wip/checkpoints",
+    #    model_name=train_config.get('model_name', 'basic_conv'),
     #    device=train_config.get('device', 'cuda'),
     #    num_classes=train_config.get('num_classes', None),
     #    class_groups=train_config.get('class_groups', None),
@@ -396,8 +470,22 @@ if __name__ == "__main__":
     #    save_dir=train_config.get('save_dir', None),
     #    num_batches_to_process=train_config.get('num_batches_eval', None),
     #    validation_size=train_config.get('validation_size', 2000)
-    #)
-    #exit()
+    # )
+    # test_models_in_dir(
+    #    model_root_path="/home/fe/yolcu/Documents/Code/DualView-wip/test_output/MNIST",
+    #    model_name=train_config.get('model_name', 'basic_conv'),
+    #    device=train_config.get('device', 'cuda'),
+    #    num_classes=train_config.get('num_classes', None),
+    #    class_groups=train_config.get('class_groups', None),
+    #    dataset_name=train_config.get('dataset_name', None),
+    #    dataset_type=train_config.get('dataset_type', 'std'),
+    #    data_root=train_config.get('data_root', None),
+    #    batch_size=train_config.get('batch_size', None),
+    #    save_dir=train_config.get('save_dir', None),
+    #    num_batches_to_process=train_config.get('num_batches_eval', None),
+    #    validation_size=train_config.get('validation_size', 2000)
+    # )
+    # exit()
 
     start_training(model_name=train_config.get('model_name', None),
                    model_path=train_config.get('model_path', None),

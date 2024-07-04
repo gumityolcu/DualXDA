@@ -184,7 +184,8 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             x = x.to(device)
             y = y.to(device)
             preds = torch.argmax(model(x), dim=1)
-        xpl = explainer.explain(x=x, preds=preds, targets=y)
+        xpl = explainer.explain(x=x, xpl_targets=preds)
+        #xpl = explainer.explain(x=x, xpl_targets=y) to explain actual labels
         explanations = torch.cat((explanations, xpl), dim=0)
         i = i + 1
         if i == num_batches_per_file:
@@ -228,7 +229,7 @@ def xplain_to_compute_time(model, train, test, device, explainer_clses, kwargses
                     reses[t] = {'training': train_time}
                 print(f"Starting page {page} with page_size={page_size}")
                 last_time = time()
-                xpl = explainer.explain(x=x, preds=preds, targets=y)
+                xpl = explainer.explain(x=x, xpl_targets=preds)
                 xpl_timeses[t].append(time() - last_time)
                 # print(xpl_times)
                 # explanations=torch.cat((explanations, xpl), dim=0)

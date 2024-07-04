@@ -456,12 +456,12 @@ class InfluenceFunctionExplainer(Explainer):
     def train(self):
         return 0.
 
-    def explain(self, x, preds=None, targets=None):
+    def explain(self, x, xpl_targets):
         x=x.to(self.device)
         xpl=torch.empty((0,len(self.dataset)),device=self.device)
         for i in range(x.shape[0]):
             dp=x[i:i+1]
-            target=preds[i:i+1]
+            target=xpl_targets[i:i+1]
             scores=(-1.)*self.influence_module.influences(dp, target)
             xpl=torch.concatenate((xpl,scores[None].to(self.device)),dim=0)
         return xpl
