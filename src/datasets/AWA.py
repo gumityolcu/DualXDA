@@ -128,7 +128,7 @@ class AWA(VisionDataset):
         self.val_labels_path = os.path.join(root, 'AWA_rawdata/AWA_val_label.npy')
 
         self.train_indices = np.arange(29870)
-        self.val_indices = np.arange(7466)
+        self.val_indices = np.arange(7452)
         
 
         # DON'T WE NEED A TRAIN / TEST / VAL SPLIT? -> SPLIT UP ORIGINAL VAL DATAPOINTS IN TEST AND VAL
