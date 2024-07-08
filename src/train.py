@@ -138,7 +138,7 @@ def load_optimizer(name, model, lr, momentum=0.9): #could add momentum as a vari
     optimizer = optimizer_dict.get(name, SGD(model.parameters(), lr=lr, momentum=momentum))
     return optimizer
 
-def load_loss(name):
+def load_loss(name): #add regularisation
     loss_dict = {
         "cross_entropy": CrossEntropyLoss(),
         "kl": KLDivLoss(),
@@ -147,6 +147,8 @@ def load_loss(name):
     }
     loss = loss_dict.get(name, CrossEntropyLoss())
     return loss
+
+# REGULARIZATION MISSING
 
 def load_augmentation(name, dataset_name):
     if name is None:
