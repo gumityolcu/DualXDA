@@ -6,7 +6,8 @@ import os
 import json
 import sys
 import yaml
-from torch.nn import CrossEntropyLoss, KLDivLoss, BCEWithLogitsLoss, MultiMarginLoss
+from torch.nn import CrossEntropyLoss, KLDivLoss, BCEWithLogitsLoss, MultiMarginLoss, BCELoss
+from torch.nn.functional import one_hot
 from tqdm import tqdm
 from utils.models import load_model, load_cifar_model, load_awa_model
 from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, CorruptLabelDataset
@@ -19,6 +20,7 @@ from torch.optim import SGD, Adam, RMSprop
 from torch.optim.lr_scheduler import ConstantLR, StepLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 from utils.data import load_datasets_reduced
+import warnings
 
 
 def test_models_in_dir(model_root_path, model_name, device, num_classes, class_groups, data_root, batch_size,
@@ -102,7 +104,7 @@ def parse_report(rep, num_classes):
             ret[key][spl[0].strip().replace(' ', '_')] = float(spl[i + 1].strip())
     return ret
 
-def get_validation_loss(model, ds, loss, device):
+def get_validation_loss(model, ds, loss, num_classes, device):
     model.eval()
     #loader = DataLoader(ds, batch_size=64)
     loader = DataLoader(ds, batch_size=32)
@@ -111,6 +113,8 @@ def get_validation_loss(model, ds, loss, device):
     for inputs, targets in tqdm(iter(loader)):
         inputs = inputs.to(torch.device(device))
         targets = targets.long()
+        if isinstance(loss, BCEWithLogitsLoss):
+            targets = one_hot(targets, num_classes).float()
         targets = targets.to(torch.device(device))
         with torch.no_grad():
             y = model(inputs)
@@ -124,31 +128,30 @@ def load_scheduler(name, optimizer): #include warmup?
     scheduler_dict = {
         "constant": ConstantLR(optimizer=optimizer, last_epoch=-1),
         "step": StepLR(optimizer=optimizer, step_size=50, gamma=0.1, last_epoch=-1),
-        "annealing": CosineAnnealingLR(optimizer=optimizer, last_epoch=-1)
+        "annealing": CosineAnnealingLR(optimizer=optimizer, T_max = 50, last_epoch=-1) #make it so that t_max updates to len(train_data) // batch_size (check that this is correct again)
     }
     scheduler = scheduler_dict.get(name, ConstantLR(optimizer=optimizer, last_epoch=-1 ))
     return scheduler
 
-def load_optimizer(name, model, lr, momentum=0.9): #could add momentum as a variable
+def load_optimizer(name, model, lr, weight_decay, momentum): #could add momentum as a variable
     optimizer_dict = {
-        "sgd": SGD(model.parameters(), lr=lr, momentum=momentum),
-        "adam": Adam(model.parameters(), lr=lr),
-        "rmsprop": RMSprop(model.parameters(), lr=lr, momentum=momentum)
+        "sgd": SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum),
+        "adam": Adam(model.parameters(), lr=lr, weight_decay=weight_decay, betas = (momentum, 0.999)), #No momentum for ADAM
+        "rmsprop": RMSprop(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum)
     }
-    optimizer = optimizer_dict.get(name, SGD(model.parameters(), lr=lr, momentum=momentum))
+    optimizer = optimizer_dict.get(name, SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum))
+    if name == "adam":
+        warnings.warn("For Adam, the given momentum value is used for beta_1.")
     return optimizer
 
 def load_loss(name): #add regularisation
     loss_dict = {
         "cross_entropy": CrossEntropyLoss(),
-        "kl": KLDivLoss(),
-        "bce": BCEWithLogitsLoss(),
+        "bce": BCEWithLogitsLoss(reduction='sum'),
         "hinge": MultiMarginLoss()
     }
     loss = loss_dict.get(name, CrossEntropyLoss())
     return loss
-
-# REGULARIZATION MISSING
 
 def load_augmentation(name, dataset_name):
     if name is None:
@@ -160,10 +163,10 @@ def load_augmentation(name, dataset_name):
     }
     trans_arr=[]
     trans_dict={
-        "crop": RandomApply(RandomResizedCrop(size=shapes[dataset_name], ), p=0.5),
+        "crop": RandomApply([RandomResizedCrop(size=shapes[dataset_name], )], p=0.5),
         "flip": RandomHorizontalFlip(),
         "eq": RandomEqualize(),
-        "rotate": RandomApply(RandomRotation(degrees=(0,180)),p=0.5),
+        "rotate": RandomApply([RandomRotation(degrees=(0,180))],p=0.5),
         "cifar": AutoAugment(AutoAugmentPolicy.CIFAR10),
         "imagenet": AutoAugment(AutoAugmentPolicy.IMAGENET)
     }
@@ -173,7 +176,7 @@ def load_augmentation(name, dataset_name):
     return Compose(trans_arr)
 
 def start_training(model_name, device, num_classes, class_groups, data_root, epochs,
-                   batch_size, lr, momentum, save_dir, save_each, model_path, base_epoch,
+                   batch_size, lr, weight_decay, momentum, save_dir, save_each, model_path, base_epoch,
                    dataset_name, dataset_type, num_batches_eval, validation_size,
                    augmentation, optimizer, scheduler, loss):
     if not torch.cuda.is_available():
@@ -197,9 +200,9 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     val_acc = []
     train_acc = []
     loss=load_loss(loss)
-    optimizer = load_optimizer(optimizer, model, lr)
+    optimizer = load_optimizer(optimizer, model, lr, weight_decay, momentum)
     scheduler = load_scheduler(scheduler, optimizer)
-    if augmentation is not None:
+    if augmentation not in [None, '']:
         augmentation = load_augmentation(augmentation, dataset_name)
 
     kwargs = {
@@ -252,7 +255,10 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         for inputs, targets in tqdm(iter(loader)):
             inputs = inputs.to(device)
             targets = targets.long()
+            if isinstance(loss, BCEWithLogitsLoss):
+                targets = one_hot(targets, num_classes).float()
             targets = targets.to(device)
+
         
             y_true = torch.cat((y_true, targets), 0)
 
@@ -302,7 +308,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         learning_rates.append(scheduler.get_lr())
         scheduler.step()
         if (e + 1) % save_each == 0:
-            validation_loss = get_validation_loss(model, valds, loss, device)
+            validation_loss = get_validation_loss(model, valds, loss, num_classes, device)
             validation_losses.append(validation_loss.detach().cpu())
             validation_epochs.append(e)
             save_dict = {
@@ -376,7 +382,8 @@ def evaluate_model(model_name, device, num_classes, class_groups, data_root, bat
         'image_set': image_set,
         'class_groups': class_groups,
         'validation_size': validation_size,
-        'only_train': True
+        'only_train': True,
+        'transform': None
     }
     _, ds = load_datasets_reduced(dataset_name=dataset_name, dataset_type=dataset_type, kwparams=kwparams)
     if not len(ds) > 0:
@@ -523,6 +530,7 @@ if __name__ == "__main__":
                    batch_size=train_config.get('batch_size', None),
                    lr=train_config.get('lr', 0.1),
                    momentum=train_config.get('momentum', 0.9),
+                   weight_decay=train_config.get('weight_decay', 0),
                    augmentation=train_config.get('augmentation', None),
                    loss=train_config.get('loss', None),
                    optimizer=train_config.get('optimizer', None),

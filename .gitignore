@@ -1,8 +1,5 @@
 # config files (specific to the machine)
-config_files/comparison/
-config_files/evaluate/
-config_files/explain/
-config_files/surrogate_check/
+config_files/
 
 # files created form the repo
 explanations/
