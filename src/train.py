@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 from torch.optim import SGD, Adam, RMSprop
 from torch.optim.lr_scheduler import ConstantLR, StepLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
-from utils.data import load_datasets_reduced
+from utils.data import load_datasets_reduced, RestrictedDataset
 import warnings
 
 
@@ -178,7 +178,7 @@ def load_augmentation(name, dataset_name):
 def start_training(model_name, device, num_classes, class_groups, data_root, epochs,
                    batch_size, lr, weight_decay, momentum, save_dir, save_each, model_path, base_epoch,
                    dataset_name, dataset_type, num_batches_eval, validation_size,
-                   augmentation, optimizer, scheduler, loss):
+                   augmentation, optimizer, scheduler, loss, train_indices=None):
     if not torch.cuda.is_available():
         device="cpu"
     if dataset_type=="group":
@@ -216,6 +216,8 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     corrupt = (dataset_type == "corrupt")
     group = (dataset_type == "group")
     ds, valds = load_datasets_reduced(dataset_name, dataset_type, kwargs)
+    if train_indices is not None:
+        ds = RestrictedDataset(ds, train_indices, return_indices=True)
     loader = DataLoader(ds, batch_size=batch_size, shuffle=True)
     saved_files = []
 
