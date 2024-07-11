@@ -435,7 +435,7 @@ def resnet18(pretrained=False, progress=True, device="cpu", **kwargs):
     )
 
 def resnet50(pretrained=False, progress=True, device="cpu", **kwargs):
-    """Constructs a ResNet-18 model.
+    """Constructs a ResNet-50 model.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr

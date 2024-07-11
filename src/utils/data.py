@@ -4,6 +4,7 @@ from torch.utils.data.dataset import Dataset
 from datasets.MNIST import MNIST, FashionMNIST
 from datasets.CIFAR import CIFAR
 from datasets.AWA import AWA
+from datasets.AWA_sub import AWA_sub
 import matplotlib.pyplot as plt
 import os
 
@@ -38,7 +39,7 @@ class CorruptLabelDataset(Dataset):
     def __init__(self, dataset, p=0.3):
         super().__init__()
         self.class_labels = dataset.class_labels
-        torch.manual_seed(420)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
+        torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
         self.inverse_transform = dataset.inverse_transform
         self.dataset = dataset
         if hasattr(dataset, "class_groups"):
@@ -202,15 +203,16 @@ class GroupLabelDataset(Dataset):
 
 
 class FeatureDataset(Dataset):
-    def __init__(self, model, dataset, device, file=None):
+    def __init__(self, model, dataset, device, dir=None):
         self.model = model
         self.device = device
         self.samples = torch.empty(size=(0, model.classifier.in_features), device=self.device)
         self.labels = torch.empty(size=(0,), device=self.device)
         loader = torch.utils.data.DataLoader(dataset, batch_size=32)
         super().__init__()
-        if file is not None:
-            self.load_from_file(file)
+        if os.path.exists(os.path.join(dir,"samples_tensor")):
+            self.samples = torch.load(os.path.join(dir, "samples_tensor"), map_location=self.device)
+            self.labels = torch.load(os.path.join(dir, "labels_tensor"), map_location=self.device)
         else:
             for x, y in tqdm(iter(loader)):
                 x = x.to(self.device)
@@ -225,16 +227,6 @@ class FeatureDataset(Dataset):
 
     def __getitem__(self, item):
         return self.samples[item], self.labels[item]
-
-    def load_from_file(self, file):
-        if ".csv" in file:
-            from utils.csv_io import read_matrix
-            mat = read_matrix(file_name=file)
-            self.samples = torch.tensor(mat[:, :-1], dtype=torch.float, device=self.device)
-            self.labels = torch.tensor(mat[:, -1], dtype=torch.int, device=self.device)
-        else:
-            self.samples = torch.load(os.path.join(file, "samples_tensor"), map_location=self.device)
-            self.labels = torch.load(os.path.join(file, "labels_tensor"), map_location=self.device)
 
 
 class RestrictedDataset(Dataset):
@@ -312,7 +304,7 @@ class FlipLabelDataset(Dataset):
 def load_datasets(dataset_name, dataset_type, **kwparams):
     ds = None
     evalds = None
-    ds_dict = {'MNIST': MNIST, 'CIFAR': CIFAR, 'FashionMNIST': FashionMNIST, 'AWA': AWA}
+    ds_dict = {'MNIST': MNIST, 'CIFAR': CIFAR, 'FashionMNIST': FashionMNIST, 'AWA': AWA, 'AWA_sub': AWA_sub}
     if "only_train" not in kwparams.keys():
         only_train = False
     else:
@@ -321,11 +313,12 @@ def load_datasets(dataset_name, dataset_type, **kwparams):
     class_groups = kwparams['class_groups']
     validation_size = kwparams['validation_size']
     set = kwparams['image_set']
+    transform=kwparams['transform']
 
     if dataset_name in ds_dict.keys():
         dscls = ds_dict[dataset_name]
-        ds = dscls(root=data_root, split="train", validation_size=validation_size)
-        evalds = dscls(root=data_root, split=set, validation_size=validation_size)
+        ds = dscls(root=data_root, split="train", validation_size=validation_size, transform=transform)
+        evalds = dscls(root=data_root, split=set, validation_size=validation_size, transform=transform)
     else:
         raise NameError(f"Unresolved dataset name : {dataset_name}.")
     if (dataset_type == "group") or (dataset_type == "groupk"):

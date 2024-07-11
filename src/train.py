@@ -6,19 +6,78 @@ import os
 import json
 import sys
 import yaml
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, KLDivLoss, BCEWithLogitsLoss, MultiMarginLoss, BCELoss
+from torch.nn.functional import one_hot
 from tqdm import tqdm
-from utils.models import load_model
+from utils.models import load_model, load_cifar_model, load_awa_model
 from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, CorruptLabelDataset
 import torch
+from torchvision.transforms import Compose, RandomResizedCrop, RandomHorizontalFlip, RandomApply, RandomEqualize, RandomRotation, AutoAugment, AutoAugmentPolicy
 import matplotlib.pyplot as plt
 from datasets.MNIST import MNIST
 from torch.utils.data import DataLoader
-from torch.optim import SGD
-from torch.optim.lr_scheduler import ConstantLR
+from torch.optim import SGD, Adam, RMSprop
+from torch.optim.lr_scheduler import ConstantLR, StepLR, CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
 from utils.data import load_datasets_reduced, RestrictedDataset
+import warnings
 
+
+def test_models_in_dir(model_root_path, model_name, device, num_classes, class_groups, data_root, batch_size,
+                   num_batches_to_process, dataset_name, dataset_type, validation_size, save_dir):
+    #model_root_path=os.path.join(model_root_path, dataset_name)
+    filelist=[file for file in os.listdir(model_root_path) if not os.path.isdir(os.path.join(model_root_path, file)) and not ".out" in file and not ".tgz" in file]
+    
+    # model1=load_model("basic_conv", "MNIST", 10)
+    # model2=load_model("basic_conv", "MNIST", 10)
+    # model1.load_state_dict(torch.load(os.path.join(model_root_path,"MNIST_basic_conv_119"),map_location="cpu")["model_state"])
+    # model2.load_state_dict(torch.load(os.path.join(model_root_path,"MNIST_basic_conv_149"),map_location="cpu")["model_state"])
+    # for name, param1 in model1.named_parameters():
+    #     param2=model1.state_dict()[name]
+    #     pass
+    results_dict={}
+    for fname in filelist:
+        print(f"Testing: {fname}")       
+        results_dict[fname]={}
+        spl=fname.split("_")
+        model_path=os.path.join(model_root_path, fname)
+        dataset_type=fname.split("_")[-1]
+        num_classes=5 if dataset_type=="group" else 10 
+        train_acc=evaluate_model(
+            model_name=model_name,
+            device=device,
+            num_classes=num_classes,
+            class_groups=class_groups,
+            data_root=data_root,
+            batch_size=batch_size,
+            num_batches_to_process=num_batches_to_process,
+            load_path=model_path,
+            dataset_name=dataset_name,
+            dataset_type=dataset_type,
+            validation_size=validation_size,
+            image_set="train"
+        )
+        test_acc = evaluate_model(
+            model_name=model_name,
+            device=device,
+            num_classes=num_classes,
+            class_groups=class_groups,
+            data_root=data_root,
+            batch_size=batch_size,
+            num_batches_to_process=num_batches_to_process,
+            load_path=model_path,
+            dataset_name=dataset_name,
+            dataset_type=dataset_type,
+            validation_size=validation_size,
+            image_set="test"
+        )
+        print(f"train: {train_acc} - test: {test_acc}")
+        results_dict[fname]["train"]=train_acc.item()
+        results_dict[fname]["test"]=test_acc.item()
+    save_dir=os.path.join(save_dir,"results.json")
+    with open(save_dir, 'w') as file:
+        json.dump(results_dict, file)
+    return results_dict
 
 def parse_report(rep, num_classes):
     print(rep)
@@ -45,14 +104,17 @@ def parse_report(rep, num_classes):
             ret[key][spl[0].strip().replace(' ', '_')] = float(spl[i + 1].strip())
     return ret
 
-
-def get_validation_loss(model, ds, loss, device):
+def get_validation_loss(model, ds, loss, num_classes, device):
     model.eval()
-    loader = DataLoader(ds, batch_size=64)
+    #loader = DataLoader(ds, batch_size=64)
+    loader = DataLoader(ds, batch_size=32)
     l = torch.tensor(0.0)
     # count = 0
     for inputs, targets in tqdm(iter(loader)):
         inputs = inputs.to(torch.device(device))
+        targets = targets.long()
+        if isinstance(loss, BCEWithLogitsLoss):
+            targets = one_hot(targets, num_classes).float()
         targets = targets.to(torch.device(device))
         with torch.no_grad():
             y = model(inputs)
@@ -62,27 +124,71 @@ def get_validation_loss(model, ds, loss, device):
     model.train()
     return l
 
-def load_scheduler(name, optimizer):
-    return ConstantLR(optimizer=optimizer, last_epoch=-1 ) 
+def load_scheduler(name, optimizer): #include warmup?
+    scheduler_dict = {
+        "constant": ConstantLR(optimizer=optimizer, last_epoch=-1),
+        "step": StepLR(optimizer=optimizer, step_size=50, gamma=0.1, last_epoch=-1),
+        "annealing": CosineAnnealingLR(optimizer=optimizer, T_max = 50, last_epoch=-1) #make it so that t_max updates to len(train_data) // batch_size (check that this is correct again)
+    }
+    scheduler = scheduler_dict.get(name, ConstantLR(optimizer=optimizer, last_epoch=-1 ))
+    return scheduler
 
-def load_optimizer(name, model, lr):
-    return SGD(model.parameters(), lr=lr, momentum=0.9)
+def load_optimizer(name, model, lr, weight_decay, momentum): #could add momentum as a variable
+    optimizer_dict = {
+        "sgd": SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum),
+        "adam": Adam(model.parameters(), lr=lr, weight_decay=weight_decay, betas = (momentum, 0.999)), #No momentum for ADAM
+        "rmsprop": RMSprop(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum)
+    }
+    optimizer = optimizer_dict.get(name, SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum))
+    if name == "adam":
+        warnings.warn("For Adam, the given momentum value is used for beta_1.")
+    return optimizer
 
-def load_augmentation(name):
-    return lambda x:x
+def load_loss(name): #add regularisation
+    loss_dict = {
+        "cross_entropy": CrossEntropyLoss(),
+        "bce": BCEWithLogitsLoss(reduction='sum'),
+        "hinge": MultiMarginLoss()
+    }
+    loss = loss_dict.get(name, CrossEntropyLoss())
+    return loss
 
-def load_loss():
-    return CrossEntropyLoss()
+def load_augmentation(name, dataset_name):
+    if name is None:
+        return lambda x:x
+    shapes={
+        "MNIST": (28,28),
+        "CIFAR": (32,32),
+        "AWA": (224,224)
+    }
+    trans_arr=[]
+    trans_dict={
+        "crop": RandomApply([RandomResizedCrop(size=shapes[dataset_name], )], p=0.5),
+        "flip": RandomHorizontalFlip(),
+        "eq": RandomEqualize(),
+        "rotate": RandomApply([RandomRotation(degrees=(0,180))],p=0.5),
+        "cifar": AutoAugment(AutoAugmentPolicy.CIFAR10),
+        "imagenet": AutoAugment(AutoAugmentPolicy.IMAGENET)
+    }
+    for trans in name.split("_"):
+        if trans in trans_dict.keys():
+            trans_arr.append(trans_dict[trans])
+    return Compose(trans_arr)
 
 def start_training(model_name, device, num_classes, class_groups, data_root, epochs,
-                   batch_size, lr, save_dir, save_each, model_path, base_epoch,
+                   batch_size, lr, weight_decay, momentum, save_dir, save_each, model_path, base_epoch,
                    dataset_name, dataset_type, num_batches_eval, validation_size,
                    augmentation, optimizer, scheduler, loss, train_indices=None):
     if not torch.cuda.is_available():
         device="cpu"
     if dataset_type=="group":
         num_classes=len(class_groups)
-    model = load_model(model_name, dataset_name, num_classes).to(device)
+    if model_name == "resnet18":
+        model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
+    elif model_name == "resnet50":
+        model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
+    else:
+        model = load_model(model_name, dataset_name, num_classes).to(device)
     tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
     tensorboarddir = os.path.join(save_dir, tensorboarddir)
     writer = SummaryWriter(tensorboarddir)
@@ -93,18 +199,19 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     validation_epochs = []
     val_acc = []
     train_acc = []
-    loss=load_loss()
-    optimizer = load_optimizer(optimizer, model, lr)
+    loss=load_loss(loss)
+    optimizer = load_optimizer(optimizer, model, lr, weight_decay, momentum)
     scheduler = load_scheduler(scheduler, optimizer)
-    if augmentation is not None:
-        augmentation = load_augmentation(augmentation)
+    if augmentation not in [None, '']:
+        augmentation = load_augmentation(augmentation, dataset_name)
 
     kwargs = {
         'data_root': data_root,
         'class_groups': class_groups,
         'image_set': "val",
         'validation_size': validation_size,
-        'only_train': True
+        'only_train': True,
+        'transform': augmentation
     }
     corrupt = (dataset_type == "corrupt")
     group = (dataset_type == "group")
@@ -149,11 +256,12 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         cnt = 0
         for inputs, targets in tqdm(iter(loader)):
             inputs = inputs.to(device)
+            targets = targets.long()
+            if isinstance(loss, BCEWithLogitsLoss):
+                targets = one_hot(targets, num_classes).float()
             targets = targets.to(device)
-        
-            if augmentation is not None:
-                inputs=augmentation(inputs)
 
+        
             y_true = torch.cat((y_true, targets), 0)
 
             optimizer.zero_grad()
@@ -202,7 +310,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         learning_rates.append(scheduler.get_lr())
         scheduler.step()
         if (e + 1) % save_each == 0:
-            validation_loss = get_validation_loss(model, valds, loss, device)
+            validation_loss = get_validation_loss(model, valds, loss, num_classes, device)
             validation_losses.append(validation_loss.detach().cpu())
             validation_epochs.append(e)
             save_dict = {
@@ -222,18 +330,18 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             if group:
                 save_dict["classes"] = ds.dataset.classes
             save_id = f"{dataset_name}_{model_name}_{base_epoch + e}"
-            path = os.path.join(save_dir, save_id)
+            model_save_path = os.path.join(save_dir, save_id)
             if not os.path.isdir(save_dir):
                 os.makedirs(save_dir, exist_ok=True)
-            torch.save(save_dict, path)
-            saved_files.append((path, save_id))
+            torch.save(save_dict, model_save_path)
+            saved_files.append((model_save_path, save_id))
 
             print(f"\n\nValidation loss: {validation_loss}\n\n")
             writer.add_scalar('Loss/val', validation_loss, base_epoch + e)
             valeval = evaluate_model(model_name=model_name, device=device, num_classes=num_classes,
                                      data_root=data_root,
                                      batch_size=batch_size, num_batches_to_process=num_batches_eval,
-                                     load_path=best_model_yet, dataset_name=dataset_name, dataset_type=dataset_type,
+                                     load_path=model_save_path, dataset_name=dataset_name, dataset_type=dataset_type,
                                      validation_size=validation_size,
                                      image_set="val", class_groups=class_groups
                                      )
@@ -260,17 +368,24 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     writer.close()
     save_id = os.path.basename(best_model_yet)
 
-
 def evaluate_model(model_name, device, num_classes, class_groups, data_root, batch_size,
                    num_batches_to_process, load_path, dataset_name, dataset_type, validation_size, image_set):
-    model = load_model(model_name, dataset_name, num_classes).to(device)
+    if not torch.cuda.is_available():
+        device="cpu"
+    if dataset_name == 'CIFAR':
+        model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True)
+    elif dataset_name == 'AWA':
+        model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True)
+    else:
+        model = load_model(model_name, dataset_name, num_classes).to(device)
 
     kwparams = {
         'data_root': data_root,
         'image_set': image_set,
         'class_groups': class_groups,
         'validation_size': validation_size,
-        'only_train': True
+        'only_train': True,
+        'transform': None
     }
     _, ds = load_datasets_reduced(dataset_name=dataset_name, dataset_type=dataset_type, kwparams=kwparams)
     if not len(ds) > 0:
@@ -306,7 +421,7 @@ def evaluate_model(model_name, device, num_classes, class_groups, data_root, bat
     model.train()
     return (y_true == y_pred).sum() / y_out.shape[0]
 
-def test_all_models(model_root_path, device, num_classes, class_groups, data_root, batch_size,
+def test_all_models(model_root_path, model_name, device, num_classes, class_groups, data_root, batch_size,
                    num_batches_to_process, dataset_name, dataset_type, validation_size, save_dir):
     model_root_path=os.path.join(model_root_path, dataset_name)
     dirlist=[direc for direc in os.listdir(model_root_path) if ((os.path.isdir(os.path.join(model_root_path, direc))) and (direc != "results_all"))]
@@ -315,9 +430,10 @@ def test_all_models(model_root_path, device, num_classes, class_groups, data_roo
         print(f"Testing: {dir_name}")       
         results_dict[dir_name]={}
         spl=dir_name.split("_")
-        model_name=f"{spl[0]}_{spl[1]}"
         model_path=os.path.join(model_root_path, dir_name)
         model_path=os.path.join(model_path,f"{dataset_name}_{model_name}")
+        dataset_type=dir_name
+        num_classes=5 if dataset_type=="group" else 10
         train_acc=evaluate_model(
             model_name=model_name,
             device=device,
@@ -373,8 +489,9 @@ if __name__ == "__main__":
 
     save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
 
-    #test_all_models(
-    #    model_root_path="/home/fe/yolcu/Documents/Code/THESIS/checkpoints",
+    # test_all_models(
+    #    model_root_path="/home/fe/yolcu/Documents/Code/DualView-wip/checkpoints",
+    #    model_name=train_config.get('model_name', 'basic_conv'),
     #    device=train_config.get('device', 'cuda'),
     #    num_classes=train_config.get('num_classes', None),
     #    class_groups=train_config.get('class_groups', None),
@@ -385,8 +502,22 @@ if __name__ == "__main__":
     #    save_dir=train_config.get('save_dir', None),
     #    num_batches_to_process=train_config.get('num_batches_eval', None),
     #    validation_size=train_config.get('validation_size', 2000)
-    #)
-    #exit()
+    # )
+    # test_models_in_dir(
+    #    model_root_path="/home/fe/yolcu/Documents/Code/DualView-wip/test_output/MNIST",
+    #    model_name=train_config.get('model_name', 'basic_conv'),
+    #    device=train_config.get('device', 'cuda'),
+    #    num_classes=train_config.get('num_classes', None),
+    #    class_groups=train_config.get('class_groups', None),
+    #    dataset_name=train_config.get('dataset_name', None),
+    #    dataset_type=train_config.get('dataset_type', 'std'),
+    #    data_root=train_config.get('data_root', None),
+    #    batch_size=train_config.get('batch_size', None),
+    #    save_dir=train_config.get('save_dir', None),
+    #    num_batches_to_process=train_config.get('num_batches_eval', None),
+    #    validation_size=train_config.get('validation_size', 2000)
+    # )
+    # exit()
 
     start_training(model_name=train_config.get('model_name', None),
                    model_path=train_config.get('model_path', None),
@@ -400,6 +531,8 @@ if __name__ == "__main__":
                    epochs=train_config.get('epochs', None),
                    batch_size=train_config.get('batch_size', None),
                    lr=train_config.get('lr', 0.1),
+                   momentum=train_config.get('momentum', 0.9),
+                   weight_decay=train_config.get('weight_decay', 0),
                    augmentation=train_config.get('augmentation', None),
                    loss=train_config.get('loss', None),
                    optimizer=train_config.get('optimizer', None),

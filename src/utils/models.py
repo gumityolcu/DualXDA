@@ -4,12 +4,51 @@ from models import BasicConvModel, CIFARResNet, AWAResNet
 from models.resnet import resnet18, resnet50
 import tqdm
 
+class ResNetWrapper(torch.nn.Module):
+    def __init__(self, module, output_dim):
+        super().__init__()
+        self.resnet=module
+        self.classifier=torch.nn.Linear(in_features=module.fc.in_features, out_features=output_dim, bias=False)
+        seq_array=[
+            torch.nn.Conv2d(3,module.bn1.num_features,kernel_size=3,padding=2,stride=1),
+            module.bn1,
+            module.relu,
+            module.maxpool,
+            module.layer1,module.layer2,module.layer3,
+            module.layer4,module.avgpool,
+            torch.nn.Flatten()
+            ]
+
+        self.features=torch.nn.Sequential(*seq_array)
+
+    def forward(self, x):
+        x=self.features(x)
+        return self.classifier(x)
+    
 def load_model(model_name, dataset_name, num_classes):
-    bias = not ('homo' in model_name)
-    params={
-        'MNIST':
-            {
-                'convs': {
+    if dataset_name=="MNIST":
+        bias = not ('homo' in model_name)
+        params={
+            'MNIST':
+                {
+                    'convs': {
+                            'num': 3,
+                            'padding': 0,
+                            'kernel': 3,
+                            'stride': 1,
+                            'features': [5, 10, 5]
+                        },
+
+                    'fc' : {
+                        'num': 2,
+                        'features': [500, 100]
+                    },
+
+                    'input_shape':(1,28,28)
+                },
+            'FashionMNIST':
+                {
+                    'convs': {
                         'num': 3,
                         'padding': 0,
                         'kernel': 3,
@@ -17,65 +56,54 @@ def load_model(model_name, dataset_name, num_classes):
                         'features': [5, 10, 5]
                     },
 
-                'fc' : {
-                    'num': 2,
-                    'features': [500, 100]
-                },
+                    'fc': {
+                        'num': 2,
+                        'features': [500, 100]
+                    },
 
-                'input_shape':(1,28,28)
-            },
-        'FashionMNIST':
-            {
+                    'input_shape': (1, 28, 28)
+                },
+            'CIFAR':
+                {
                 'convs': {
-                    'num': 3,
-                    'padding': 0,
-                    'kernel': 3,
-                    'stride': 1,
-                    'features': [5, 10, 5]
-                },
-
+                'num': 5,
+                'padding': 0,
+                'kernel': 3,
+                'stride': 1,
+                'features': [5, 10, 10, 10, 5]
+            },
                 'fc': {
                     'num': 2,
                     'features': [500, 100]
                 },
-
-                'input_shape': (1, 28, 28)
-            },
-        'CIFAR':
-            {
-            'convs': {
-            'num': 5,
-            'padding': 0,
-            'kernel': 3,
-            'stride': 1,
-            'features': [5, 10, 10, 10, 5]
-        },
-            'fc': {
-                'num': 2,
-                'features': [500, 100]
-            },
-            'input_shape': (3, 32, 32)
+                'input_shape': (3, 32, 32)
+            }
         }
-    }
 
-    params=params[dataset_name]
-    return BasicConvModel(input_shape=params['input_shape'], convs=params['convs'], fc=params['fc'], num_classes=num_classes, bias=bias)
+        params=params[dataset_name]
+        return BasicConvModel(input_shape=params['input_shape'], convs=params['convs'], fc=params['fc'], num_classes=num_classes, bias=bias)
+    elif dataset_name=="CIFAR":
+        if model_name=="resnet18":
+            return ResNetWrapper(resnet18(),output_dim=num_classes)
+        else:
+            return ResNetWrapper(resnet50(),output_dim=num_classes)
 
-def load_cifar_model(model_path,dataset_type,num_classes,device):
+def load_cifar_model(model_path,dataset_type,num_classes,device, train=False):
     model=resnet18()
     model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_classes, bias=False)
-    checkpoint = torch.load(model_path, map_location=device)
-    checkpoint={key[6:]: value for key,value in checkpoint['state_dict'].items()}
-
-    model.load_state_dict(checkpoint)
+    if train==False:
+        checkpoint = torch.load(model_path, map_location=device)
+        checkpoint={key[6:]: value for key,value in checkpoint['state_dict'].items()}
+        model.load_state_dict(checkpoint)
     model.eval()
     return CIFARResNet(model,device=device)
 
-def load_awa_model(model_path,dataset_type,num_classes,device):
+def load_awa_model(model_path,dataset_type,num_classes,device,train=False):
     model=resnet50(model_path)
     model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_classes, bias=False)
-    checkpoint = torch.load(model_path, map_location=device)
-    model.load_state_dict(checkpoint['state_dict'])
+    if train == False:
+        checkpoint = torch.load(model_path, map_location=device)
+        model.load_state_dict(checkpoint)
     model.eval()
     return AWAResNet(model,device=device)
 
