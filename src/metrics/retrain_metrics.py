@@ -395,7 +395,7 @@ class LinearDatamodelingScore(RetrainMetric):
 
     def __call__(self, xpl):
         xpl.to(self.device)
-        combined_xpl = xpl.sum(dim=0)
+        combined_xpl = xpl.abs().sum(dim=0)
         evalds = self.test
         for i in range(self.samples):
             sample_indices = np.random.choice(len(combined_xpl), size= int(self.alpha * len(combined_xpl)), replace=False)
