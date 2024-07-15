@@ -1,0 +1,63 @@
+C: 0.1
+batch_size: 16
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+- - 10
+  - 11
+- - 12
+  - 13
+- - 14
+  - 15
+- - 16
+  - 17
+- - 18
+  - 19
+- - 20
+  - 21
+- - 22
+  - 23
+- - 24
+  - 25
+- - 26
+  - 27
+- - 28
+  - 29
+- - 30
+  - 31
+- - 32
+  - 33
+- - 34
+  - 35
+- - 36
+  - 37
+- - 38
+  - 39
+- - 40
+  - 41
+- - 42
+  - 43
+- - 44
+  - 45
+- - 46
+  - 47
+- - 48
+  - 49
+data_root: /mnt/dataset
+dataset_name: AWA
+device: cuda
+metric: labelflip
+model_name: resnet50
+num_classes: 50
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: influence
+xpl_root: mnt/explanations/AWA/std/resnet50_std/influence

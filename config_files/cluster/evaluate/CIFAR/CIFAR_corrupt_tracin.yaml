@@ -1,0 +1,23 @@
+C: 0.1
+batch_size: 16
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: /mnt/dataset
+dataset_name: CIFAR
+device: cuda
+metric: corrupt
+model_name: resnet18
+num_classes: 10
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: tracin
+xpl_root: mnt/explanations/CIFAR/std/resnet18_std/tracin

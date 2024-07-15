@@ -124,11 +124,11 @@ def get_validation_loss(model, ds, loss, num_classes, device):
     model.train()
     return l
 
-def load_scheduler(name, optimizer): #include warmup?
+def load_scheduler(name, optimizer, epochs): #include warmup?
     scheduler_dict = {
         "constant": ConstantLR(optimizer=optimizer, last_epoch=-1),
-        "step": StepLR(optimizer=optimizer, step_size=50, gamma=0.1, last_epoch=-1),
-        "annealing": CosineAnnealingLR(optimizer=optimizer, T_max = 50, last_epoch=-1) #make it so that t_max updates to len(train_data) // batch_size (check that this is correct again)
+        "step": StepLR(optimizer=optimizer, step_size=epochs // 20, gamma=0.1, last_epoch=epochs),
+        "annealing": CosineAnnealingLR(optimizer=optimizer, T_max = epochs, last_epoch=epochs) #make it so that t_max updates to len(train_data) // batch_size (check that this is correct again)
     }
     scheduler = scheduler_dict.get(name, ConstantLR(optimizer=optimizer, last_epoch=-1 ))
     return scheduler
@@ -201,7 +201,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     train_acc = []
     loss=load_loss(loss)
     optimizer = load_optimizer(optimizer, model, lr, weight_decay, momentum)
-    scheduler = load_scheduler(scheduler, optimizer)
+    scheduler = load_scheduler(scheduler, optimizer, epochs)
     if augmentation not in [None, '']:
         augmentation = load_augmentation(augmentation, dataset_name)
 

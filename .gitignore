@@ -1,5 +1,5 @@
-# config files (specific to the machine)
-config_files/
+# config files notebooks
+config_files/*.ipynb
 
 # files created form the repo
 explanations/
