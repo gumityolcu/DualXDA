@@ -12,3 +12,6 @@ src/datasets/AWA_rawdata/
 
 # ignore changes to cpp files of library (linux vs. windows issues)
 src/solvers/libs/
+
+# ignore training checkpoints overview
+training_checkpoints/

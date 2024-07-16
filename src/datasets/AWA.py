@@ -172,12 +172,15 @@ class AWA(VisionDataset):
             data, target = self.load_data(id, "val")
         
         img = torch.from_numpy(data)
+        img = Image.fromarray(img)
         target = torch.tensor(target, dtype=torch.long)
-        
+
         if self.transform is not None:
             img = self.transform(img)
+
         if self.target_transform is not None:
             target = self.target_transform(target)
+
         return img, target
     
     def __len__(self):

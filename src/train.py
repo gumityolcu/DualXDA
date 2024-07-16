@@ -333,7 +333,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             model_save_path = os.path.join(save_dir, save_id)
             if not os.path.isdir(save_dir):
                 os.makedirs(save_dir, exist_ok=True)
-            torch.save(save_dict, model_save_path)
+            #torch.save(save_dict, model_save_path)
             saved_files.append((model_save_path, save_id))
 
             print(f"\n\nValidation loss: {validation_loss}\n\n")
