@@ -5,7 +5,6 @@ config_files/*.ipynb
 explanations/
 surrogate_check/
 test_output/
-checkpoints/
 
 # ignore large files (for now)
 src/datasets/AWA_rawdata/
