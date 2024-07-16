@@ -9,6 +9,7 @@ epochs: 20
 loss: cross_entropy
 lr: 0.01
 model_name: resnet50
+model_path: mnt/checkpoints/AWA/std/resnet50_std/resnet50_imagenet1k_strong_training_strategy.tar.gz
 momentum: 0
 num_batches_eval: 200
 num_classes: 50

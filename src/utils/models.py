@@ -98,12 +98,16 @@ def load_cifar_model(model_path,dataset_type,num_classes,device, train=False):
     model.eval()
     return CIFARResNet(model,device=device)
 
-def load_awa_model(model_path,dataset_type,num_classes,device,train=False):
+def load_awa_model(model_path, dataset_type,num_classes,device,train=False):
     model=resnet50(model_path)
     model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_classes, bias=False)
     if train == False:
         checkpoint = torch.load(model_path, map_location=device)
         model.load_state_dict(checkpoint)
+    else:
+        if model_path != None:
+            checkpoint = torch.load(model_path, map_location=device) #Load Imagenet checkpoint
+            model.load_state_dict(checkpoint)
     model.eval()
     return AWAResNet(model,device=device)
 
