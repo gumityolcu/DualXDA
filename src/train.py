@@ -223,14 +223,17 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
 
     if model_path is not None:
         checkpoint = torch.load(model_path, map_location=device)
-        model.load_state_dict(checkpoint["model_state"])
-        optimizer.load_state_dict(checkpoint["optimizer_state"])
-        scheduler.load_state_dict(checkpoint["scheduler_state"])
-        train_losses = checkpoint["train_losses"]
-        validation_losses = checkpoint["validation_losses"]
-        validation_epochs = checkpoint["validation_epochs"]
-        val_acc = checkpoint["validation_accuracy"]
-        train_acc = checkpoint["train_accuracy"]
+        if checkpoint.get("model_state", None) != None:
+            model.load_state_dict(checkpoint["model_state"])
+        if checkpoint.get("optimizer_state", None) != None:
+            optimizer.load_state_dict(checkpoint["optimizer_state"])
+        if checkpoint.get("scheduler_state", None) != None:
+            scheduler.load_state_dict(checkpoint["scheduler_state"])
+        train_losses = checkpoint.get("train_losses", None)
+        validation_losses = checkpoint.get("validation_losses", None)
+        validation_epochs = checkpoint.get("validation_epochs", None)
+        val_acc = checkpoint.get("validation_accuracy", None)
+        train_acc = checkpoint.get("train_accuracy", None)
 
     for i,r in enumerate(learning_rates):
         writer.add_scalar('Metric/lr', r, i)
