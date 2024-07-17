@@ -229,11 +229,16 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             optimizer.load_state_dict(checkpoint["optimizer_state"])
         if checkpoint.get("scheduler_state", None) != None:
             scheduler.load_state_dict(checkpoint["scheduler_state"])
-        train_losses = checkpoint.get("train_losses", None)
-        validation_losses = checkpoint.get("validation_losses", None)
-        validation_epochs = checkpoint.get("validation_epochs", None)
-        val_acc = checkpoint.get("validation_accuracy", None)
-        train_acc = checkpoint.get("train_accuracy", None)
+        if checkpoint.get("train_losses", None) != None:
+            train_losses = checkpoint.get("train_losses", None)
+        if checkpoint.get("validation_losses", None) != None:    
+            validation_losses = checkpoint.get("validation_losses", None)
+        if checkpoint.get("validation_epochs", None) != None:
+            validation_epochs = checkpoint.get("validation_epochs", None)
+        if checkpoint.get("validation_accuracy", None) != None:
+            val_acc = checkpoint.get("validation_accuracy", None)
+        if checkpoint.get("train_accuracy", None) != None:
+            train_acc = checkpoint.get("train_accuracy", None)
 
     for i,r in enumerate(learning_rates):
         writer.add_scalar('Metric/lr', r, i)
