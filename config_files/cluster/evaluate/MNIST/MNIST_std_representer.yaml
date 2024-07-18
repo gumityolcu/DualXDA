@@ -1,5 +1,4 @@
 batch_size: 128
-coef_root: mnt/explanations/MNIST/std/basic_conv_std/representer
 data_root: /mnt/dataset
 dataset_name: MNIST
 device: cuda

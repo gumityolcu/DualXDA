@@ -51,7 +51,6 @@ class_groups:
   - 47
 - - 48
   - 49
-coef_root: mnt/explanations/AWA/std/resnet50_std/dualview_0.1
 data_root: /mnt/dataset
 dataset_name: AWA
 device: cuda

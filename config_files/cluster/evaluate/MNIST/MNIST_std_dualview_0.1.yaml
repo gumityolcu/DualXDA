@@ -1,6 +1,5 @@
 C: 0.1
 batch_size: 16
-coef_root: mnt/explanations/MNIST/std/basic_conv_std/dualview_0.1
 data_root: /mnt/dataset
 dataset_name: MNIST
 device: cuda

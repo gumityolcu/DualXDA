@@ -11,7 +11,6 @@ class_groups:
   - 7
 - - 8
   - 9
-coef_root: mnt/explanations/MNIST/group/basic_conv_group/representer
 data_root: /mnt/dataset
 dataset_name: MNIST
 device: cuda

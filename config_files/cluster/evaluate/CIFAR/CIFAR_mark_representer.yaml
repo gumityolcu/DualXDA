@@ -11,7 +11,6 @@ class_groups:
   - 7
 - - 8
   - 9
-coef_root: mnt/explanations/CIFAR/mark/resnet18_mark/representer
 data_root: /mnt/dataset
 dataset_name: CIFAR
 device: cuda

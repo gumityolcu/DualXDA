@@ -11,7 +11,6 @@ class_groups:
   - 7
 - - 8
   - 9
-coef_root: mnt/explanations/MNIST/switched_one_file/basic_conv_switched_one_file/representer
 data_root: /mnt/dataset
 dataset_name: MNIST
 device: cuda

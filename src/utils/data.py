@@ -318,7 +318,7 @@ def load_datasets(dataset_name, dataset_type, **kwparams):
     if dataset_name in ds_dict.keys():
         dscls = ds_dict[dataset_name]
         ds = dscls(root=data_root, split="train", validation_size=validation_size, transform=transform)
-        evalds = dscls(root=data_root, split=set, validation_size=validation_size, transform=transform)
+        evalds = dscls(root=data_root, split=set, validation_size=validation_size, transform=None)
     else:
         raise NameError(f"Unresolved dataset name : {dataset_name}.")
     if (dataset_type == "group") or (dataset_type == "groupk"):

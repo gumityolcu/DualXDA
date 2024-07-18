@@ -104,6 +104,8 @@ class AWA(VisionDataset):
     ):
         if transform is None:
             transform=AWA.default_transform
+        else:
+            transform=transforms.Compose([AWA.default_transform, transform])
         if inv_transform is None:
             inv_transform=AWA.inverse_transform
         train=(split=="train")
