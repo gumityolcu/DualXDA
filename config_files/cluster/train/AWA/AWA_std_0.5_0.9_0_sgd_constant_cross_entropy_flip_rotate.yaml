@@ -9,7 +9,7 @@ epochs: 100
 loss: cross_entropy
 lr: 0.5
 model_name: resnet50
-model_path: mnt/checkpoints/AWA/std/resnet50_std/resnet50_imagenet1k_v1.pth
+model_path: /mnt/checkpoints/AWA/std/resnet50_std/resnet50_imagenet1k_v1.pth
 momentum: 0.9
 num_batches_eval: 200
 num_classes: 50
