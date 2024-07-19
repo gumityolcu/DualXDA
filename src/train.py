@@ -374,9 +374,7 @@ def evaluate_model(model, device, num_classes, class_groups, data_root, batch_si
         device="cpu"
     if isinstance(model,str):
         model_name=model
-        if dataset_name == 'CIFAR':
-            model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True)
-        elif dataset_name == 'AWA':
+        if dataset_name == 'AWA':
             model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True)
         else:
             model = load_model(model_name, dataset_name, num_classes).to(device)
