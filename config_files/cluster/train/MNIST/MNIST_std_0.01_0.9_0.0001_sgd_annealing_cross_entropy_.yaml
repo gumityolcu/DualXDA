@@ -4,7 +4,7 @@ data_root: /mnt/dataset/
 dataset_name: MNIST
 dataset_type: std
 device: cuda
-epochs: 20
+epochs: 100
 loss: cross_entropy
 lr: 0.01
 model_name: basic_conv
@@ -13,7 +13,7 @@ num_batches_eval: 200
 num_classes: 10
 optimizer: sgd
 save_dir: /mnt/outputs/
-save_each: 2
+save_each: 5
 scheduler: annealing
 validation_size: 2000
 weight_decay: 0.0001
