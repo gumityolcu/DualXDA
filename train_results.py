@@ -13,7 +13,7 @@ def visualize(lists, split, caption="", save_path=None):
     row_labels=[]
     col_labels=[]
     for label, loss, leng in lists:
-        rowlbl=" ".join(label[0:split+1])
+        rowlbl=", ".join(label[0:split+1])
         row_labels.append(rowlbl)
         collbl="_".join(label[split+1:])
         col_labels.append(collbl)
@@ -49,7 +49,11 @@ def visualize(lists, split, caption="", save_path=None):
 
 if __name__=="__main__":
     list_of_ckpts=[]
-    init_dir="test_output/MNIST/5e3"
+    init_dir="test_output/MNIST/1e3"
+    # The strings in this list will be deleted from the folder name
+    # What we want in the end is:
+    # param1_param2_param3_param4_param5
+    
     replace_strs=["MNIST-MNIST_", "CIFAR-CIFAR_", "std_0.001_", "std_0.005_", ".yaml-output_data", "_sgd_constant_cross_entropy"]
     dirlist=sorted([f for f in listdir(init_dir) if ".png" not in f])
     for l in dirlist:
@@ -60,12 +64,17 @@ if __name__=="__main__":
             label=label.replace(rep, "")
             label=label.replace(rep, "")
             label=label.replace(rep, "")
+        # here we split : [param1, param2, param3 , ...]
         label=label.split("_")
         assert len(listdir(path.join(init_dir,l)))==1
         fil=listdir(path.join(init_dir,l))[0]
         val_losses=torch.load(path.join(init_dir,l,fil), map_location="cpu")["validation_accuracy"]
         
         list_of_ckpts.append((label, val_losses[-1], len(val_losses)))
+    # by giving split=1 we tell it that the rows will be pairs of (param1, param2),
+    # splitting the list from index 1, the columns will be n-tuples of params with ids >1
+    # you should change split such that the columns are combinations of different augmentations
+
     visualize(list_of_ckpts, split=1, caption=init_dir.replace("test_output/",""), save_path=path.join(init_dir,"grid.png"))
 
 
