@@ -184,7 +184,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     if dataset_type=="group":
         num_classes=len(class_groups)
     if model_name == "resnet18":
-        model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
+        model = load_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
     elif model_name == "resnet50":
         model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
     else:
