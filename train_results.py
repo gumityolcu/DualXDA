@@ -44,18 +44,19 @@ def visualize(lists, split, caption="", save_path=None):
     ax.imshow(res)
     ax.set_title(caption)
     if save_path is not None:
-        plt.savefig(save_path)    
+        plt.savefig(str(save_path)+".png")    
+        plt.savefig(str(save_path)+".pdf")    
     plt.show()
 
 if __name__=="__main__":
     list_of_ckpts=[]
-    init_dir="test_output/MNIST/1e3"
+    init_dir="test_output/MNIST/std/5e3"
     # The strings in this list will be deleted from the folder name
     # What we want in the end is:
     # param1_param2_param3_param4_param5
     
     replace_strs=["MNIST-MNIST_", "CIFAR-CIFAR_", "std_0.001_", "std_0.005_", ".yaml-output_data", "_sgd_constant_cross_entropy"]
-    dirlist=sorted([f for f in listdir(init_dir) if ".png" not in f])
+    dirlist=sorted([f for f in listdir(init_dir) if (".png" not in f) and (".pdf" not in f)])
     for l in dirlist:
         if path.isdir(path.join(init_dir,l, "outputs")):
             mvdir(path.join(init_dir,l))  #moves files out of the outputs folder and deletes everything other than the best ckpt
@@ -75,7 +76,7 @@ if __name__=="__main__":
     # splitting the list from index 1, the columns will be n-tuples of params with ids >1
     # you should change split such that the columns are combinations of different augmentations
 
-    visualize(list_of_ckpts, split=1, caption=init_dir.replace("test_output/",""), save_path=path.join(init_dir,"grid.png"))
+    visualize(list_of_ckpts, split=1, caption=init_dir.replace("test_output/",""), save_path=path.join(init_dir,"grid"))
 
 
 
