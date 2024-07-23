@@ -349,7 +349,8 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             if best_loss_yet is None or best_loss_yet > validation_loss:
                 best_loss_yet = validation_loss
                 path = os.path.join(save_dir, f"best_val_score_{dataset_name}_{model_name}_{base_epoch + e}")
-                torch.save(save_dict, path)
+                save_dict2={key: val for (key,val) in save_dict.keys() if (("scheduler" not in key) and ("optimizer" not in key))}
+                torch.save(save_dict2, path)
                 if best_model_yet is not None:
                     os.remove(best_model_yet)
                 best_model_yet = path

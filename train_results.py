@@ -50,12 +50,19 @@ def visualize(lists, split, caption="", save_path=None):
 
 if __name__=="__main__":
     list_of_ckpts=[]
-    init_dir="test_output/MNIST/std/5e3"
+    lr="1e3"
+    lr="5e3"
+    typ="mark"
+    init_dir=f"test_output/MNIST/{typ}/{lr}"
+    init_dir=f"test_output/MNIST/{typ}"
     # The strings in this list will be deleted from the folder name
     # What we want in the end is:
     # param1_param2_param3_param4_param5
     
-    replace_strs=["MNIST-MNIST_", "CIFAR-CIFAR_", "std_0.001_", "std_0.005_", ".yaml-output_data", "_sgd_constant_cross_entropy"]
+    replace_strs=["MNIST-MNIST_", "CIFAR-CIFAR_", \
+                  "std_", "group_", "corrupt_", "mark_", \
+                   # "0.001_", "0.005_",\
+                     ".yaml-output_data", "_sgd_constant_cross_entropy"]
     dirlist=sorted([f for f in listdir(init_dir) if (".png" not in f) and (".pdf" not in f)])
     for l in dirlist:
         if path.isdir(path.join(init_dir,l, "outputs")):

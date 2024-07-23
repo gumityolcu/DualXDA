@@ -137,7 +137,7 @@ class CIFARResNetCanonizer(CompositeCanonizer):
 
 
 def zennit_inner_product_explanation(model, train, test, composite_cls=EpsilonAlpha2Beta1, canonizer=None,
-                                     mode="train",cmap_name="bwr"):
+                                     mode="train",cmap_name="bwr", method="combine"):
     with torch.no_grad():
         train_features = model.features(train)
         test_features = model.features(test)
@@ -148,10 +148,18 @@ def zennit_inner_product_explanation(model, train, test, composite_cls=EpsilonAl
     else:
         attributor = Gradient(model.features, composite_cls())
 
-    input = train if mode == "train" else test
+    if method=="plain":
+        input = train if mode == "train" else test
 
-    output, attr = attributor(input, init)
-    attr = attr.cpu()
+        output, attr = attributor(input, init)
+        attr = attr.cpu()
+    else:
+        attr=torch.zeros_like(input)
+        for i in range(train.shape[-1]):
+            output, subattr = attributor(input, init)
+            attr=attr+subattr
+        attr=attr/int(train.shape[-1])
+        
     img = imgify(attr.sum(1), symmetric=True, cmap=cmap_name)
 
     sensible_palette = {img.palette.colors[color]: torch.tensor(color, dtype=torch.float32) for color in

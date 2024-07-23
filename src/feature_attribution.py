@@ -153,6 +153,7 @@ def evaluate(model_name, model_path, device, class_groups,
         'image_set': "test",
         'validation_size': validation_size,
         'only_train': False,
+        'transform':None,
         'imagenet_class_ids':imagenet_class_ids,
         'testsplit':testsplit
     }
@@ -959,7 +960,7 @@ if __name__ == "__main__":
     parser.add_argument('--config_file', type=str)
     parser.add_argument('--pages', type=int)
     args = parser.parse_args()
-    config_file = args.config_file
+    config_file = "config_files/local/evaluate/MNIST/basic_conv_std_mcsvm.yaml"
 
     with open(config_file, "r") as stream:
         try:
