@@ -1,6 +1,7 @@
 from tqdm import tqdm
 import torch
 from torch.utils.data.dataset import Dataset
+from torchvision.transforms.functional import to_pil_image
 from datasets.MNIST import MNIST, FashionMNIST
 from datasets.CIFAR import CIFAR
 from datasets.AWA import AWA
@@ -137,7 +138,8 @@ class MarkDataset(Dataset):
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
 
-        return self.dataset.transform(x.numpy().transpose(1, 2, 0))
+        return self.dataset.transform(to_pil_image(x))
+
 
     def mark_image_middle_square(self, x):
         x = self.dataset.inverse_transform(x)
@@ -149,7 +151,8 @@ class MarkDataset(Dataset):
             x[1:] = torch.zeros_like(x[1:]) * mask + x[1:] * (1 - mask)
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
-        return self.dataset.transform(x.numpy().transpose(1, 2, 0))
+        return self.dataset.transform(to_pil_image(x))
+
 
     def mark_image(self, x):
         x = self.dataset.inverse_transform(x)
@@ -165,7 +168,7 @@ class MarkDataset(Dataset):
             x[1:] = torch.zeros_like(x[1:]) * mask + x[1:] * (1 - mask)
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
-        return self.dataset.transform(x.numpy().transpose(1, 2, 0))
+        return self.dataset.transform(to_pil_image(x))
 
 
 class GroupLabelDataset(Dataset):

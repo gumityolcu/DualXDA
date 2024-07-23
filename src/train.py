@@ -349,7 +349,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             if best_loss_yet is None or best_loss_yet > validation_loss:
                 best_loss_yet = validation_loss
                 path = os.path.join(save_dir, f"best_val_score_{dataset_name}_{model_name}_{base_epoch + e}")
-                save_dict2={key: val for (key,val) in save_dict.keys() if (("scheduler" not in key) and ("optimizer" not in key))}
+                save_dict2={key: val for key,val in save_dict.items() if (("scheduler" not in key) and ("optimizer" not in key))}
                 torch.save(save_dict2, path)
                 if best_model_yet is not None:
                     os.remove(best_model_yet)
@@ -367,7 +367,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     writer.close()
     save_id = os.path.basename(best_model_yet)
 
-def evaluate_model(model, device, num_classes, class_groups, data_root, batch_size,
+def evaluate_model(model, device, num_classes, class_groups,  data_root, batch_size,
                    num_batches_to_process, load_path, dataset_name, dataset_type, validation_size, image_set):
     if not torch.cuda.is_available():
         device="cpu"
