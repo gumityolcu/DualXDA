@@ -5,7 +5,7 @@ data_root: /mnt/dataset/
 dataset_name: MNIST
 dataset_type: std
 device: cuda
-epochs: 100
+epochs: 50
 loss: cross_entropy
 lr: 0.01
 model_name: basic_conv

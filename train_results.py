@@ -3,10 +3,10 @@ from os import listdir, path, system
 from matplotlib import pyplot as plt
 
 def mvdir(p):
-    system(f"mv {path.join(p,'outputs','*')} {p}")
+    system(f"move {path.join(p,'outputs','*')} {p}")
     for l in listdir(p):
         if not "best" in l:
-            system(f"rm -r {path.join(p,l)}")
+            system(f"rmdir /s {path.join(p,l)}")
 
 def visualize(lists, split, caption="", save_path=None):
     L=[]
@@ -49,16 +49,17 @@ def visualize(lists, split, caption="", save_path=None):
 
 if __name__=="__main__":
     list_of_ckpts=[]
-    init_dir="test_output/MNIST/1e3"
+    init_dir="./AWA/"
     # The strings in this list will be deleted from the folder name
     # What we want in the end is:
     # param1_param2_param3_param4_param5
     
-    replace_strs=["MNIST-MNIST_", "CIFAR-CIFAR_", "std_0.001_", "std_0.005_", ".yaml-output_data", "_sgd_constant_cross_entropy"]
+    replace_strs=["MNIST-MNIST_", "CIFAR-CIFAR_", "AWA-AWA_", "std_0.001_", "std_0.005_", ".yaml-output_data", "_sgd_constant_cross_entropy"]
     dirlist=sorted([f for f in listdir(init_dir) if ".png" not in f])
     for l in dirlist:
-        if path.isdir(path.join(init_dir,l, "outputs")):
-            mvdir(path.join(init_dir,l))  #moves files out of the outputs folder and deletes everything other than the best ckpt
+        print(l)
+        #if path.isdir(path.join(init_dir,l, "outputs/")):
+        #    mvdir(path.join(init_dir,l))  #moves files out of the outputs folder and deletes everything other than the best ckpt
         label=l
         for rep in replace_strs:
             label=label.replace(rep, "")
@@ -66,16 +67,16 @@ if __name__=="__main__":
             label=label.replace(rep, "")
         # here we split : [param1, param2, param3 , ...]
         label=label.split("_")
-        assert len(listdir(path.join(init_dir,l)))==1
+        assert len(listdir(path.join(init_dir,l,"outputs")))==1
         fil=listdir(path.join(init_dir,l))[0]
-        val_losses=torch.load(path.join(init_dir,l,fil), map_location="cpu")["validation_accuracy"]
+        val_losses=torch.load(path.join(init_dir,l,"outputs", fil), map_location="cpu")["validation_accuracy"]
         
         list_of_ckpts.append((label, val_losses[-1], len(val_losses)))
     # by giving split=1 we tell it that the rows will be pairs of (param1, param2),
     # splitting the list from index 1, the columns will be n-tuples of params with ids >1
     # you should change split such that the columns are combinations of different augmentations
 
-    visualize(list_of_ckpts, split=1, caption=init_dir.replace("test_output/",""), save_path=path.join(init_dir,"grid.png"))
+    visualize(list_of_ckpts, split=1, caption=init_dir.replace("AWA/",""), save_path=path.join(init_dir,"grid.png"))
 
 
 
