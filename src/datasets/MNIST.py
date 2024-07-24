@@ -25,7 +25,7 @@ class MNIST(tvMNIST):
             transform=None,
             inv_transform=None,
             target_transform=None,
-            download=False,
+            download=True,
             validation_size=0
     ):
         if transform is None:

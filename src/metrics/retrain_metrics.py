@@ -1,5 +1,6 @@
 from utils import Metric
 import torch
+from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 import copy
 from utils.data import RestrictedDataset, FlipLabelDataset
@@ -19,13 +20,15 @@ class RetrainMetric(Metric):
 
     def load_retraining_parameters(self): #only for now, this will need to be loaded depending on the model
         self.num_classes = 10
-        self.epochs = 1
+        self.epochs = 5
         self.batch_size = 64
         self.lr = 0.005
         self.augmentation = None
         self.optimizer = None
         self.scheduler = None
         self.loss = None
+        self.weight_decay = 0
+        self.momentum = 0
 
     def retrain(self, ds):
         #tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
@@ -39,8 +42,8 @@ class RetrainMetric(Metric):
         #validation_epochs = []
         #val_acc = []
         train_acc = []
-        loss=load_loss()
-        optimizer = load_optimizer(self.optimizer, model, self.lr)
+        loss=load_loss(self.loss)
+        optimizer = load_optimizer(self.optimizer, model, self.lr, self.weight_decay, self.momentum)
         scheduler = load_scheduler(self.scheduler, optimizer)
         if self.augmentation is not None:
             augmentation = load_augmentation(self.augmentation)
@@ -381,6 +384,7 @@ class OnlyBatch(RetrainMetric):
             self.write_result(resdict, dir, file_name)
         return resdict
 
+'''
 class LinearDatamodelingScore(RetrainMetric):
     name = "LinearDatamodelingScore"
 
@@ -415,7 +419,46 @@ class LinearDatamodelingScore(RetrainMetric):
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
+'''
+class LinearDatamodelingScore(RetrainMetric):
+    name = "LinearDatamodelingScore"
 
+    def __init__(self, train, test, model, num_classes=10, alpha=0.05, samples=10, device="cuda"):
+        super().__init__(train, test, model, device)
+        self.num_classes = num_classes
+        self.alpha = alpha
+        self.samples = samples
+        self.attribution_array = None
+        self.loss_array = None
+        self.n_test = None
+        self.load_retraining_parameters()
+
+    def __call__(self, xpl, start_index=0):
+        xpl.to(self.device)
+        self.n_test = xpl.shape[0]
+        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0)
+        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long()
+        self.attribution_array = np.empty((xpl.shape[0], self.samples))
+        self.loss_array = np.empty((xpl.shape[0], self.samples))
+        loss = CrossEntropyLoss()
+        for i in range(self.samples):
+            sample_indices = np.random.choice(xpl.shape[1], size= int(self.alpha * xpl.shape[1]), replace=False)
+            self.attribution_array[:, i] = xpl[:, sample_indices].sum(dim=1)
+            ds = RestrictedDataset(self.train, sample_indices)
+            retrained_model = self.retrain(ds)
+            self.loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).detach().numpy()
+
+    def get_result(self, dir=None, file_name=None):
+        print(self.attribution_array.shape)
+        print(self.loss_array.shape)
+        spearman = SpearmanCorrCoef(num_outputs=self.n_test)
+        correlation_scores = spearman(torch.from_numpy(self.attribution_array.T), torch.from_numpy(self.loss_array.T))
+        resdict = {'metric': self.name, 'correlation_scores': correlation_scores, 'avg_score': correlation_scores.mean(),
+                   'sample_attributions': self.attribution_array, 'sample_losses': self.loss_array}
+        if dir is not None:
+            self.write_result(resdict, dir, file_name)
+        return resdict
+        
 class LabelFlipMetric(RetrainMetric):
     name = "LabelFlipMetric"
 

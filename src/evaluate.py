@@ -41,7 +41,8 @@ def evaluate(model_name, model_path, device, class_groups,
         'class_groups': class_groups,
         'image_set': "test",
         'validation_size': validation_size,
-        'only_train': False
+        'only_train': False,
+        'transform': None
     }
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
     if dataset_name == "CIFAR":
@@ -144,7 +145,7 @@ if __name__ == "__main__":
              device=train_config.get('device', 'cuda'),
              class_groups=train_config.get('class_groups', None),
              dataset_name=train_config.get('dataset_name', None),
-             dataset_type=train_config.get('dataset_type', 'std'),
+             dataset_type=train_config.get('metric', 'std'),
              data_root=train_config.get('data_root', None),
              xpl_root=train_config.get('xpl_root', None),
              coef_root=train_config.get('coef_root', None),
