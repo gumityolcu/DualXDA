@@ -8,7 +8,7 @@ def mvdir(p):
         if not "best" in l:
             system(f"rm -r {path.join(p,l)}")
 
-def visualize(lists, split, caption="", save_path=None):
+def visualize(lists, split, caption="", save_path=None, cmap="PiYG"):
     L=[]
     row_labels=[]
     col_labels=[]
@@ -41,7 +41,7 @@ def visualize(lists, split, caption="", save_path=None):
         lengths[rid,cid]=leng
         ax.text(cid,rid,f"{loss:.3f}, {leng}",ha="center", va="center", color="white")
 
-    ax.imshow(res)
+    ax.imshow(res, cmap=cmap)
     ax.set_title(caption)
     if save_path is not None:
         plt.savefig(str(save_path)+".png")    
@@ -51,8 +51,8 @@ def visualize(lists, split, caption="", save_path=None):
 if __name__=="__main__":
     list_of_ckpts=[]
     lr="1e3"
-    ds="CIFAR"
-    typ="std"
+    ds="MNIST"
+    typ="mark"
     init_dir=f"test_output/{ds}/{typ}/{lr}"
     # The strings in this list will be deleted from the folder name
     # What we want in the end is:
