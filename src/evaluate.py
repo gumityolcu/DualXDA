@@ -6,7 +6,9 @@ import logging
 from metrics import *
 
 
-def load_metric(dataset_type, train, test, device, coef_root, model):
+def load_metric(dataset_type, datset_name, train, test, device, coef_root, model,
+                epochs, loss, lr, momentum, optimizer, scheduler,
+                weight_decay, augmentation,):
     ret_dict = {"std": SameClassMetric, "group": SameSubclassMetric, "corrupt": CorruptLabelMetric,
                 "mark": MarkImageMetric,
                 "stdk": TopKSameClassMetric, "groupk": TopKSameSubclassMetric,
@@ -24,7 +26,9 @@ def load_metric(dataset_type, train, test, device, coef_root, model):
     elif dataset_type == "switched":
         ret = metric_cls(device)
     elif dataset_type in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
-        ret = metric_cls(train, test, model, device=device)
+        ret = metric_cls(dataset_name, train, test, model,
+                         epochs, loss, lr, momentum, optimizer, scheduler,
+                         weight_decay, augmentation, device=device)
     else:
         ret = metric_cls(train, test, device=device)
     return ret
@@ -33,7 +37,10 @@ def load_metric(dataset_type, train, test, device, coef_root, model):
 def evaluate(model_name, model_path, device, class_groups,
              dataset_name, dataset_type,
              data_root, xpl_root, coef_root,
-             save_dir, validation_size, num_classes, from_checkpoint=True):
+             save_dir, validation_size, num_classes,
+             epochs, loss, lr, momentum, optimizer, scheduler,
+             weight_decay, augmentation,
+             from_checkpoint=True):
     if not torch.cuda.is_available():
         device="cpu"
     ds_kwargs = {
@@ -54,7 +61,9 @@ def evaluate(model_name, model_path, device, class_groups,
             model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
-    metric = load_metric(dataset_type, train, test, device, coef_root, model)
+    metric = load_metric(dataset_type, dataset_name, train, test, device, coef_root, model,
+                         epochs, loss, lr, momentum, optimizer, scheduler,
+                         weight_decay, augmentation)
     print(f"Computing metric {metric.name}")
     fname=f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}"
     if not os.path.isdir(xpl_root):
@@ -141,15 +150,23 @@ if __name__ == "__main__":
     save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
 
     evaluate(model_name=train_config.get('model_name', None),
-             model_path=train_config.get('model_path', None),
-             device=train_config.get('device', 'cuda'),
-             class_groups=train_config.get('class_groups', None),
-             dataset_name=train_config.get('dataset_name', None),
-             dataset_type=train_config.get('metric', 'std'),
-             data_root=train_config.get('data_root', None),
-             xpl_root=train_config.get('xpl_root', None),
-             coef_root=train_config.get('coef_root', None),
-             save_dir=train_config.get('save_dir', None),
-             validation_size=train_config.get('validation_size', 2000),
-             num_classes=train_config.get('num_classes')
+                model_path=train_config.get('model_path', None),
+                device=train_config.get('device', 'cuda'),
+                class_groups=train_config.get('class_groups', None),
+                dataset_name=train_config.get('dataset_name', None),
+                dataset_type=train_config.get('metric', 'std'),
+                data_root=train_config.get('data_root', None),
+                xpl_root=train_config.get('xpl_root', None),
+                coef_root=train_config.get('coef_root', None),
+                save_dir=train_config.get('save_dir', None),
+                validation_size=train_config.get('validation_size', 2000),
+                num_classes=train_config.get('num_classes'),
+                epochs=train_config.get('epochs', None),
+                loss=train_config.get('loss', None),
+                lr=train_config.get('lr', None),
+                momentum=train_config.get('momentum', None),
+                optimizer=train_config.get('optimizer', None),
+                scheduler=train_config.get('scheduler', None),
+                weight_decay=train_config.get('weight_decay', None),
+                augmentation=train_config.get('augmentation', None)
              )

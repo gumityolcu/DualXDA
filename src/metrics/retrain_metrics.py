@@ -12,23 +12,34 @@ from torchmetrics.regression import SpearmanCorrCoef
 class RetrainMetric(Metric):
     name = "RetrainMetric"
     
-    def __init__(self, train, test, model, device):
+    def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
+             weight_decay, augmentation, device):
+        self.dataset_name = dataset_name
         self.train = train
         self.test = test
+        self.num_classes = 10
         self.model = model #load model WITHOUT checkpoint in evaluate script for this metric!
         self.device = device
+        self.batch_size = 64
+        self.epochs = epochs
+        self.lr = lr
+        self.augmentation = augmentation
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.loss = loss
+        self.weight_decay = weight_decay
+        self.momentum = momentum
+        if dataset_name == "AWA":
+            self.num_classes = 50
+        else:
+            self.num_classes = 10
+        self.load_retraining_parameters()
 
     def load_retraining_parameters(self): #only for now, this will need to be loaded depending on the model
-        self.num_classes = 10
-        self.epochs = 5
-        self.batch_size = 64
-        self.lr = 0.005
-        self.augmentation = None
-        self.optimizer = None
-        self.scheduler = None
-        self.loss = None
-        self.weight_decay = 0
-        self.momentum = 0
+        self.loss = load_loss(self.loss)
+        self.scheduler = load_scheduler(self.scheduler)
+        self.optimizer = load_optimizer(self.optimizer)
+        self.augmentation = load_augmentation(self.augmentation, self.dataset_name)
 
     def retrain(self, ds):
         #tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
@@ -232,7 +243,6 @@ class CumAddBatchIn(RetrainMetric):
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
-        self.load_retraining_parameters()
 
     def __call__(self, xpl):
         curr_score=torch.empty(self.batch_nr, dtype=torch.float, device=self.device)
@@ -273,7 +283,6 @@ class CumAddBatchInNeg(RetrainMetric):
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
-        self.load_retraining_parameters()
 
     def __call__(self, xpl):
         curr_score=torch.empty(self.batch_nr, dtype=torch.float, device=self.device)
@@ -313,7 +322,6 @@ class LeaveBatchOut(RetrainMetric):
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
-        self.load_retraining_parameters()
 
     def __call__(self, xpl):
         curr_score=torch.empty(self.batch_nr, dtype=torch.float, device=self.device)
@@ -353,7 +361,6 @@ class OnlyBatch(RetrainMetric):
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
-        self.load_retraining_parameters()
 
     def __call__(self, xpl):
         curr_score=torch.empty(self.batch_nr, dtype=torch.float, device=self.device)
@@ -395,7 +402,6 @@ class LinearDatamodelingScore(RetrainMetric):
         self.samples = samples
         self.sample_attributions = np.empty(samples)
         self.sample_accuracies = np.empty(samples)
-        self.load_retraining_parameters()
 
     def __call__(self, xpl):
         xpl.to(self.device)
@@ -431,7 +437,6 @@ class LinearDatamodelingScore(RetrainMetric):
         self.attribution_array = None
         self.loss_array = None
         self.n_test = None
-        self.load_retraining_parameters()
 
     def __call__(self, xpl, start_index=0):
         xpl.to(self.device)
@@ -469,7 +474,6 @@ class LabelFlipMetric(RetrainMetric):
         self.flip_least_relevant=torch.empty(batch_nr+1, dtype=torch.float, device=self.device)
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
-        self.load_retraining_parameters()
 
     def __call__(self, xpl):
         xpl.to(self.device)
