@@ -1,0 +1,12 @@
+C: 0.1
+batch_size: 16
+data_root: /mnt/dataset
+dataset_name: MNIST
+device: cuda
+metric: switched
+model_name: basic_conv
+num_classes: 10
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: dualview
+xpl_root: mnt/explanations/MNIST/switched_one_file/basic_conv_switched_one_file/dualview_0.1

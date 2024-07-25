@@ -1,0 +1,27 @@
+accuracy: true
+batch_size: 16
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: c:\Users\weckbecker\DualView-wip/src/datasets
+dataset_name: CIFAR
+dataset_type: group
+device: cpu
+model_name: resnet18
+model_path: c:\Users\weckbecker\DualView-wip/checkpoints/CIFAR/group/resnet18_group/CIFAR_resnet18
+num_batches_per_file: 1
+num_classes: 10
+num_files: 100
+save_dir: c:\Users\weckbecker\DualView-wip/explanations/CIFAR/group/resnet18_group/influence
+skip: 2230
+start_file: 0
+validation_size: 2000
+xai_method: influence

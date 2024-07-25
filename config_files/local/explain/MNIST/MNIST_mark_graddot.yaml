@@ -1,0 +1,16 @@
+accuracy: true
+batch_size: 16
+data_root: c:\Users\weckbecker\DualView-wip/src/datasets
+dataset_name: MNIST
+dataset_type: mark
+device: cpu
+model_name: basic_conv
+model_path: c:\Users\weckbecker\DualView-wip/checkpoints/MNIST/mark/basic_conv_mark/MNIST_basic_conv
+num_batches_per_file: 1
+num_classes: 10
+num_files: 100
+save_dir: c:\Users\weckbecker\DualView-wip/explanations/MNIST/mark/basic_conv_mark/graddot
+skip: 2230
+start_file: 0
+validation_size: 2000
+xai_method: graddot

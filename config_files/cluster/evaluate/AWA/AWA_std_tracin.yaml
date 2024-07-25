@@ -1,0 +1,11 @@
+batch_size: 16
+data_root: /mnt/dataset
+dataset_name: AWA
+device: cuda
+metric: std
+model_name: resnet50
+num_classes: 50
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: tracin
+xpl_root: mnt/explanations/AWA/std/resnet50_std/tracin

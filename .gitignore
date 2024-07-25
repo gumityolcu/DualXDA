@@ -1,6 +1,3 @@
-# config files (specific to the machine)
-config_files/
-
 # files created form the repo
 explanations/
 surrogate_check/

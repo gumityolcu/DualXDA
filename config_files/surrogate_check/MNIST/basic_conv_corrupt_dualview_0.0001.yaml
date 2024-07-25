@@ -1,0 +1,28 @@
+C: '0.0001'
+accuracy: true
+batch_size: 32
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: C:/Users/weckbecker/DualView-wip/src/datasets
+dataset_name: MNIST
+dataset_type: corrupt
+device: cuda
+model_name: basic_conv
+model_path: C:/Users/weckbecker/DualView-wip/checkpoints/MNIST/corrupt/basic_conv_corrupt/MNIST_basic_conv
+num_batches_per_file: 100
+num_classes: 10
+num_files: 500
+save_dir_explainer: C:/Users/weckbecker/DualView-wip/explanations/MNIST/corrupt/basic_conv_corrupt/dualview_0.0001
+save_dir_results: C:/Users/weckbecker/DualView-wip/surrogate_check/MNIST/corrupt/basic_conv_corrupt/dualview_0.0001
+start_file: 0
+validation_size: 2000
+xai_method: dualview

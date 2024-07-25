@@ -1,0 +1,11 @@
+batch_size: 16
+data_root: c:\Users\weckbecker\DualView-wip/src/datasets
+dataset_name: CIFAR
+device: cpu
+metric: mark
+model_name: resnet18
+num_classes: 10
+save_dir: c:\Users\weckbecker\DualView-wip/test_output
+validation_size: 2000
+xai_method: influence
+xpl_root: c:\Users\weckbecker\DualView-wip/explanations/CIFAR/mark/resnet18_mark/influence

@@ -1,0 +1,22 @@
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: C:/Users/weckbecker/DualView-wip/src/datasets/
+dataset_name: MNIST
+dataset_type: labelflip
+device: cuda
+model_name: homo_conv
+model_path: C:/Users/weckbecker/DualView-wip/checkpoints/MNIST/std/homo_conv_std/MNIST_homo_conv
+num_classes: 10
+save_dir: C:/Users/weckbecker/DualView-wip/test_output
+validation_size: 2000
+xai_method: similarity
+xpl_root: C:/Users/weckbecker/DualView-wip/explanations/MNIST/std/homo_conv_std/similarity

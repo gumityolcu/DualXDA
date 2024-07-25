@@ -1,0 +1,11 @@
+batch_size: 16
+data_root: c:\Users\weckbecker\DualView-wip/src/datasets
+dataset_name: MNIST
+device: cpu
+metric: switched
+model_name: basic_conv
+num_classes: 10
+save_dir: c:\Users\weckbecker\DualView-wip/test_output
+validation_size: 2000
+xai_method: rp_similarity
+xpl_root: c:\Users\weckbecker\DualView-wip/explanations/MNIST/switched_one_file/basic_conv_switched_one_file/rp_similarity
