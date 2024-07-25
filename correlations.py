@@ -13,11 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 matplotlib.interactive(False)
-#unpack calues but still reach with indecxxing
-# make strings string again
-# leftover sanity check code
-# hardcoded paths
-# if __main__
+
 
 def group_files_by_base_name(src_dir):
     grouped_files = defaultdict(list) # Create dict for the explainers
