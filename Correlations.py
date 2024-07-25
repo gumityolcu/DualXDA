@@ -122,25 +122,23 @@ def explainer_corr(xpl_src_dir, corr_types = "spearman", save_dir = None, num_ro
 
 
 if __name__ == "__main__":
-#    current = os.path.dirname(os.path.realpath(__file__))
-#    parent_directory = os.path.dirname(current)
-#    sys.path.append(current)
-#    parser = argparse.ArgumentParser()
-#    parser.add_argument('--config_file', type=str)
-#    args = parser.parse_args()
-#    config_file = args.config_file
+    current = os.path.dirname(os.path.realpath(__file__))
+    parent_directory = os.path.dirname(current)
+    sys.path.append(current)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_file', type=str)
+    args = parser.parse_args()
+    config_file = args.config_file
 
-#     with open(config_file, "r") as stream:
-#        try:
-#            train_config = yaml.safe_load(stream)
-#        except yaml.YAMLError as exc:
-#            logging.info(exc)
+    with open(config_file, "r") as stream:
+       try:
+           train_config = yaml.safe_load(stream)
+       except yaml.YAMLError as exc:
+           logging.info(exc)
 
-#     save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
-    X=torch.tensor([[i for i in range(10)]for _ in range(10)],dtype=torch.float)
-    Y=torch.tensor([[10-i for i in range(10)]for _ in range(10)],dtype=torch.float)
-    for i in range(3):
-        torch.save(X,f"explanations/FirstExplainer/FirstExplainer_{i}")
-        torch.save(Y,f"explanations/SecondExplainer/SecondExplainer_{i}")
-    explainer_corr(xpl_src_dir="explanations",
-                   save_dir="explanations")
+    save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
+
+    explainer_corr(xpl_src_dir=train_config["xpl_src_dir"],
+                   corr_types = train_config["corr_types"],
+                   save_dir = train_config["save_dir"],
+                   num_rows = None , color_map = "viridis")
