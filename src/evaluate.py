@@ -6,7 +6,7 @@ import logging
 from metrics import *
 
 
-def load_metric(dataset_type, datset_name, train, test, device, coef_root, model,
+def load_metric(dataset_type, dataset_name, train, test, device, coef_root, model,
                 epochs, loss, lr, momentum, optimizer, scheduler,
                 weight_decay, augmentation,):
     ret_dict = {"std": SameClassMetric, "group": SameSubclassMetric, "corrupt": CorruptLabelMetric,
