@@ -16,7 +16,7 @@ data_root: /mnt/dataset/
 dataset_name: CIFAR
 dataset_type: mark
 device: cuda
-epochs: 500
+epochs: 200
 loss: cross_entropy
 lr: 0.0001
 model_name: resnet18
