@@ -9,7 +9,7 @@ model_path: /mnt/checkpoints/MNIST/switched_one_file/basic_conv_switched_one_fil
 num_batches_per_file: 1
 num_classes: 10
 num_files: 100
-save_dir: c:\Users\weckbecker\DualView-wip/explanations/MNIST/switched_one_file/basic_conv_switched_one_file/trak
+save_dir: /mnt/outputs/
 skip: 2230
 start_file: 0
 validation_size: 2000

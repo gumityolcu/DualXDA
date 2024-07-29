@@ -60,7 +60,7 @@ model_path: /mnt/checkpoints/AWA/group/resnet50_group/AWA_resnet50
 num_batches_per_file: 1
 num_classes: 50
 num_files: 100
-save_dir: c:\Users\weckbecker\DualView-wip/explanations/AWA/group/resnet50_group/representer
+save_dir: /mnt/outputs/
 skip: 2230
 start_file: 0
 validation_size: 2000

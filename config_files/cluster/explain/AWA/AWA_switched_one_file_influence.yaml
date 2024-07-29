@@ -9,7 +9,7 @@ model_path: /mnt/checkpoints/AWA/switched_one_file/resnet50_switched_one_file/AW
 num_batches_per_file: 1
 num_classes: 50
 num_files: 100
-save_dir: c:\Users\weckbecker\DualView-wip/explanations/AWA/switched_one_file/resnet50_switched_one_file/influence
+save_dir: /mnt/outputs/
 skip: 2230
 start_file: 0
 validation_size: 2000

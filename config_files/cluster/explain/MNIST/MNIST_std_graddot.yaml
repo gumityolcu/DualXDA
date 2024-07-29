@@ -9,7 +9,7 @@ model_path: /mnt/checkpoints/MNIST/std/basic_conv_std/MNIST_basic_conv
 num_batches_per_file: 1
 num_classes: 10
 num_files: 100
-save_dir: c:\Users\weckbecker\DualView-wip/explanations/MNIST/std/basic_conv_std/graddot
+save_dir: /mnt/outputs/
 skip: 2230
 start_file: 0
 validation_size: 2000
