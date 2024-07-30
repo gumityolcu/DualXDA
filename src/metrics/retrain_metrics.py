@@ -130,7 +130,7 @@ class CumAddBatchIn(RetrainMetric):
                 indices_sorted = xpl[test_index].argsort(descending=True)
                 ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
                 retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).detach().numpy()
+                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
 
     def get_result(self, dir=None, file_name=None):
         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
@@ -170,7 +170,7 @@ class CumAddBatchInNeg(RetrainMetric):
                 indices_sorted = xpl[test_index].argsort(descending=False)
                 ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
                 retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).detach().numpy()
+                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
         
 
     def get_result(self, dir=None, file_name=None):
@@ -210,7 +210,7 @@ class LeaveBatchOut(RetrainMetric):
                 indices_sorted = xpl[test_index].argsort(descending=True)
                 ds = RestrictedDataset(self.train, torch.cat((indices_sorted[:i*self.batchsize], indices_sorted[(i+1)*self.batchsize:])))
                 retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).detach().numpy()
+                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
        
 
     def get_result(self, dir=None, file_name=None):
@@ -250,7 +250,7 @@ class OnlyBatch(RetrainMetric):
                 indices_sorted = xpl[test_index].argsort(descending=True)
                 ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
                 retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).detach().numpy()
+                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
            
 
     def get_result(self, dir=None, file_name=None):
@@ -329,7 +329,7 @@ class LinearDatamodelingScore(RetrainMetric):
             self.attribution_array[:, i] = xpl[:, sample_indices].sum(dim=1).cpu()
             ds = RestrictedDataset(self.train, sample_indices)
             retrained_model = self.retrain(ds)
-            self.loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).detach().numpy()
+            self.loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).cpu().detach().numpy()
 
     def get_result(self, dir=None, file_name=None):
         print(self.attribution_array.shape)
