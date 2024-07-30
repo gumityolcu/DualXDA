@@ -8,4 +8,4 @@ num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: rp_similarity
-xpl_root: mnt/explanations/MNIST/mark/basic_conv_mark/rp_similarity
+xpl_root: /mnt/explanations/MNIST/mark/basic_conv_mark/rp_similarity

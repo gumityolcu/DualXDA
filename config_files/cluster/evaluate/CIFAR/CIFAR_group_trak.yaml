@@ -19,4 +19,4 @@ num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: trak
-xpl_root: mnt/explanations/CIFAR/group/resnet18_group/trak
+xpl_root: /mnt/explanations/CIFAR/group/resnet18_group/trak

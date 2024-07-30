@@ -56,7 +56,7 @@ def evaluate(model_name, model_path, device, class_groups,
         model = load_cifar_model(model_path, dataset_type, num_classes, device)
     else:
         model = load_model(model_name, dataset_name, num_classes).to(device)
-        if dataset_type not in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
+        if dataset_type == 'mark':
             checkpoint = torch.load(model_path, map_location=device)
             model.load_state_dict(checkpoint["model_state"])
     model.to(device)

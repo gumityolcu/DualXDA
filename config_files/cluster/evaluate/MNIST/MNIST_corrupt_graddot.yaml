@@ -8,4 +8,4 @@ num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: graddot
-xpl_root: mnt/explanations/MNIST/std/basic_conv_std/graddot
+xpl_root: /mnt/explanations/MNIST/std/basic_conv_std/graddot

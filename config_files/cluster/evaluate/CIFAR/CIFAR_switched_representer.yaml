@@ -8,4 +8,4 @@ num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: representer
-xpl_root: mnt/explanations/CIFAR/switched_one_file/resnet18_switched_one_file/representer
+xpl_root: /mnt/explanations/CIFAR/switched_one_file/resnet18_switched_one_file/representer

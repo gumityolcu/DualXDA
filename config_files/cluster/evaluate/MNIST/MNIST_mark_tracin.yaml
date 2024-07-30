@@ -8,4 +8,4 @@ num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: tracin
-xpl_root: mnt/explanations/MNIST/mark/basic_conv_mark/tracin
+xpl_root: /mnt/explanations/MNIST/mark/basic_conv_mark/tracin

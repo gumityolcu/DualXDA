@@ -16,4 +16,4 @@ scheduler: constant
 validation_size: 2000
 weight_decay: 0
 xai_method: influence
-xpl_root: mnt/explanations/AWA/std/resnet50_std/influence
+xpl_root: /mnt/explanations/AWA/std/resnet50_std/influence

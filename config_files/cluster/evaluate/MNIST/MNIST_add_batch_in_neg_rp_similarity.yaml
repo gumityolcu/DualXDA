@@ -16,4 +16,4 @@ scheduler: constant
 validation_size: 2000
 weight_decay: 0
 xai_method: rp_similarity
-xpl_root: mnt/explanations/MNIST/std/basic_conv_std/rp_similarity
+xpl_root: /mnt/explanations/MNIST/std/basic_conv_std/rp_similarity

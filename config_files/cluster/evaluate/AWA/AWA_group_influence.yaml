@@ -59,4 +59,4 @@ num_classes: 50
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: influence
-xpl_root: mnt/explanations/AWA/group/resnet50_group/influence
+xpl_root: /mnt/explanations/AWA/group/resnet50_group/influence

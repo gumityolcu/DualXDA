@@ -9,4 +9,4 @@ num_classes: 50
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: dualview
-xpl_root: mnt/explanations/AWA/switched_one_file/resnet50_switched_one_file/dualview_0.1
+xpl_root: /mnt/explanations/AWA/switched_one_file/resnet50_switched_one_file/dualview_0.1

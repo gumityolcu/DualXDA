@@ -16,4 +16,4 @@ scheduler: constant
 validation_size: 2000
 weight_decay: 0
 xai_method: representer
-xpl_root: mnt/explanations/MNIST/std/basic_conv_std/representer
+xpl_root: /mnt/explanations/MNIST/std/basic_conv_std/representer
