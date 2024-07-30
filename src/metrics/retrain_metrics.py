@@ -39,7 +39,7 @@ class RetrainMetric(Metric):
         learning_rates=[]
         train_losses = []
 
-        model = copy.deepcopy(self.model)
+        model = copy.deepcopy(self.model).to(self.device)
         loss = load_loss(self.loss)
         optimizer = load_optimizer(self.optimizer, model, self.lr, self.weight_decay, self.momentum)
         scheduler = load_scheduler(self.scheduler, optimizer)
@@ -121,8 +121,8 @@ class CumAddBatchIn(RetrainMetric):
 
     def __call__(self, xpl, start_index=0, n_test=10):
         xpl.to(self.device)
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long()
+        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
         self.loss_array = np.empty((n_test, self.batch_nr))
         loss = CrossEntropyLoss()
         for test_index in range(n_test):
@@ -130,7 +130,7 @@ class CumAddBatchIn(RetrainMetric):
                 indices_sorted = xpl[test_index].argsort(descending=True)
                 ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
                 retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).detach().numpy()
+                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0).cpu()), evalds_labels[start_index + test_index].unsqueeze(0).cpu()).detach().numpy()
 
     def get_result(self, dir=None, file_name=None):
         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
@@ -161,8 +161,8 @@ class CumAddBatchInNeg(RetrainMetric):
 
     def __call__(self, xpl, start_index=0, n_test=10):
         xpl.to(self.device)
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long()
+        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
         self.loss_array = np.empty((n_test, self.batch_nr))
         loss = CrossEntropyLoss()
         for test_index in range(n_test):
@@ -170,7 +170,7 @@ class CumAddBatchInNeg(RetrainMetric):
                 indices_sorted = xpl[test_index].argsort(descending=False)
                 ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
                 retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).detach().numpy()
+                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0).cpu()), evalds_labels[start_index + test_index].unsqueeze(0).cpu()).detach().numpy()
         
 
     def get_result(self, dir=None, file_name=None):
@@ -201,8 +201,8 @@ class LeaveBatchOut(RetrainMetric):
 
     def __call__(self, xpl, start_index=0, n_test=10):
         xpl.to(self.device)
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long()
+        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
         self.loss_array = np.empty((n_test, self.batch_nr))
         loss = CrossEntropyLoss()
         for test_index in range(n_test):
@@ -241,8 +241,8 @@ class OnlyBatch(RetrainMetric):
 
     def __call__(self, xpl, start_index=0, n_test=10):
         xpl.to(self.device)
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long()
+        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
         self.loss_array = np.empty((n_test, self.batch_nr))
         loss = CrossEntropyLoss()
         for test_index in range(n_test):
@@ -319,8 +319,8 @@ class LinearDatamodelingScore(RetrainMetric):
     def __call__(self, xpl, start_index=0):
         xpl.to(self.device)
         self.n_test = xpl.shape[0]
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long()
+        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0).to(self.device)
+        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long().to(self.device)
         self.attribution_array = np.empty((xpl.shape[0], self.samples))
         self.loss_array = np.empty((xpl.shape[0], self.samples))
         loss = CrossEntropyLoss()
@@ -359,7 +359,7 @@ class LabelFlipMetric(RetrainMetric):
         xpl.to(self.device)
         combined_xpl = xpl.sum(dim=0)
         indices_sorted = combined_xpl.argsort(descending=True)
-        evalds = self.test
+        evalds = self.test.to(self.device)
         ds_most = FlipLabelDataset(self.train, [])
         ds_least = FlipLabelDataset(self.train, [])
         retrained_model = self.retrain(ds_most)
