@@ -359,7 +359,7 @@ class LabelFlipMetric(RetrainMetric):
         xpl.to(self.device)
         combined_xpl = xpl.sum(dim=0)
         indices_sorted = combined_xpl.argsort(descending=True)
-        evalds = self.test.to(self.device)
+        evalds = self.test
         ds_most = FlipLabelDataset(self.train, [])
         ds_least = FlipLabelDataset(self.train, [])
         retrained_model = self.retrain(ds_most)
