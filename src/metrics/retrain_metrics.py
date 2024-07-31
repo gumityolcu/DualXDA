@@ -332,8 +332,6 @@ class LinearDatamodelingScore(RetrainMetric):
             self.loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).cpu().detach().numpy()
 
     def get_result(self, dir=None, file_name=None):
-        print(self.attribution_array.shape)
-        print(self.loss_array.shape)
         spearman = SpearmanCorrCoef(num_outputs=self.n_test)
         correlation_scores = spearman(torch.from_numpy(self.attribution_array.T), torch.from_numpy(self.loss_array.T))
         resdict = {'metric': self.name, 'correlation_scores': correlation_scores, 'avg_score': correlation_scores.mean(),
