@@ -8,7 +8,7 @@ def mvdir(p):
         if not "best" in l:
             system(f"rm -r {path.join(p,l)}")
 
-def visualize(lists, split, caption="", save_path=None, cmap="PiYG"):
+def visualize(lists, split, caption="", save_path=None, text_clr="white", cmap="inferno", block=True):
     L=[]
     row_labels=[]
     col_labels=[]
@@ -39,28 +39,22 @@ def visualize(lists, split, caption="", save_path=None, cmap="PiYG"):
         cnt[rid,cid] = cnt[rid,cid] + 1
         res[rid,cid] = loss
         lengths[rid,cid]=leng
-        ax.text(cid,rid,f"{loss:.3f}, {leng}",ha="center", va="center", color="white")
+        ax.text(cid,rid,f"{loss:.3f}, {leng}",ha="center", va="center", color=text_clr)
 
     ax.imshow(res, cmap=cmap)
     ax.set_title(caption)
     if save_path is not None:
         plt.savefig(str(save_path)+".png")    
         plt.savefig(str(save_path)+".pdf")    
-    plt.show()
+    plt.show(block=block)
 
-if __name__=="__main__":
+
+
+def run(init_dir, split=1, text_clr="black", cmap="inferno"):
     list_of_ckpts=[]
-    lr="1e3"
-    ds="MNIST"
-    typ="mark"
-    init_dir=f"test_output/{ds}/{typ}/{lr}"
-    # The strings in this list will be deleted from the folder name
-    # What we want in the end is:
-    # param1_param2_param3_param4_param5
-    
     replace_strs=["MNIST-MNIST_", "CIFAR-CIFAR_", \
                   "std_", "group_", "corrupt_", "mark_", \
-                   "0.001_", "0.005_",\
+                   "0.001_", "0.005_", "0.0001_", \
                      ".yaml-output_data", "_sgd_constant_cross_entropy"]
     dirlist=sorted([f for f in listdir(init_dir) if (".png" not in f) and (".pdf" not in f)])
     for l in dirlist:
@@ -82,7 +76,29 @@ if __name__=="__main__":
     # splitting the list from index 1, the columns will be n-tuples of params with ids >1
     # you should change split such that the columns are combinations of different augmentations
 
-    visualize(list_of_ckpts, split=1, caption=init_dir.replace("test_output/",""), save_path=path.join(init_dir,"grid"))
+    visualize(list_of_ckpts, split=split, caption=init_dir.replace("test_output/",""), save_path=path.join(init_dir,"grid"), text_clr=text_clr, cmap=cmap)
+
+if __name__=="__main__":
+
+    # The strings in this list will be deleted from the folder name
+    # What we want in the end is:
+    # param1_param2_param3_param4_param5
+    params_list=[
+        ("1e3", "MNIST", 1),
+        ("5e3", "MNIST", 1),
+        ("1e4", "CIFAR", 1),
+        ("5e3", "CIFAR", 1),
+    ]
+    for lr, ds, i in params_list:
+        for typ in ["std", "group", "corrupt", "mark"]:
+            init_dir=f"/media/yolcu/DualView/test_output/{ds}/{typ}/{lr}"
+            if path.isdir(init_dir):
+                print(f"running on {init_dir}")
+                run(init_dir, split=i)
+            else:
+                print(f" not running on {init_dir}")
+
+
 
 
 
