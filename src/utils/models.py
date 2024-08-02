@@ -1,7 +1,7 @@
 import torch.utils.data
 import torchvision
 from models import BasicConvModel, CIFARResNet, AWAResNet
-from models.resnet import resnet18, resnet50
+from torchvision.models.resnet import resnet18, resnet50
 import tqdm
 
 class ResNetWrapper(torch.nn.Module):
