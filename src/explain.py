@@ -4,7 +4,7 @@ from utils import xplain
 from utils.explainers import GradientProductExplainer, GradDotExplainer
 from explainers import TRAK, DualView, RepresenterPointsExplainer, RPSimilarityExplainer, InfluenceFunctionExplainer, TracInExplainer
 from utils.data import load_datasets_reduced
-from utils.models import compute_accuracy, load_model, load_cifar_model, load_awa_model
+from utils.models import compute_accuracy, load_model
 import yaml
 import logging
 import os
@@ -47,14 +47,9 @@ def explain_model(model_name, model_path, device, class_groups,
     }
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
-    if dataset_name=="CIFAR":
-        model=load_cifar_model(model_path,dataset_type,num_classes,device)
-    elif dataset_name=="AWA":
-        model=load_awa_model(model_path,dataset_type,num_classes,device)
-    else:
-        model = load_model(model_name, dataset_name, num_classes).to(device)
-        checkpoint = torch.load(model_path, map_location=device)
-        model.load_state_dict(checkpoint["model_state"])
+    model = load_model(model_name, dataset_name, num_classes)
+    checkpoint = torch.load(model_path, map_location=device)
+    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
     # if accuracy:

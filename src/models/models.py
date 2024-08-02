@@ -67,7 +67,7 @@ class BasicModel(Module):
                                                    bias=bias))
             last_features = fc['features'][i]
             self.features.add_module(name=f"relu-{convs['num'] + i}", module=activation_class())
-        self.classifier = Linear(in_features=last_features, out_features=num_classes, bias=False)
+        self.classifier = Linear(in_features=last_features, out_features=num_classes, bias=True)
 
     def forward(self, x):
         x = self.features(x)
@@ -93,7 +93,7 @@ class BasicConvModel(BasicModel):
         'features': [500, 100]
     }
 
-    def __init__(self, input_shape, num_classes, convs=None, fc=None, bias=False, leaky=False):
+    def __init__(self, input_shape, num_classes, convs=None, fc=None, leaky=False):
         if convs is None:
             convs = BasicConvModel.default_convs
         if fc is None:
@@ -103,87 +103,7 @@ class BasicConvModel(BasicModel):
             num_classes=num_classes,
             convs=convs,
             fc=fc,
-            bias=bias,
             leaky=leaky,
             input_shape=input_shape
         )
 
-class CIFARResNet(Module):
-    def __init__(self, model, device):
-        super().__init__()
-        self.model = model
-
-        if os.path.isfile('models/resnet_feature_indices'):
-            self.xpl_feature_indices = torch.load('models/resnet_feature_indices', map_location="cpu")
-
-        else:
-            indices = torch.randint(low=0, high=512, size=(50,))
-            torch.save(indices, 'models/resnet_feature_indices')
-            self.xpl_feature_indices = indices
-
-        self.features = Sequential()
-        self.features.add_module("conv1", model.conv1)
-        self.features.add_module("bn1", model.bn1)
-        self.features.add_module("relu", model.relu)
-        self.features.add_module("maxpool", model.maxpool)
-        self.features.add_module("layer1", model.layer1)
-        self.features.add_module("layer2", model.layer2)
-        self.features.add_module("layer3", model.layer3)
-        self.features.add_module("layer4", model.layer4)
-        self.features.add_module("avgpool", model.avgpool)
-        self.features.add_module("flatten", torch.nn.Flatten())
-        self.features.to(device)
-
-        self.classifier = model.fc
-        self.classifier.to(device)
-
-    def forward(self, x):
-        x = self.features(x)
-        x = self.classifier(x)
-        return x
-
-    def sim_parameters(self):
-        return self.parameters()
-
-    def influence_named_parameters(self):
-        return [("classifier.weight", self.classifier.weight)]
-    
-class AWAResNet(Module):
-    def __init__(self, model, device):
-        super().__init__()
-        self.model = model
-
-        if os.path.isfile('models/resnet50_feature_indices'):
-            self.xpl_feature_indices = torch.load('models/resnet50_feature_indices', map_location="cpu")
-
-        else:
-            indices = torch.randint(low=0, high=512, size=(50,))
-            torch.save(indices, 'models/resnet50_feature_indices')
-            self.xpl_feature_indices = indices
-
-        self.features = Sequential()
-        self.features.add_module("conv1", model.conv1)
-        self.features.add_module("bn1", model.bn1)
-        self.features.add_module("relu", model.relu)
-        self.features.add_module("maxpool", model.maxpool)
-        self.features.add_module("layer1", model.layer1)
-        self.features.add_module("layer2", model.layer2)
-        self.features.add_module("layer3", model.layer3)
-        self.features.add_module("layer4", model.layer4)
-        self.features.add_module("avgpool", model.avgpool)
-        self.features.add_module("flatten", torch.nn.Flatten())
-        self.features.to(device)
-
-        self.classifier = model.fc
-        self.classifier.to(device)
-
-    def forward(self, x):
-        x = self.features(x)
-        x = self.classifier(x)
-        return x
-
-    def sim_parameters(self):
-        return self.parameters()
-
-    def influence_named_parameters(self):
-        return [("classifier.weight", self.classifier.weight)]

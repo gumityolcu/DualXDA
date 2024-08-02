@@ -52,13 +52,10 @@ def evaluate(model_name, model_path, device, class_groups,
         'transform': None
     }
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
-    if dataset_name == "CIFAR":
-        model = load_cifar_model(model_path, dataset_type, num_classes, device)
-    else:
-        model = load_model(model_name, dataset_name, num_classes).to(device)
-        if dataset_type == 'mark':
-            checkpoint = torch.load(model_path, map_location=device)
-            model.load_state_dict(checkpoint["model_state"])
+    model = load_model(model_name, dataset_name, num_classes).to(device)
+    #if dataset_type == 'mark': # do we need these lines? not clear yet.
+    #    checkpoint = torch.load(model_path, map_location=device)
+    #    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
     metric = load_metric(dataset_type, dataset_name, train, test, device, coef_root, model,

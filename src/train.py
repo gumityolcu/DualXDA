@@ -9,7 +9,7 @@ import yaml
 from torch.nn import CrossEntropyLoss, KLDivLoss, BCEWithLogitsLoss, MultiMarginLoss, BCELoss
 from torch.nn.functional import one_hot
 from tqdm import tqdm
-from utils.models import load_model, load_cifar_model, load_awa_model
+from utils.models import load_model
 from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, CorruptLabelDataset
 import torch
 from torchvision.transforms import Compose, RandomResizedCrop, RandomHorizontalFlip, RandomApply, RandomEqualize, RandomRotation, AutoAugment, AutoAugmentPolicy
@@ -183,12 +183,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         device="cpu"
     if dataset_type=="group":
         num_classes=len(class_groups)
-    if model_name == "resnet18":
-        model = load_cifar_model(model_path, dataset_name, num_classes, device=device, train=True).to(device)
-    elif model_name == "resnet50":
-        model = load_awa_model(model_path, dataset_name, num_classes, device=device, train=True).to(device)
-    else:
-        model = load_model(model_name, dataset_name, num_classes).to(device)
+    model = load_model(model_name, dataset_name, num_classes).to(device)
     tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
     tensorboarddir = os.path.join(save_dir, tensorboarddir)
     writer = SummaryWriter(tensorboarddir)
@@ -381,13 +376,7 @@ def evaluate_model(model, device, num_classes, class_groups, data_root, batch_si
     if not torch.cuda.is_available():
         device="cpu"
     if isinstance(model,str):
-        model_name=model
-        if dataset_name == 'CIFAR':
-            model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True)
-        elif dataset_name == 'AWA':
-            model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True)
-        else:
-            model = load_model(model_name, dataset_name, num_classes).to(device)
+        model = load_model(model, dataset_name, num_classes).to(device)
 
     kwparams = {
         'data_root': data_root,

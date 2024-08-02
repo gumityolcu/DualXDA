@@ -8,7 +8,7 @@ import zennit
 from matplotlib.gridspec import GridSpec
 from utils import zennit_inner_product_explanation
 from utils.data import load_datasets
-from utils.models import compute_accuracy, load_model, load_cifar_model
+from utils.models import compute_accuracy, load_model
 import yaml
 import logging
 from tqdm import tqdm
@@ -158,13 +158,9 @@ def evaluate(model_name, model_path, device, class_groups,
     }
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
     canonizer=None
-    if dataset_name == "CIFAR":
-        model = load_cifar_model(model_path, dataset_type, num_classes, device)
-        canonizer=CIFARResNetCanonizer()
-    else:
-        model = load_model(model_name, dataset_name, num_classes).to(device)
-        checkpoint = torch.load(model_path, map_location=device)
-        model.load_state_dict(checkpoint["model_state"])
+    model = load_model(model_name, dataset_name, num_classes).to(device)
+    checkpoint = torch.load(model_path, map_location=device)
+    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
     page_size=4

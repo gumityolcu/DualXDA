@@ -14,7 +14,7 @@ import numpy as np
 import os
 import torch
 from utils.data import load_datasets_reduced
-from utils.models import load_model, load_cifar_model
+from utils.models import load_model
 import argparse
 import yaml
 import logging
@@ -52,12 +52,9 @@ def load_surrogate(model_name, model_path, device,
     }
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
-    if dataset_name=="CIFAR":
-        model=load_cifar_model(model_path,dataset_type,num_classes,device)
-    else:
-        model = load_model(model_name, dataset_name, num_classes).to(device)
-        checkpoint = torch.load(model_path, map_location=device)
-        model.load_state_dict(checkpoint["model_state"])
+    model = load_model(model_name, dataset_name, num_classes).to(device)
+    checkpoint = torch.load(model_path, map_location=device)
+    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
     explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir_explainer, dataset_name)
