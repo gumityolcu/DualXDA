@@ -41,8 +41,8 @@ def load_model(model_name, dataset_name, num_classes):
                         'features': [500, 100]
                     },
 
-                    'input_shape':(1,28,28)
-                },
+                    'input_shape': (1,28,28)
+                }
         return BasicConvModel(input_shape=params['input_shape'], convs=params['convs'], fc=params['fc'], num_classes=num_classes, bias=True)
     if model_name=="resnet18":
         return ResNetWrapper(resnet18(),output_dim=num_classes)
