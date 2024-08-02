@@ -67,7 +67,7 @@ class BasicModel(Module):
                                                    bias=bias))
             last_features = fc['features'][i]
             self.features.add_module(name=f"relu-{convs['num'] + i}", module=activation_class())
-        self.classifier = Linear(in_features=last_features, out_features=num_classes, bias=False)
+        self.classifier = Linear(in_features=last_features, out_features=num_classes, bias=True)
 
     def forward(self, x):
         x = self.features(x)
