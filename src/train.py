@@ -44,7 +44,7 @@ def test_models_in_dir(model_root_path, model_name, device, num_classes, class_g
         dataset_type=fname.split("_")[-1]
         num_classes=5 if dataset_type=="group" else 10 
         train_acc=evaluate_model(
-            model_name=model_name,
+            model=model_name,
             device=device,
             num_classes=num_classes,
             class_groups=class_groups,
@@ -58,7 +58,7 @@ def test_models_in_dir(model_root_path, model_name, device, num_classes, class_g
             image_set="train"
         )
         test_acc = evaluate_model(
-            model_name=model_name,
+            model=model_name,
             device=device,
             num_classes=num_classes,
             class_groups=class_groups,
@@ -124,11 +124,11 @@ def get_validation_loss(model, ds, loss, num_classes, device):
     model.train()
     return l
 
-def load_scheduler(name, optimizer): #include warmup?
+def load_scheduler(name, optimizer, epochs): #include warmup?
     scheduler_dict = {
         "constant": ConstantLR(optimizer=optimizer, last_epoch=-1),
-        "step": StepLR(optimizer=optimizer, step_size=50, gamma=0.1, last_epoch=-1),
-        "annealing": CosineAnnealingLR(optimizer=optimizer, T_max = 50, last_epoch=-1) #make it so that t_max updates to len(train_data) // batch_size (check that this is correct again)
+        "step": StepLR(optimizer=optimizer, step_size=epochs // 20, gamma=0.1, last_epoch=epochs),
+        "annealing": CosineAnnealingLR(optimizer=optimizer, T_max = epochs, last_epoch=epochs) #make it so that t_max updates to len(train_data) // batch_size (check that this is correct again)
     }
     scheduler = scheduler_dict.get(name, ConstantLR(optimizer=optimizer, last_epoch=-1 ))
     return scheduler
@@ -184,9 +184,9 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     if dataset_type=="group":
         num_classes=len(class_groups)
     if model_name == "resnet18":
-        model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
+        model = load_cifar_model(model_path, dataset_name, num_classes, device=device, train=True).to(device)
     elif model_name == "resnet50":
-        model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True).to(device)
+        model = load_awa_model(model_path, dataset_name, num_classes, device=device, train=True).to(device)
     else:
         model = load_model(model_name, dataset_name, num_classes).to(device)
     tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
@@ -201,7 +201,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     train_acc = []
     loss=load_loss(loss)
     optimizer = load_optimizer(optimizer, model, lr, weight_decay, momentum)
-    scheduler = load_scheduler(scheduler, optimizer)
+    scheduler = load_scheduler(scheduler, optimizer, epochs)
     if augmentation not in [None, '']:
         augmentation = load_augmentation(augmentation, dataset_name)
 
@@ -223,14 +223,22 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
 
     if model_path is not None:
         checkpoint = torch.load(model_path, map_location=device)
-        model.load_state_dict(checkpoint["model_state"])
-        optimizer.load_state_dict(checkpoint["optimizer_state"])
-        scheduler.load_state_dict(checkpoint["scheduler_state"])
-        train_losses = checkpoint["train_losses"]
-        validation_losses = checkpoint["validation_losses"]
-        validation_epochs = checkpoint["validation_epochs"]
-        val_acc = checkpoint["validation_accuracy"]
-        train_acc = checkpoint["train_accuracy"]
+        if checkpoint.get("model_state", None) != None:
+            model.load_state_dict(checkpoint["model_state"])
+        if checkpoint.get("optimizer_state", None) != None:
+            optimizer.load_state_dict(checkpoint["optimizer_state"])
+        if checkpoint.get("scheduler_state", None) != None:
+            scheduler.load_state_dict(checkpoint["scheduler_state"])
+        if checkpoint.get("train_losses", None) != None:
+            train_losses = checkpoint.get("train_losses", None)
+        if checkpoint.get("validation_losses", None) != None:    
+            validation_losses = checkpoint.get("validation_losses", None)
+        if checkpoint.get("validation_epochs", None) != None:
+            validation_epochs = checkpoint.get("validation_epochs", None)
+        if checkpoint.get("validation_accuracy", None) != None:
+            val_acc = checkpoint.get("validation_accuracy", None)
+        if checkpoint.get("train_accuracy", None) != None:
+            train_acc = checkpoint.get("train_accuracy", None)
 
     for i,r in enumerate(learning_rates):
         writer.add_scalar('Metric/lr', r, i)
@@ -333,12 +341,12 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
             model_save_path = os.path.join(save_dir, save_id)
             if not os.path.isdir(save_dir):
                 os.makedirs(save_dir, exist_ok=True)
-            torch.save(save_dict, model_save_path)
+            #torch.save(save_dict, model_save_path)
             saved_files.append((model_save_path, save_id))
 
             print(f"\n\nValidation loss: {validation_loss}\n\n")
             writer.add_scalar('Loss/val', validation_loss, base_epoch + e)
-            valeval = evaluate_model(model_name=model_name, device=device, num_classes=num_classes,
+            valeval = evaluate_model(model=model, device=device, num_classes=num_classes,
                                      data_root=data_root,
                                      batch_size=batch_size, num_batches_to_process=num_batches_eval,
                                      load_path=model_save_path, dataset_name=dataset_name, dataset_type=dataset_type,
@@ -368,16 +376,18 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     writer.close()
     save_id = os.path.basename(best_model_yet)
 
-def evaluate_model(model_name, device, num_classes, class_groups, data_root, batch_size,
+def evaluate_model(model, device, num_classes, class_groups, data_root, batch_size,
                    num_batches_to_process, load_path, dataset_name, dataset_type, validation_size, image_set):
     if not torch.cuda.is_available():
         device="cpu"
-    if dataset_name == 'CIFAR':
-        model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True)
-    elif dataset_name == 'AWA':
-        model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True)
-    else:
-        model = load_model(model_name, dataset_name, num_classes).to(device)
+    if isinstance(model,str):
+        model_name=model
+        if dataset_name == 'CIFAR':
+            model = load_cifar_model(model_name, dataset_name, num_classes, device=device, train=True)
+        elif dataset_name == 'AWA':
+            model = load_awa_model(model_name, dataset_name, num_classes, device=device, train=True)
+        else:
+            model = load_model(model_name, dataset_name, num_classes).to(device)
 
     kwparams = {
         'data_root': data_root,
@@ -392,9 +402,10 @@ def evaluate_model(model_name, device, num_classes, class_groups, data_root, bat
         return 0.0, 0.0
     loader = DataLoader(ds, batch_size=batch_size, shuffle=True)
 
-    if load_path is not None:
-        checkpoint = torch.load(load_path, map_location=device)
-        model.load_state_dict(checkpoint["model_state"])
+    if isinstance(model, str):
+        if load_path is not None:
+            checkpoint = torch.load(load_path, map_location=device)
+            model.load_state_dict(checkpoint["model_state"])
     # classes = ds.all_classes
     model.eval()
     y_true = torch.empty(0, device=device)
@@ -435,7 +446,7 @@ def test_all_models(model_root_path, model_name, device, num_classes, class_grou
         dataset_type=dir_name
         num_classes=5 if dataset_type=="group" else 10
         train_acc=evaluate_model(
-            model_name=model_name,
+            model=model_name,
             device=device,
             num_classes=num_classes,
             class_groups=class_groups,
@@ -449,7 +460,7 @@ def test_all_models(model_root_path, model_name, device, num_classes, class_grou
             image_set="train"
         )
         test_acc = evaluate_model(
-            model_name=model_name,
+            model=model_name,
             device=device,
             num_classes=num_classes,
             class_groups=class_groups,

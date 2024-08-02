@@ -104,6 +104,8 @@ class AWA(VisionDataset):
     ):
         if transform is None:
             transform=AWA.default_transform
+        else:
+            transform=transforms.Compose([AWA.default_transform, transform])
         if inv_transform is None:
             inv_transform=AWA.inverse_transform
         train=(split=="train")
@@ -173,11 +175,13 @@ class AWA(VisionDataset):
         
         img = torch.from_numpy(data)
         target = torch.tensor(target, dtype=torch.long)
-        
+
         if self.transform is not None:
             img = self.transform(img)
+
         if self.target_transform is not None:
             target = self.target_transform(target)
+
         return img, target
     
     def __len__(self):
