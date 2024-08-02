@@ -17,129 +17,10 @@ from metrics import *
 from zennit.image import imgify
 from zennit.composites import EpsilonPlus, EpsilonAlpha2Beta1
 from zennit.attribution import Gradient
-from models.resnet import BasicBlock,Bottleneck
 from zennit import canonizers as zcanon
 from zennit.canonizers import AttributeCanonizer
 from zennit.torchvision import SequentialMergeBatchNorm,Sum
 
-class CIFARResNetBottleneckCanonizer(AttributeCanonizer):
-    '''Canonizer specifically for Bottlenecks of torchvision.models.resnet* type models.'''
-    def __init__(self):
-        super().__init__(self._attribute_map)
-
-    @classmethod
-    def _attribute_map(cls, name, module):
-        '''Create a forward function and a Sum module to overload as new attributes for module.
-
-        Parameters
-        ----------
-        name : string
-            Name by which the module is identified.
-        module : obj:`torch.nn.Module`
-            Instance of a module. If this is a Bottleneck layer, the appropriate attributes to overload are returned.
-
-        Returns
-        -------
-        None or dict
-            None if `module` is not an instance of Bottleneck, otherwise the appropriate attributes to overload onto
-            the module instance.
-        '''
-        if isinstance(module, Bottleneck):
-            attributes = {
-                'forward': cls.forward.__get__(module),
-                'canonizer_sum': Sum(),
-            }
-            return attributes
-        return None
-
-    @staticmethod
-    def forward(self, x):
-        '''Modified Bottleneck forward for ResNet.'''
-        identity = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
-
-        out = self.conv3(out)
-        out = self.bn3(out)
-
-        if self.downsample is not None:
-            identity = self.downsample(x)
-
-        out = torch.stack([identity, out], dim=-1)
-        out = self.canonizer_sum(out)
-
-        out = self.relu(out)
-
-        return out
-
-class CIFARResNetBasicBlockCanonizer(AttributeCanonizer):
-    '''Canonizer specifically for BasicBlocks of torchvision.models.resnet* type models.'''
-    def __init__(self):
-        super().__init__(self._attribute_map)
-
-    @classmethod
-    def _attribute_map(cls, name, module):
-        '''Create a forward function and a Sum module to overload as new attributes for module.
-
-        Parameters
-        ----------
-        name : string
-            Name by which the module is identified.
-        module : obj:`torch.nn.Module`
-            Instance of a module. If this is a BasicBlock layer, the appropriate attributes to overload are returned.
-
-        Returns
-        -------
-        None or dict
-            None if `module` is not an instance of BasicBlock, otherwise the appropriate attributes to overload onto
-            the module instance.
-        '''
-        if isinstance(module, BasicBlock):
-            attributes = {
-                'forward': cls.forward.__get__(module),
-                'canonizer_sum': Sum(),
-            }
-            return attributes
-        return None
-
-    @staticmethod
-    def forward(self, x):
-        '''Modified BasicBlock forward for ResNet.'''
-        identity = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-
-        if self.downsample is not None:
-            identity = self.downsample(x)
-
-        out = torch.stack([identity, out], dim=-1)
-        out = self.canonizer_sum(out)
-
-        out = self.relu(out)
-
-        return out
-
-class CIFARResNetCanonizer(zcanon.CompositeCanonizer):
-    '''Canonizer for torchvision.models.resnet* type models. This applies SequentialMergeBatchNorm, as well as
-    add a Sum module to the Bottleneck modules and overload their forward method to use the Sum module instead of
-    simply adding two tensors, such that forward and backward hooks may be applied.'''
-    def __init__(self):
-        super().__init__((
-            SequentialMergeBatchNorm(),
-            CIFARResNetBottleneckCanonizer(),
-            CIFARResNetBasicBlockCanonizer(),
-        ))
 
 def evaluate(model_name, model_path, device, class_groups,
              dataset_name, dataset_type,
@@ -157,7 +38,7 @@ def evaluate(model_name, model_path, device, class_groups,
         'testsplit':testsplit
     }
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
-    canonizer=None
+    canonizer = None if dataset_name=="MNIST" else zennit.torchvision.ResNetCanonizer()
     model = load_model(model_name, dataset_name, num_classes).to(device)
     checkpoint = torch.load(model_path, map_location=device)
     model.load_state_dict(checkpoint["model_state"])
