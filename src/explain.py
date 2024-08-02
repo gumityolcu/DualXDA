@@ -42,7 +42,8 @@ def explain_model(model_name, model_path, device, class_groups,
         'validation_size': validation_size,
         "only_train": False,
         'imagenet_class_ids': imagenet_class_ids,
-        'testsplit': testsplit
+        'testsplit': testsplit,
+        'transform': None
     }
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
