@@ -65,71 +65,59 @@ def evaluate(model_name, model_path, device, class_groups,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation)
     print(f"Computing metric {metric.name}")
-    fname=f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}"
-    if not os.path.isdir(xpl_root):
-        raise Exception(f"Can not find explanation directory {xpl_root}")
-    file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f)]
-    file_root = file_list[0].split('_')[0]
-    cur_index = 0
-    num_files=len(file_list)
-    file_sizes=[]
+
     if dataset_type == 'switched':
         xpl_root_switched = xpl_root
         xpl_root = xpl_root.replace('switched', 'std')
-    if f"{file_root}_init" in file_list:
-        fname = os.path.join(xpl_root, f"{file_root}_init")
-        xpl = torch.load(fname, map_location=torch.device(device))
-        xpl.to(device)
-        if dataset_type == 'switched':
-            fname_switched = os.path.join(xpl_root_switched, f"{file_root}_init")
-            xpl_switched = torch.load(fname_switched, map_location=torch.device(device)).T
-            xpl_switched.to(device)
-        file_sizes.append(xpl.shape[0])
-        assert not torch.any(xpl.isnan())
-        len_xpl = xpl.shape[0]
-        if dataset_type == 'switched':
-            metric(xpl, xpl_switched, cur_index)
-        else:
-            metric(xpl, cur_index)
-        cur_index = cur_index + len_xpl
-        num_files=num_files-1
-    if dataset_type in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
+
+        #merge all xpl
+        if not os.path.isdir(xpl_root):
+            raise Exception(f"Can not find standard explanation directory {xpl_root}")
+        file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+        file_root = file_list[0].split('_')[0]
+        num_files=len(file_list)
         xpl_all = torch.empty(0, device=device)
         for i in range(num_files):
             fname = os.path.join(xpl_root, f"{file_root}_{i}")
             xpl = torch.load(fname, map_location=torch.device(device))
             xpl.to(device)
             xpl_all = torch.cat((xpl_all, xpl), 0)
+        torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
 
-        metric(xpl_all)
+        #merge all switched xpl
+        if not os.path.isdir(xpl_root_switched):
+            raise Exception(f"Can not find switched explanation directory {xpl_root_switched}")
+        file_list_switched = [f for f in os.listdir(xpl_root_switched) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+        file_root_switched = file_list_switched[0].split('_')[0]
+        num_files_switched=len(file_list_switched)
+        xpl_all_switched = torch.empty(0, device=device)
+        for i in range(num_files_switched):
+            fname_switched = os.path.join(xpl_root_switched, f"{file_root_switched}_{i}")
+            xpl_switched = torch.load(fname_switched, map_location=torch.device(device))
+            xpl_switched.to(device)
+            xpl_all_switched = torch.cat((xpl_all_switched, xpl_switched), 0)
+        torch.save(xpl_all_switched, os.path.join(xpl_root_switched, f"{file_root_switched}_all"))
+
+        metric(xpl_all, xpl_all_switched, 0)
         metric.get_result(save_dir, f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}_eval_results.json")
 
     else:
+        #merge all xpl
+        if not os.path.isdir(xpl_root):
+            raise Exception(f"Can not find standard explanation directory {xpl_root}")
+        file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f)]
+        file_root = file_list[0].split('_')[0]
+        num_files=len(file_list)
+        xpl_all = torch.empty(0, device=device)
         for i in range(num_files):
             fname = os.path.join(xpl_root, f"{file_root}_{i}")
             xpl = torch.load(fname, map_location=torch.device(device))
             xpl.to(device)
-            if dataset_type == 'switched':
-                fname_switched = os.path.join(xpl_root_switched, f"{file_root}_{i}")
-                xpl_switched = torch.load(fname_switched, map_location=torch.device(device)).T
-                xpl_switched.to(device)
-            # limit explanations to 4k test samples
-            if cur_index+xpl.shape[0]>4000:
-                xpl=xpl[:4000-cur_index,...]
-                if dataset_type == 'switched':
-                    xpl_switched=xpl_switched[:4000-cur_index,...]
-            file_sizes.append(xpl.shape[0])
-            assert not torch.any(xpl.isnan())
-            len_xpl = xpl.shape[0]
-            if dataset_type == 'switched':
-                metric(xpl, xpl_switched, cur_index)
-            else:
-                metric(xpl, cur_index)
-            cur_index = cur_index + len_xpl
-
+            xpl_all = torch.cat((xpl_all, xpl), 0)
+        torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
+            
+        metric(xpl_all, 0)
         metric.get_result(save_dir, f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}_eval_results.json")
-
-
 
 
 if __name__ == "__main__":

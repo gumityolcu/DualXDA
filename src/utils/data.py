@@ -340,6 +340,6 @@ def load_datasets_reduced(dataset_name, dataset_type, kwparams):
     if dataset_type in ["group", "groupk", "corrupt"]:
         ds = ReduceLabelDataset(ds)
         evalds = ReduceLabelDataset(evalds)
-    elif dataset_type == "switched_one_file":
+    elif dataset_type == "switched":
         return evalds, ds
     return ds, evalds
