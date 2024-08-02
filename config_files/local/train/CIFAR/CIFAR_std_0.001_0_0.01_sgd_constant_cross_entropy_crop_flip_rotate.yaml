@@ -1,7 +1,18 @@
 augmentation: crop_flip_rotate
 base_epoch: 0
 batch_size: 64
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: /home/yolcu/Documents/Code/DualView_wip/src/datasets
 dataset_name: CIFAR
 dataset_type: std
 device: cpu
@@ -13,7 +24,7 @@ momentum: 0
 num_batches_eval: 200
 num_classes: 10
 optimizer: sgd
-save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/std/resnet18_std
+save_dir: /home/yolcu/Documents/Code/DualView_wip/checkpoints/CIFAR/std/resnet18_std
 save_each: 1
 scheduler: constant
 validation_size: 2000
