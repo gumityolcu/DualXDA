@@ -56,7 +56,7 @@ def load_model(model_name, dataset_name, num_classes):
         if dataset_name=="AWA":
             return ResNetWrapper(resnet50(weights=ResNet50_Weights.IMAGENET1K_V2), output_dim=num_classes)
         else:
-            return ResNetWrapper(resnet50())
+            return ResNetWrapper(resnet50(), output_dim=num_classes)
 
 
 def compute_accuracy(model, test, device):
