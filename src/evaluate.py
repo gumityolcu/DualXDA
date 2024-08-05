@@ -39,8 +39,7 @@ def evaluate(model_name, model_path, device, class_groups,
              data_root, xpl_root, coef_root,
              save_dir, validation_size, num_classes,
              epochs, loss, lr, momentum, optimizer, scheduler,
-             weight_decay, augmentation,
-             from_checkpoint=True):
+             weight_decay, augmentation):
     if not torch.cuda.is_available():
         device="cpu"
     ds_kwargs = {
