@@ -6,7 +6,7 @@ import logging
 from metrics import *
 
 
-def load_metric(dataset_type, dataset_name, train, test, device, coef_root, model,
+def load_metric(metric_name, dataset_name, train, test, device, coef_root, model,
                 epochs, loss, lr, momentum, optimizer, scheduler,
                 weight_decay, augmentation,):
     ret_dict = {"std": SameClassMetric, "group": SameSubclassMetric, "corrupt": CorruptLabelMetric,
@@ -16,16 +16,16 @@ def load_metric(dataset_type, dataset_name, train, test, device, coef_root, mode
                 "add_batch_in": CumAddBatchIn, "add_batch_in_neg": CumAddBatchInNeg, 
                 "leave_out": LeaveBatchOut, "only_batch": OnlyBatch,
                 "lds": LinearDatamodelingScore, "labelflip": LabelFlipMetric}
-    if dataset_type not in ret_dict.keys():
+    if metric_name not in ret_dict.keys():
         return SameClassMetric(train, test, device)
-    metric_cls = ret_dict[dataset_type]
-    if dataset_type == "corrupt":
+    metric_cls = ret_dict[metric_name]
+    if metric_name == "corrupt":
         ret = metric_cls(train, test, coef_root, device)
-    elif dataset_type == "mark":
+    elif metric_name == "mark":
         ret = metric_cls(train, test, model, device)
-    elif dataset_type == "switched":
+    elif metric_name == "switched":
         ret = metric_cls(device)
-    elif dataset_type in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
+    elif metric_name in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
         ret = metric_cls(dataset_name, train, test, model,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, device=device)
@@ -35,7 +35,7 @@ def load_metric(dataset_type, dataset_name, train, test, device, coef_root, mode
 
 
 def evaluate(model_name, model_path, device, class_groups,
-             dataset_name, dataset_type,
+             dataset_name, metric_name,
              data_root, xpl_root, coef_root,
              save_dir, validation_size, num_classes,
              epochs, loss, lr, momentum, optimizer, scheduler,
@@ -50,6 +50,10 @@ def evaluate(model_name, model_path, device, class_groups,
         'only_train': False,
         'transform': None
     }
+    if metric_name in ["corrupt", "mark", "switched", "group"]:
+        dataset_type=metric_name
+    else:
+        dataset_type = "std"
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes).to(device)
     #if dataset_type == 'mark': # do we need these lines? not clear yet.
@@ -57,12 +61,12 @@ def evaluate(model_name, model_path, device, class_groups,
     #    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
-    metric = load_metric(dataset_type, dataset_name, train, test, device, coef_root, model,
+    metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation)
     print(f"Computing metric {metric.name}")
 
-    if dataset_type == 'switched':
+    if metric_name == 'switched':
         xpl_root_switched = xpl_root
         xpl_root = xpl_root.replace('switched', 'std')
 
@@ -95,7 +99,7 @@ def evaluate(model_name, model_path, device, class_groups,
         torch.save(xpl_all_switched, os.path.join(xpl_root_switched, f"{file_root_switched}_all"))
 
         metric(xpl_all, xpl_all_switched, 0)
-        metric.get_result(save_dir, f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}_eval_results.json")
+        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
 
     else:
         #merge all xpl
@@ -113,7 +117,7 @@ def evaluate(model_name, model_path, device, class_groups,
         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
             
         metric(xpl_all, 0)
-        metric.get_result(save_dir, f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}_eval_results.json")
+        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
 
 
 if __name__ == "__main__":
@@ -138,7 +142,7 @@ if __name__ == "__main__":
                 device=train_config.get('device', 'cuda'),
                 class_groups=train_config.get('class_groups', None),
                 dataset_name=train_config.get('dataset_name', None),
-                dataset_type=train_config.get('metric', 'std'),
+                metric_name=train_config.get('metric', 'std'),
                 data_root=train_config.get('data_root', None),
                 xpl_root=train_config.get('xpl_root', None),
                 coef_root=train_config.get('coef_root', None),
