@@ -1,12 +1,13 @@
 import torch
 from utils import Metric
 from torch.nn import CosineSimilarity
+from torchmetrics.regression import SpearmanCorrCoef
 
 class SwitchMetric(Metric):
     name = "SwitchMetric"
 
     def __init__(self, device="cuda"):
-        self.scores = torch.empty(0, dtype=torch.float, device=device)
+        self.scores = None
         self.device = device
 
     def __call__(self, xpl, xpl_switched, start_index):
@@ -18,9 +19,14 @@ class SwitchMetric(Metric):
         #print(xpl_switched.shape)
         
         #self.scores = torch.norm(xpl-xpl_switched, p=1, dim=1)
-        #Cosine implementation
-        cos = torch.nn.CosineSimilarity(dim=1, eps=1e-10) 
-        self.scores = cos(xpl, xpl_switched)
+
+        # Cosine implementation
+        #cos = torch.nn.CosineSimilarity(dim=1, eps=1e-10) 
+        #self.scores = cos(xpl, xpl_switched)
+
+        # Spearman rank correlation implementation
+        spearman = SpearmanCorrCoef(num_outputs=xpl.shape[0])
+        self.scores = spearman(xpl, xpl_switched)
 
     def get_result(self, dir=None, file_name=None):
         self.scores = self.scores.to('cpu').detach().numpy()
