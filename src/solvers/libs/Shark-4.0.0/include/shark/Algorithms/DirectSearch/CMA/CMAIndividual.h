@@ -28,6 +28,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
+<<<<<<< HEAD
  */
 #ifndef SHARK_ALGORITHMS_DIRECT_SEARCH_CMA_INDIVIDUAL_H
 #define SHARK_ALGORITHMS_DIRECT_SEARCH_CMA_INDIVIDUAL_H
@@ -92,3 +93,69 @@ private:
 
 }
 #endif
+=======
+ */
+#ifndef SHARK_ALGORITHMS_DIRECT_SEARCH_CMA_INDIVIDUAL_H
+#define SHARK_ALGORITHMS_DIRECT_SEARCH_CMA_INDIVIDUAL_H
+
+#include <shark/Algorithms/DirectSearch/Individual.h>
+#include <shark/Algorithms/DirectSearch/CMA/Chromosome.h>
+
+#include <shark/LinAlg/Base.h>
+#include <vector>
+
+namespace shark {
+
+template<class FitnessType>
+class CMAIndividual : public Individual<RealVector,FitnessType, CMAChromosome>{
+public:
+	using Individual<RealVector,FitnessType, CMAChromosome>::chromosome;
+	using Individual<RealVector,FitnessType, CMAChromosome>::searchPoint;
+	/**
+	 * \brief Default constructor that initializes the individual's attributes to default values.
+	 */
+	CMAIndividual():m_parent(0){}
+	CMAIndividual(
+		std::size_t searchSpaceDimension,
+		double successThreshold = 0.44,
+		double initialStepSize = 1.0
+	):m_parent(0){
+		chromosome() = CMAChromosome(searchSpaceDimension, successThreshold, initialStepSize);
+		searchPoint().resize(searchSpaceDimension);
+	}
+	
+	void updateAsParent(CMAChromosome::IndividualSuccess offspringSuccess){
+		chromosome().updateAsParent(offspringSuccess);
+	}
+	void updateAsOffspring(){
+		chromosome().updateAsOffspring();
+	}
+	template<class randomType>
+	void mutate(randomType& rng){
+		chromosome().m_mutationDistribution.generate(
+			rng, chromosome().m_lastStep,chromosome().m_lastZ
+		);
+		noalias(searchPoint()) += chromosome().m_stepSize * chromosome().m_lastStep;
+	}
+	
+	double& noSuccessfulOffspring(){
+		return chromosome().m_noSuccessfulOffspring;
+	}
+	
+	double noSuccessfulOffspring()const{
+		return chromosome().m_noSuccessfulOffspring;
+	}
+	
+	std::size_t parent()const{
+		return m_parent;
+	}
+	std::size_t& parent(){
+		return m_parent;
+	}
+private:
+	std::size_t m_parent;
+};
+
+}
+#endif
+>>>>>>> 6debba295b32d30cbc9689dedfa454168c959980

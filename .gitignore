@@ -1,0 +1,16 @@
+# config files notebooks
+config_files/*.ipynb
+
+# files created form the repo
+explanations/
+surrogate_check/
+test_output/
+
+# ignore large files (for now)
+src/datasets/AWA_rawdata/
+
+# ignore changes to cpp files of library (linux vs. windows issues)
+src/solvers/libs/
+
+# ignore training checkpoints overview
+training_checkpoints/

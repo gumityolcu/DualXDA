@@ -25,11 +25,13 @@ class MNIST(tvMNIST):
             transform=None,
             inv_transform=None,
             target_transform=None,
-            download=False,
+            download=True,
             validation_size=0
     ):
         if transform is None:
-            transform=self.default_transform
+            transform=MNIST.default_transform
+        else:
+            transform=transforms.Compose([transform, MNIST.default_transform])
         if inv_transform is not None:
             self.inverse_transform = inv_transform  # MUST HAVE THIS FOR MARK DATASET TO WORK
         train=(split=="train")

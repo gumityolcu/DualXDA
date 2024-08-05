@@ -1,75 +1,63 @@
 import torch.utils.data
-import torchvision
-from models import BasicConvModel, CIFARResNet
-from models.resnet import resnet18
+from models import BasicConvModel
+from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 import tqdm
 
+class ResNetWrapper(torch.nn.Module):
+    def __init__(self, module, output_dim):
+        super().__init__()
+        self.resnet=module
+        self.classifier=torch.nn.Linear(in_features=module.fc.in_features, out_features=output_dim, bias=True)
+        seq_array=[
+            torch.nn.Conv2d(3,module.bn1.num_features,kernel_size=3,padding=2,stride=1),
+            module.bn1,
+            module.relu,
+            module.maxpool,
+            module.layer1,module.layer2,module.layer3,
+            module.layer4,module.avgpool,
+            torch.nn.Flatten()
+            ]
+
+        self.features=torch.nn.Sequential(*seq_array)
+
+    def forward(self, x):
+        x=self.features(x)
+        return self.classifier(x)
+    
 def load_model(model_name, dataset_name, num_classes):
-    bias = not ('homo' in model_name)
-    params={
-        'MNIST':
-            {
-                'convs': {
-                        'num': 3,
-                        'padding': 0,
-                        'kernel': 3,
-                        'stride': 1,
-                        'features': [5, 10, 5]
+    if dataset_name=="MNIST":
+        bias = not ('homo' in model_name)
+        params={
+                    'convs': {
+                            'num': 3,
+                            'padding': 0,
+                            'kernel': 3,
+                            'stride': 1,
+                            'features': [5, 10, 5]
+                        },
+
+                    'fc' : {
+                        'num': 2,
+                        'features': [500, 100]
                     },
 
-                'fc' : {
-                    'num': 2,
-                    'features': [500, 100]
-                },
+                    'input_shape':(1,28,28)
+                }
 
-                'input_shape':(1,28,28)
-            },
-        'FashionMNIST':
-            {
-                'convs': {
-                    'num': 3,
-                    'padding': 0,
-                    'kernel': 3,
-                    'stride': 1,
-                    'features': [5, 10, 5]
-                },
+        return BasicConvModel(input_shape=params['input_shape'], convs=params['convs'], fc=params['fc'], num_classes=num_classes)
 
-                'fc': {
-                    'num': 2,
-                    'features': [500, 100]
-                },
+    if model_name=="resnet18":
+        if dataset_name=="AWA":
+            return ResNetWrapper(resnet18(weights=ResNet18_Weights.IMAGENET1K_V1), output_dim=num_classes)
+        else:
+            return ResNetWrapper(resnet18(), output_dim=num_classes)
+    
+    else:
+        if dataset_name=="AWA":
+            return ResNetWrapper(resnet50(weights=ResNet50_Weights.IMAGENET1K_V2), output_dim=num_classes)
+        else:
+            return ResNetWrapper(resnet50(), output_dim=num_classes)
 
-                'input_shape': (1, 28, 28)
-            },
-        'CIFAR':
-            {
-            'convs': {
-            'num': 5,
-            'padding': 0,
-            'kernel': 3,
-            'stride': 1,
-            'features': [5, 10, 10, 10, 5]
-        },
-            'fc': {
-                'num': 2,
-                'features': [500, 100]
-            },
-            'input_shape': (3, 32, 32)
-        }
-    }
-
-    params=params[dataset_name]
-    return BasicConvModel(input_shape=params['input_shape'], convs=params['convs'], fc=params['fc'], num_classes=num_classes, bias=bias)
-
-def load_cifar_model(model_path,dataset_type,num_classes,device):
-    model=resnet18()
-    model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_classes, bias=False)
-    checkpoint = torch.load(model_path, map_location=device)
-    checkpoint={key[6:]: value for key,value in checkpoint['state_dict'].items()}
-
-    model.load_state_dict(checkpoint)
-    model.eval()
-    return CIFARResNet(model,device=device)
 
 def compute_accuracy(model, test, device):
     loader=torch.utils.data.DataLoader(test, 64, shuffle=False)

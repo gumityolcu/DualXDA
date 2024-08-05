@@ -9,6 +9,28 @@
 using namespace shark;
 typedef RealVector VectorType;
 
+<<<<<<< HEAD
+int main(int argc, char *argv[]) {
+    LabeledData<VectorType, unsigned int> training;
+    std::string path(argv[1]);
+    float C=atof(argv[2]);
+    std::cout<<"C : "<<C<<std::endl;
+    if (path[path.length() - 1] == '/') {
+        path = path.substr(0, path.length() - 1);
+    }
+    importCSV(training, path + "/data.csv", LAST_COLUMN, ',', '#');
+
+    LinearClassifier<VectorType> model;
+    LinearCSvmTrainer<VectorType> trainer(C, false);
+    trainer.setMcSvmType(shark::McSvm::CS);
+    std::pair<RealMatrix, RealMatrix> ret = trainer.train_custom(model, training);
+    ZeroOneLoss<unsigned int> loss;
+    //Data<unsigned int> output = model(training.inputs());
+    //double train_error = loss.eval(training.labels(), output);
+    //std::cout << "training error:\t" <<  train_error << std::endl;
+    std::cout << ret.second << std::endl;
+    std::cout << ret.second(0, 0) << std::endl;
+=======
 
 template <typename T>
 std::vector<T> readFileData(const std::string& name) {
@@ -126,6 +148,7 @@ int main(int argc, char *argv[]) {
     std::cout << ret.second << std::endl;
     std::cout << ret.second(0, 0) << std::endl;
     */
+>>>>>>> ef74f8c075560cf68744604a02d74e4a952750b6
     std::ofstream str;
     str.open(path + "/dualvars.csv");
     for (int i = 0; i < ret.first.size1(); i++) {
@@ -137,7 +160,11 @@ int main(int argc, char *argv[]) {
         str << "\n";
     }
     str.close();
+<<<<<<< HEAD
+    str.open(path+"/weights.csv");
+=======
     str.open(path + "/weights.csv");
+>>>>>>> ef74f8c075560cf68744604a02d74e4a952750b6
     for (int i = 0; i < ret.second.size1(); i++) {
         for (int j = 0; j < ret.second.size2(); j++) {
             str << ret.second(i, j);

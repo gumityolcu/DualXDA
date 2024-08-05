@@ -1,8 +1,11 @@
 from tqdm import tqdm
 import torch
 from torch.utils.data.dataset import Dataset
+from torchvision.transforms.functional import to_pil_image
 from datasets.MNIST import MNIST, FashionMNIST
 from datasets.CIFAR import CIFAR
+from datasets.AWA import AWA
+from datasets.AWA_sub import AWA_sub
 import matplotlib.pyplot as plt
 import os
 
@@ -37,7 +40,7 @@ class CorruptLabelDataset(Dataset):
     def __init__(self, dataset, p=0.3):
         super().__init__()
         self.class_labels = dataset.class_labels
-        torch.manual_seed(420)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
+        torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
         self.inverse_transform = dataset.inverse_transform
         self.dataset = dataset
         if hasattr(dataset, "class_groups"):
@@ -163,7 +166,7 @@ class MarkDataset(Dataset):
             x[1:] = torch.zeros_like(x[1:]) * mask + x[1:] * (1 - mask)
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
-        return self.dataset.transform(x.numpy().transpose(1, 2, 0))
+        return self.dataset.transform(to_pil_image(x))
 
 
 class GroupLabelDataset(Dataset):
@@ -246,11 +249,63 @@ class RestrictedDataset(Dataset):
             return d, self.indices[item]
         return d
 
+class FlipLabelDataset(Dataset):
+    def corrupt_label(self, y):
+        ret = y
+        while ret == y:
+            ret = torch.randint(0, len(self.dataset.classes), (1,))
+        return ret
+
+    def __init__(self, dataset, indices):
+        super().__init__()
+        self.corrupt_samples = indices
+        self.class_labels = dataset.class_labels
+        torch.manual_seed(420)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
+        self.inverse_transform = dataset.inverse_transform
+        self.dataset = dataset
+        if hasattr(dataset, "class_groups"):
+            self.class_groups = dataset.class_groups
+        self.classes = dataset.classes
+        self.true_labels = []
+        self.corrupt_labels = []
+
+        for i in range(len(self.dataset)):
+            _, y = self.dataset.__getitem__(i)
+            self.true_labels.append(y)
+            if i in self.corrupt_samples:
+                self.corrupt_labels.append(self.corrupt_label(y))
+            else:
+                self.corrupt_labels.append(y)
+        self.true_labels = torch.tensor(self.true_labels)
+        self.corrupt_labels = torch.tensor(self.corrupt_labels)
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, item):
+        x, y_true = self.dataset.__getitem__(item)
+        y = y_true
+        if self.dataset.split == "train": #only change to corrupted label for training datapoints
+            y = self.corrupt_labels[item]
+        return x, y
+    
+    def getitem_true(self, item):
+        x, y_true = self.dataset.__getitem__(item)
+        return x, y_true
+    
+    def uncorrupt(self, indices):
+        for i in indices:
+            self.corrupt_labels[i] = self.true_labels[i]
+
+    def corrupt(self, indices):
+        for i in indices:
+            if self.corrupt_labels[i] == self.true_labels[i]:
+                self.corrupt_labels[i] = self.corrupt_label(self.corrupt_labels[i])
 
 def load_datasets(dataset_name, dataset_type, **kwparams):
     ds = None
     evalds = None
-    ds_dict = {'MNIST': MNIST, 'CIFAR': CIFAR, 'FashionMNIST': FashionMNIST}
+    ds_dict = {'MNIST': MNIST, 'CIFAR': CIFAR, 'FashionMNIST': FashionMNIST, 'AWA': AWA, 'AWA_sub': AWA_sub}
     if "only_train" not in kwparams.keys():
         only_train = False
     else:
@@ -259,14 +314,15 @@ def load_datasets(dataset_name, dataset_type, **kwparams):
     class_groups = kwparams['class_groups']
     validation_size = kwparams['validation_size']
     set = kwparams['image_set']
+    transform=kwparams['transform']
 
     if dataset_name in ds_dict.keys():
         dscls = ds_dict[dataset_name]
-        ds = dscls(root=data_root, split="train", validation_size=validation_size)
-        evalds = dscls(root=data_root, split=set, validation_size=validation_size)
+        ds = dscls(root=data_root, split="train", validation_size=validation_size, transform=transform)
+        evalds = dscls(root=data_root, split=set, validation_size=validation_size, transform=None)
     else:
         raise NameError(f"Unresolved dataset name : {dataset_name}.")
-    if dataset_type == "group":
+    if (dataset_type == "group") or (dataset_type == "groupk"):
         ds = GroupLabelDataset(ds, class_groups=class_groups)
         evalds = GroupLabelDataset(evalds, class_groups=class_groups)
     elif dataset_type == "corrupt":
@@ -281,7 +337,9 @@ def load_datasets(dataset_name, dataset_type, **kwparams):
 
 def load_datasets_reduced(dataset_name, dataset_type, kwparams):
     ds, evalds = load_datasets(dataset_name, dataset_type, **kwparams)
-    if dataset_type in ["group", "corrupt"]:
+    if dataset_type in ["group", "groupk", "corrupt"]:
         ds = ReduceLabelDataset(ds)
         evalds = ReduceLabelDataset(evalds)
+    elif dataset_type == "switched":
+        return evalds, ds
     return ds, evalds
