@@ -8,6 +8,7 @@ from train import load_loss, load_optimizer, load_scheduler, load_augmentation
 from tqdm import tqdm
 import numpy as np
 from torchmetrics.regression import SpearmanCorrCoef
+from torchmetrics.regression import KendallRankCorrCoef
 
 class RetrainMetric(Metric):
     name = "RetrainMetric"
@@ -104,33 +105,46 @@ class RetrainMetric(Metric):
         y_pred = torch.argmax(y_out, dim=1)
         return (y_true == y_pred).sum() / y_out.shape[0]
     
-
-    
-class CumAddBatchIn(RetrainMetric):
-    name = "CumAddBatchIn"
+class BatchRetraining(RetrainMetric):
+    name = "BatchRetraining"
 
     def __init__(self, dataset_name, train, test, model, 
                  epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, batch_nr=10, device="cuda"):
+                 weight_decay, augmentation, batch_nr=10, device="cuda", mode="cum"):
+        # mode should be one of "cum", "neg_cum", "leave_batch_out", "single_batch"
         super().__init__(dataset_name, train, test, model,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, device)
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
-        self.loss_array = None
+        self.mode=mode
+        self.loss_array = torch.empty((0, self.batch_nr))
 
-    def __call__(self, xpl, start_index=0, n_test=10):
+
+
+    def __call__(self, xpl, start_index=0):
         xpl.to(self.device)
+        n_test=xpl.shape[0]
         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
-        self.loss_array = np.empty((n_test, self.batch_nr))
         loss = CrossEntropyLoss()
         for test_index in range(n_test):
+            new_losses=torch.empty((self.batch_nr,))
             for i in range(self.batch_nr):
                 indices_sorted = xpl[test_index].argsort(descending=True)
-                ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
+                if self.mode=="cum":
+                    ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
+                elif self.mode=="neg_cum":
+                    ds = RestrictedDataset(self.train, indices_sorted[(self.batch_nr-(i+1))*self.batchsize:])
+                elif self.mode=="leave_batch_out":
+                    ds = RestrictedDataset(self.train, torch.cat((indices_sorted[:i*self.batchsize], indices_sorted[(i+1)*self.batchsize:])))
+                elif self.mode=="single_batch":
+                    ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
+                else:
+                    raise f"Unexpected BatchTraining metric mode = {self.mode}"
                 retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
+                new_losses[i]=loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
+            self.loss_array = torch.cat((self.loss_array,new_losses),dim=0)
 
     def get_result(self, dir=None, file_name=None):
         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
@@ -139,133 +153,166 @@ class CumAddBatchIn(RetrainMetric):
         #resdict = {'metric': self.name, 'all_batch_scores': self.scores, 'all_batch_scores_avg': avg_scores,
         #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
         #           'num_batches': self.scores.shape[0]}
-        self.scores = self.scores.to('cpu').detach().numpy()
-        resdict = {'metric': self.name, 'all_batch_scores': self.loss_array,
-                   'num_batches': self.scores.shape}
+
+
+        resdict = {'metric': self.name,
+                   'all_batch_scores': self.loss_array,
+                   'num_batches': self.batch_nr,
+                   'mode':self.mode
+                   }
+        
+        if "cum" in self.mode:
+            resdict["auc_scores"] = self.loss_array.mean(dim=1).to('cpu').detach().numpy()
+            resdict["auc_score_avg"]=self.loss_array.mean().to('cpu').detach().numpy()
+        else:
+            kendall = KendallRankCorrCoef(num_outputs=self.loss_array.shape[0])
+            spearman = SpearmanCorrCoef(num_outputs=self.loss_array.shape[0])
+            if self.mode=="single_batch":
+                temp_arr=torch.stack(
+                [
+                    torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
+                ],
+                device=self.device
+                )
+            elif self.mode=="leave_batch_out": 
+                temp_arr=torch.stack(
+                [
+                    self.batch_nr - torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
+                ],
+                device=self.device
+                ) 
+
+            kendall_scores = kendall(self.loss_array.T, temp_arr.T)
+            spearman_scores = spearman(self.loss_array.T, temp_arr.T)
+            resdict["kendall_scores"]=kendall_scores
+            resdict["spearman_scores"]=spearman_scores
+            resdict["spearman_score_avg"]=spearman_scores.mean().to('cpu').numpy()
+            resdict["kendall_scores"]=kendall_scores.mean().to('cpu').numpy()
+
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
 
-class CumAddBatchInNeg(RetrainMetric):
-    # Add batches in from highest negative relevance to highest positive relevance
-    name = "CumAddBatchInNeg"
+# class CumAddBatchInNeg(RetrainMetric):
+#     # Add batches in from highest negative relevance to highest positive relevance
+#     name = "CumAddBatchInNeg"
 
-    def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, batch_nr=10, device="cuda"):
-        super().__init__(dataset_name, train, test, model,
-                         epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, device)
-        self.batch_nr = batch_nr
-        self.batchsize = len(self.train) // batch_nr
-        self.loss_array = None
+#     def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
+#                  weight_decay, augmentation, batch_nr=10, device="cuda"):
+#         super().__init__(dataset_name, train, test, model,
+#                          epochs, loss, lr, momentum, optimizer, scheduler,
+#                          weight_decay, augmentation, device)
+#         self.batch_nr = batch_nr
+#         self.batchsize = len(self.train) // batch_nr
+#         self.loss_array = None
 
-    def __call__(self, xpl, start_index=0, n_test=10):
-        xpl.to(self.device)
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
-        self.loss_array = np.empty((n_test, self.batch_nr))
-        loss = CrossEntropyLoss()
-        for test_index in range(n_test):
-            for i in range(self.batch_nr):
-                indices_sorted = xpl[test_index].argsort(descending=False)
-                ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
-                retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
+#     def __call__(self, xpl, start_index=0, n_test=10):
+#         xpl.to(self.device)
+#         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+#         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
+#         self.loss_array = torch.empty((0, self.batch_nr))
+#         loss = CrossEntropyLoss()
+#         for test_index in range(n_test):
+#             for i in range(self.batch_nr):
+#                 indices_sorted = xpl[test_index].argsort(descending=False)
+#                 ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
+#                 retrained_model = self.retrain(ds)
+#                 self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
         
 
-    def get_result(self, dir=None, file_name=None):
-        # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
-        #avg_scores = self.scores.mean(dim=0).to('cpu').detach().numpy()
-        #self.scores = self.scores.to('cpu').detach().numpy()
-        #resdict = {'metric': self.name, 'all_batch_scores': self.scores, 'all_batch_scores_avg': avg_scores,
-        #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
-        #           'num_batches': self.scores.shape[0]}
-        self.scores = self.scores.to('cpu').detach().numpy()
-        resdict = {'metric': self.name, 'all_batch_scores': self.loss_array,
-                   'num_batches': self.scores.shape}
-        if dir is not None:
-            self.write_result(resdict, dir, file_name)
-        return resdict
+#     def get_result(self, dir=None, file_name=None):
+#         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
+#         #avg_scores = self.scores.mean(dim=0).to('cpu').detach().numpy()
+#         #self.scores = self.scores.to('cpu').detach().numpy()
+#         #resdict = {'metric': self.name, 'all_batch_scores': self.scores, 'all_batch_scores_avg': avg_scores,
+#         #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
+#         #           'num_batches': self.scores.shape[0]}
+#         self.scores = self.scores.to('cpu').detach().numpy()
+#         resdict = {'metric': self.name, 'all_batch_scores': self.loss_array,
+#                    'num_batches': self.scores.shape}
+#         if dir is not None:
+#             self.write_result(resdict, dir, file_name)
+#         return resdict
 
-class LeaveBatchOut(RetrainMetric):
-    name = "LeaveBatchOut"
+# class LeaveBatchOut(RetrainMetric):
+#     name = "LeaveBatchOut"
 
-    def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, batch_nr=10, device="cuda"):
-        super().__init__(dataset_name, train, test, model,
-                         epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, device)
-        self.batch_nr = batch_nr
-        self.batchsize = len(self.train) // batch_nr
-        self.loss_array = None
+#     def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
+#                  weight_decay, augmentation, batch_nr=10, device="cuda"):
+#         super().__init__(dataset_name, train, test, model,
+#                          epochs, loss, lr, momentum, optimizer, scheduler,
+#                          weight_decay, augmentation, device)
+#         self.batch_nr = batch_nr
+#         self.batchsize = len(self.train) // batch_nr
+#         self.loss_array = None
 
-    def __call__(self, xpl, start_index=0, n_test=10):
-        xpl.to(self.device)
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
-        self.loss_array = np.empty((n_test, self.batch_nr))
-        loss = CrossEntropyLoss()
-        for test_index in range(n_test):
-            for i in range(self.batch_nr):
-                indices_sorted = xpl[test_index].argsort(descending=True)
-                ds = RestrictedDataset(self.train, torch.cat((indices_sorted[:i*self.batchsize], indices_sorted[(i+1)*self.batchsize:])))
-                retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
+#     def __call__(self, xpl, start_index=0, n_test=10):
+#         xpl.to(self.device)
+#         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+#         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
+#         self.loss_array = np.empty((n_test, self.batch_nr))
+#         loss = CrossEntropyLoss()
+#         for test_index in range(n_test):
+#             for i in range(self.batch_nr):
+#                 indices_sorted = xpl[test_index].argsort(descending=True)
+#                 ds = RestrictedDataset(self.train, torch.cat((indices_sorted[:i*self.batchsize], indices_sorted[(i+1)*self.batchsize:])))
+#                 retrained_model = self.retrain(ds)
+#                 self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
        
 
-    def get_result(self, dir=None, file_name=None):
-        # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
-        #avg_scores = self.scores.mean(dim=0).to('cpu').detach().numpy()
-        #self.scores = self.scores.to('cpu').detach().numpy()
-        #resdict = {'metric': self.name, 'all_batch_scores': self.scores, 'all_batch_scores_avg': avg_scores,
-        #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
-        #           'num_batches': self.scores.shape[0]}
-        self.scores = self.scores.to('cpu').detach().numpy()
-        resdict = {'metric': self.name, 'all_batch_scores': self.loss_array,
-                   'num_batches': self.scores.shape}
-        if dir is not None:
-            self.write_result(resdict, dir, file_name)
-        return resdict
+#     def get_result(self, dir=None, file_name=None):
+#         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
+#         #avg_scores = self.scores.mean(dim=0).to('cpu').detach().numpy()
+#         #self.scores = self.scores.to('cpu').detach().numpy()
+#         #resdict = {'metric': self.name, 'all_batch_scores': self.scores, 'all_batch_scores_avg': avg_scores,
+#         #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
+#         #           'num_batches': self.scores.shape[0]}
+#         self.scores = self.scores.to('cpu').detach().numpy()
+#         resdict = {'metric': self.name, 'all_batch_scores': self.loss_array,
+#                    'num_batches': self.scores.shape}
+#         if dir is not None:
+#             self.write_result(resdict, dir, file_name)
+#         return resdict
     
-class OnlyBatch(RetrainMetric):
-    name = "OnlyBatch"
+# class OnlyBatch(RetrainMetric):
+#     name = "OnlyBatch"
 
-    def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, batch_nr=10, device="cuda"):
-        super().__init__(dataset_name, train, test, model,
-                         epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, device)
-        self.batch_nr = batch_nr
-        self.batchsize = len(self.train) // batch_nr
-        self.loss_array = None
+#     def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
+#                  weight_decay, augmentation, batch_nr=10, device="cuda"):
+#         super().__init__(dataset_name, train, test, model,
+#                          epochs, loss, lr, momentum, optimizer, scheduler,
+#                          weight_decay, augmentation, device)
+#         self.batch_nr = batch_nr
+#         self.batchsize = len(self.train) // batch_nr
+#         self.loss_array = None
 
-    def __call__(self, xpl, start_index=0, n_test=10):
-        xpl.to(self.device)
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
-        self.loss_array = np.empty((n_test, self.batch_nr))
-        loss = CrossEntropyLoss()
-        for test_index in range(n_test):
-            for i in range(self.batch_nr):
-                indices_sorted = xpl[test_index].argsort(descending=True)
-                ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
-                retrained_model = self.retrain(ds)
-                self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
+#     def __call__(self, xpl, start_index=0, n_test=10):
+#         xpl.to(self.device)
+#         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+#         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
+#         self.loss_array = np.empty((n_test, self.batch_nr))
+#         loss = CrossEntropyLoss()
+#         for test_index in range(n_test):
+#             for i in range(self.batch_nr):
+#                 indices_sorted = xpl[test_index].argsort(descending=True)
+#                 ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
+#                 retrained_model = self.retrain(ds)
+#                 self.loss_array[test_index, i] = loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
            
 
-    def get_result(self, dir=None, file_name=None):
-        # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
-        #avg_scores = self.scores.mean(dim=0).to('cpu').detach().numpy()
-        #self.scores = self.scores.to('cpu').detach().numpy()
-        #resdict = {'metric': self.name, 'all_batch_scores': self.scores, 'all_batch_scores_avg': avg_scores,
-        #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
-        #           'num_batches': self.scores.shape[0]}
-        self.scores = self.scores.to('cpu').detach().numpy()
-        resdict = {'metric': self.name, 'all_batch_scores': self.loss_array,
-                   'num_batches': self.scores.shape}
-        if dir is not None:
-            self.write_result(resdict, dir, file_name)
-        return resdict
+#     def get_result(self, dir=None, file_name=None):
+#         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
+#         #avg_scores = self.scores.mean(dim=0).to('cpu').detach().numpy()
+#         #self.scores = self.scores.to('cpu').detach().numpy()
+#         #resdict = {'metric': self.name, 'all_batch_scores': self.scores, 'all_batch_scores_avg': avg_scores,
+#         #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
+#         #           'num_batches': self.scores.shape[0]}
+#         self.scores = self.scores.to('cpu').detach().numpy()
+#         resdict = {'metric': self.name, 'all_batch_scores': self.loss_array,
+#                    'num_batches': self.scores.shape}
+#         if dir is not None:
+#             self.write_result(resdict, dir, file_name)
+#         return resdict
 
 '''
 class LinearDatamodelingScore(RetrainMetric):
@@ -313,29 +360,35 @@ class LinearDatamodelingScore(RetrainMetric):
         self.alpha = alpha
         self.samples = samples
         self.attribution_array = None
-        self.loss_array = None
+        self.loss_array = torch.empty(0,self.samples)
+        self.attribution_array = torch.empty(0,self.samples)
         self.n_test = None
+        self.sample_indices = torch.tensor([
+            np.random.choice(len(train), size= int(self.alpha * len(train)), replace=False) for _ in range(samples)
+        ],device=device)
+
 
     def __call__(self, xpl, start_index=0):
         xpl.to(self.device)
         self.n_test = xpl.shape[0]
         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0).to(self.device)
         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long().to(self.device)
-        self.attribution_array = np.empty((xpl.shape[0], self.samples))
-        self.loss_array = np.empty((xpl.shape[0], self.samples))
+        attribution_array = np.empty((xpl.shape[0], self.samples))
+        loss_array = np.empty((xpl.shape[0], self.samples))
         loss = CrossEntropyLoss()
         for i in range(self.samples):
-            sample_indices = np.random.choice(xpl.shape[1], size= int(self.alpha * xpl.shape[1]), replace=False)
-            self.attribution_array[:, i] = xpl[:, sample_indices].sum(dim=1).cpu().detach().numpy()
-            ds = RestrictedDataset(self.train, sample_indices)
+            attribution_array[:, i] = xpl[:, self.sample_indices].sum(dim=1).cpu().detach().numpy()
+            ds = RestrictedDataset(self.train, self.sample_indices)
             retrained_model = self.retrain(ds)
-            self.loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).cpu().detach().numpy()
+            loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).cpu().detach().numpy()
+        self.attribution_array=torch.cat((self.attribution_array,attribution_array), dim=0)
+        self.loss_array=torch.cat((self.loss_array, loss_array), dim=0)
 
     def get_result(self, dir=None, file_name=None):
         spearman = SpearmanCorrCoef(num_outputs=self.n_test)
         correlation_scores = spearman(torch.from_numpy(self.attribution_array.T), torch.from_numpy(self.loss_array.T))
         resdict = {'metric': self.name, 'correlation_scores': correlation_scores, 'avg_score': correlation_scores.mean(),
-                   'sample_attributions': self.attribution_array, 'sample_losses': self.loss_array}
+                   'sample_attributions': self.attribution_array, 'sample_losses': self.loss_array, "subset_indices": self.sample_indices}
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
