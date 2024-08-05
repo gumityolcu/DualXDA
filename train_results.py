@@ -52,6 +52,17 @@ def visualize(lists, split, caption="", save_path=None, text_clr="white", cmap="
 
 def run(init_dir, split=1, text_clr="black", cmap="inferno"):
     list_of_ckpts=[]
+<<<<<<< Updated upstream
+=======
+    lr="5e3"
+    ds="CIFAR"
+    typ="mark"
+    init_dir=f"test_output/{ds}/{typ}/{lr}"
+    # The strings in this list will be deleted from the folder name
+    # What we want in the end is:
+    # param1_param2_param3_param4_param5
+    
+>>>>>>> Stashed changes
     replace_strs=["MNIST-MNIST_", "CIFAR-CIFAR_", \
                   "std_", "group_", "corrupt_", "mark_", \
                    "0.001_", "0.005_", "0.0001_", \
