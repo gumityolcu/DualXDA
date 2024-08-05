@@ -6,8 +6,8 @@ from torchmetrics.regression import SpearmanCorrCoef
 class SwitchMetric(Metric):
     name = "SwitchMetric"
 
-    def __init__(self, device="cuda"):
-        self.scores = None
+    def __init__(self, device="cuda", **kwargs):
+        self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.device = device
 
     def __call__(self, xpl, xpl_switched, start_index):

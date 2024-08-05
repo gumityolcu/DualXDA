@@ -1,6 +1,6 @@
 import argparse
 from utils.data import load_datasets
-from utils.models import load_model, load_cifar_model
+from utils.models import load_model
 import yaml
 import logging
 from metrics import *
@@ -9,29 +9,47 @@ from metrics import *
 def load_metric(metric_name, dataset_name, train, test, device, coef_root, model,
                 epochs, loss, lr, momentum, optimizer, scheduler,
                 weight_decay, augmentation,):
-    ret_dict = {"std": SameClassMetric, "group": SameSubclassMetric, "corrupt": CorruptLabelMetric,
-                "mark": MarkImageMetric,
-                "stdk": TopKSameClassMetric, "groupk": TopKSameSubclassMetric,
-                "switched": SwitchMetric,
-                "add_batch_in": CumAddBatchIn, "add_batch_in_neg": CumAddBatchInNeg, 
-                "leave_out": LeaveBatchOut, "only_batch": OnlyBatch,
-                "lds": LinearDatamodelingScore, "labelflip": LabelFlipMetric}
+    base_dict={
+        "train":train,
+        "test": test,
+        "device":device
+    }
+    retrain_dict={
+        "dataset_name": dataset_name,
+        "model": model,
+        "epochs": epochs,
+        "loss": loss,
+        "lr": lr,
+        "momentum": momentum,
+        "optimizer":optimizer,
+        "scheduler":scheduler,
+        "weight_decay": weight_decay,
+        "augmentation": augmentation
+    }
+
+    """
+     dataset_name,  model, 
+                 epochs, loss, lr, momentum, optimizer, scheduler,
+                 weight_decay, augmentation, batch_nr=10, mode="cum"
+                 
+                 
+    """
+
+    ret_dict = {"std": (SameClassMetric,{}), "group": (SameSubclassMetric,{}), 
+                "corrupt": (CorruptLabelMetric,{"coef_root": coef_root}),
+                "mark": (MarkImageMetric, {"model":model}),
+                "stdk": (TopKSameClassMetric,{}), "groupk": (TopKSameSubclassMetric,{}),
+                "switched": (SwitchMetric,{}),
+                "add_batch_in": (BatchRetraining,{ **retrain_dict,**{"mode":"cum"}}),
+                "add_batch_in_neg": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
+                "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
+                "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
+                "lds": (LinearDatamodelingScore,retrain_dict), "labelflip": (LabelFlipMetric, retrain_dict)}
     if metric_name not in ret_dict.keys():
-        return SameClassMetric(train, test, device)
-    metric_cls = ret_dict[metric_name]
-    if metric_name == "corrupt":
-        ret = metric_cls(train, test, coef_root, device)
-    elif metric_name == "mark":
-        ret = metric_cls(train, test, model, device)
-    elif metric_name == "switched":
-        ret = metric_cls(device)
-    elif metric_name in ["add_batch_in", "add_batch_in_neg", "leave_out", "only_batch", "lds", "labelflip"]:
-        ret = metric_cls(dataset_name, train, test, model,
-                         epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, device=device)
-    else:
-        ret = metric_cls(train, test, device=device)
-    return ret
+        raise Exception(f"{metric_name} is not a metric name")
+    metric_cls, metric_kwargs = ret_dict[metric_name]
+    base_dict.update(metric_kwargs)
+    return metric_cls(**base_dict)
 
 
 def evaluate(model_name, model_path, device, class_groups,

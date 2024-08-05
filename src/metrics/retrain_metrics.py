@@ -141,7 +141,7 @@ class BatchRetraining(RetrainMetric):
                 elif self.mode=="single_batch":
                     ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
                 else:
-                    raise f"Unexpected BatchTraining metric mode = {self.mode}"
+                    raise Exception(f"Unexpected BatchTraining metric mode = {self.mode}")
                 retrained_model = self.retrain(ds)
                 new_losses[i]=loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
             self.loss_array = torch.cat((self.loss_array,new_losses),dim=0)
@@ -377,8 +377,9 @@ class LinearDatamodelingScore(RetrainMetric):
         loss_array = np.empty((xpl.shape[0], self.samples))
         loss = CrossEntropyLoss()
         for i in range(self.samples):
-            attribution_array[:, i] = xpl[:, self.sample_indices].sum(dim=1).cpu().detach().numpy()
-            ds = RestrictedDataset(self.train, self.sample_indices)
+            cur_indices=self.sample_indices[i]
+            attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach().numpy()
+            ds = RestrictedDataset(self.train, cur_indices)
             retrained_model = self.retrain(ds)
             loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).cpu().detach().numpy()
         self.attribution_array=torch.cat((self.attribution_array,attribution_array), dim=0)
