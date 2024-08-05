@@ -1,6 +1,6 @@
 import torch.utils.data
 from models import BasicConvModel
-from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights,
+from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 import tqdm
 
 class ResNetWrapper(torch.nn.Module):
