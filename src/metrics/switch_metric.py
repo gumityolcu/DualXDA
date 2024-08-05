@@ -20,7 +20,7 @@ class SwitchMetric(Metric):
         #self.scores = torch.norm(xpl-xpl_switched, p=1, dim=1)
         #Cosine implementation
         cos = torch.nn.CosineSimilarity(dim=1, eps=1e-10) 
-        self.scores = cos(xpl, xpl_switched)
+        self.scores = torch.cat((self.scores,cos(xpl, xpl_switched)),dim=0)
 
     def get_result(self, dir=None, file_name=None):
         self.scores = self.scores.to('cpu').detach().numpy()

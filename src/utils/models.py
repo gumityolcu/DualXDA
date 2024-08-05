@@ -1,6 +1,6 @@
 import torch.utils.data
 from models import BasicConvModel
-from torchvision.models.resnet import resnet18, resnet50
+from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights,
 import tqdm
 
 class ResNetWrapper(torch.nn.Module):
@@ -47,10 +47,16 @@ def load_model(model_name, dataset_name, num_classes):
         return BasicConvModel(input_shape=params['input_shape'], convs=params['convs'], fc=params['fc'], num_classes=num_classes)
 
     if model_name=="resnet18":
-        return ResNetWrapper(resnet18(), output_dim=num_classes)
+        if dataset_name=="AWA":
+            return ResNetWrapper(resnet18(weights=ResNet18_Weights.IMAGENET1K_V1), output_dim=num_classes)
+        else:
+            return ResNetWrapper(resnet18(), output_dim=num_classes)
+    
     else:
-        return ResNetWrapper(resnet50(), output_dim=num_classes)
-
+        if dataset_name=="AWA":
+            return ResNetWrapper(resnet50(weights=ResNet50_Weights.IMAGENET1K_V2), output_dim=num_classes)
+        else:
+            return ResNetWrapper(resnet50())
 
 
 def compute_accuracy(model, test, device):
