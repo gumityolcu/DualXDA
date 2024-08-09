@@ -56,7 +56,7 @@ dataset_name: AWA
 dataset_type: group
 device: cuda
 model_name: resnet50
-model_path: /mnt/checkpoints/AWA/group/resnet50_group/AWA_resnet50
+model_path: /mnt/checkpoints/AWA/group/AWA_resnet50_29
 num_batches_per_file: 1
 num_classes: 50
 num_files: 1

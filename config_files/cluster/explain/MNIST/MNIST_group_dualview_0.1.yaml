@@ -17,7 +17,7 @@ dataset_name: MNIST
 dataset_type: group
 device: cuda
 model_name: basic_conv
-model_path: /mnt/checkpoints/MNIST/group/basic_conv_group/MNIST_basic_conv
+model_path: /mnt/checkpoints/MNIST/group/MNIST_basic_conv_189
 num_batches_per_file: 1
 num_classes: 10
 num_files: 1
