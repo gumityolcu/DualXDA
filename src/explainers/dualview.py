@@ -20,7 +20,7 @@ class DualView(FeatureKernelExplainer):
         self.dir=dir
 
     def read_variables(self):
-        self.learned_weight = torch.load(os.path.join(self.dir,'weights_tensor'), map_location=self.device).to(torch.float)
+        self.learned_weight = torch.load(os.path.join(self.dir,"weights_tensor"), map_location=self.device).to(torch.float)
         self.coefficients=torch.load(os.path.join(self.dir,"coefficients_tensor"), map_location=self.device).to(torch.float)
 
     def train(self):
