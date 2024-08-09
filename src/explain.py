@@ -32,7 +32,7 @@ def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
                   save_dir, validation_size, num_batches_per_file,
                   start_file, num_files, xai_method, learning_rates,
-                  num_classes, C_margin, imagenet_class_ids, testsplit):
+                  num_classes, C_margin, testsplit):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -44,7 +44,6 @@ def explain_model(model_name, model_path, device, class_groups,
         'image_set': "test",
         'validation_size': validation_size,
         "only_train": False,
-        'imagenet_class_ids': imagenet_class_ids,
         'testsplit': testsplit,
         'transform': None
     }
@@ -110,7 +109,6 @@ if __name__ == "__main__":
                   xai_method=train_config.get('xai_method', None),
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
-                  imagenet_class_ids=train_config.get('imagenet_class_ids', [i for i in range(397)]),
                   testsplit=train_config.get('testsplit', "test"),
                   learning_rates=train_config.get('learning_rates', None)
                   )

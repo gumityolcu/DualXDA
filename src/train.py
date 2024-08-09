@@ -325,6 +325,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
                 'validation_losses': validation_losses,
                 'validation_epochs': validation_epochs,
                 'validation_accuracy': val_acc,
+                'learning_rates': learning_rates,
                 'train_accuracy': train_acc
             }
             if corrupt:

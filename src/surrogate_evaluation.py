@@ -34,7 +34,7 @@ def load_surrogate(model_name, model_path, device,
                      # num_batches_per_file, start_file, num_files,
                      xai_method,
                      #accuracy,
-                     num_classes, C_margin, imagenet_class_ids,testsplit
+                     num_classes, C_margin, testsplit
                      ):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir_results):
@@ -47,7 +47,6 @@ def load_surrogate(model_name, model_path, device,
         'image_set': "test",
         'validation_size': validation_size,
         "only_train": False,
-        'imagenet_class_ids':imagenet_class_ids,
         'testsplit': testsplit
     }
 
@@ -167,6 +166,5 @@ if __name__ == "__main__":
                      xai_method=surrogate_config.get('xai_method', None),
                      num_classes=surrogate_config.get('num_classes'),
                      C_margin=surrogate_config.get('C',None),
-                     imagenet_class_ids=surrogate_config.get('imagenet_class_ids',[i for i in range(397)]),
                      testsplit=surrogate_config.get('testsplit',"test")
                      )
