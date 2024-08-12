@@ -17,12 +17,12 @@ def load_explainer(xai_method, model_path, save_dir, learning_rates, dataset_nam
         "AwA": {'depth': 50, 'repeat': 500}
     }
     explainers = {
-        'representer': (RepresenterPointsExplainer, {}),
+        'representer': (RepresenterPointsExplainer, {"dir": save_dir}),
         'trak': (TRAK, {'proj_dim': 512, "dir":save_dir}),
         'dualview': (DualView, {"dir": save_dir}),
         'graddot': (GradDotExplainer, {"dir":save_dir, "dimensions":128}),
         'gradcos': (GradCosExplainer, {"dir":save_dir, "dimensions":128}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'learning_rates':learning_rates, 'dir':save_dir, 'dimensions':100}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'learning_rates':learning_rates, 'dir':save_dir, 'dimensions':128}),
         'influence': (InfluenceFunctionExplainer, if_params[dataset_name])
     }
     return explainers[xai_method]

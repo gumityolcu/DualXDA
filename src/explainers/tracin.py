@@ -13,7 +13,7 @@ class TracInExplainer(Explainer):
     def load_explainers(model, dataset, save_dir, ckpt_dir, learning_rates, dimensions, device):
         explainers=[]
         assert os.path.isdir(ckpt_dir), f"Given checkpoint path {ckpt_dir} is not a directory."
-        ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if "best" not in f]
+        ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if "best" not in f and not os.path.isdir(os.path.join(ckpt_dir,f))]
         if isinstance(learning_rates,float):
             learning_rates=[learning_rates for _ in range(len(ckpt_files))]
         elif learning_rates is None:
