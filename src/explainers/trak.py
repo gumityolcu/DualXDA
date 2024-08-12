@@ -23,8 +23,8 @@ class TRAK(Explainer):
                              projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"))
 
     def clean(self, experiment_name):
-        os.remove(os.path.join(self.dir, "trak-results", "scores", f"{experiment_name}.mmap"))
-        os.removedirs(os.path.join(self.dir, "trak-results", "scores"))
+        os.remove(os.path.join(self.dir, "trak_results", "scores", f"{experiment_name}.mmap"))
+        os.removedirs(os.path.join(self.dir, "trak_results", "scores"))
 
     def train(self):
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
