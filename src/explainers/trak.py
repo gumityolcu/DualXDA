@@ -12,6 +12,7 @@ class TRAK(Explainer):
         self.dataset=dataset
         self.batch_size=batch_size
         self.number_of_params=0
+        self.dir=dir
         for p in list(self.model.sim_parameters()):
             nn = 1
             for s in list(p.size()):
@@ -22,8 +23,8 @@ class TRAK(Explainer):
                              projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"))
 
     def clean(self, experiment_name):
-        os.remove(os.path.join(self.cache_dir, "scores", f"{experiment_name}.mmap"))
-        os.removedirs(os.path.join(self.cache_dir, "scores"))
+        os.remove(os.path.join(self.dir, "trak-results", "scores", f"{experiment_name}.mmap"))
+        os.removedirs(os.path.join(self.dir, "trak-results", "scores"))
 
     def train(self):
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
