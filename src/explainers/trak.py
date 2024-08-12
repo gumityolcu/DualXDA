@@ -21,6 +21,9 @@ class TRAK(Explainer):
         self.traker = TRAKer(model=model, task='image_classification', train_set_size=len(dataset),
                              projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"))
 
+    def clean(self, experiment_name):
+        os.remove(os.path.join(self.cache_dir, "scores", f"{experiment_name}.mmap"))
+        os.removedirs(os.path.join(self.cache_dir, "scores"))
 
     def train(self):
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
@@ -37,5 +40,7 @@ class TRAK(Explainer):
                                              exp_name='test',
                                             num_targets=x.shape[0])
         self.traker.score(batch=(x,xpl_targets), num_samples=x.shape[0])
-        return torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
+        xpl=torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
+        self.clean('test')
+        return xpl
 
