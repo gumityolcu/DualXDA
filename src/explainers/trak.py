@@ -38,6 +38,5 @@ class TRAK(Explainer):
                                              exp_name='test',
                                             num_targets=x.shape[0])
         self.traker.score(batch=(x,xpl_targets), num_samples=x.shape[0])
-        xpl=torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
-        return xpl
+        return torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
 
