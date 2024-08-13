@@ -23,10 +23,6 @@ class TRAK(Explainer):
                              projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"),
                              load_from_save_dir=False)
 
-    def clean(self, experiment_name):
-        os.remove(os.path.join(self.dir, "trak_results", "scores", f"{experiment_name}.mmap"))
-        os.removedirs(os.path.join(self.dir, "trak_results", "scores"))
-
     def train(self):
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
         self.traker.load_checkpoint(self.model.state_dict(),model_id=0)
@@ -43,6 +39,5 @@ class TRAK(Explainer):
                                             num_targets=x.shape[0])
         self.traker.score(batch=(x,xpl_targets), num_samples=x.shape[0])
         xpl=torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
-        self.clean('test')
         return xpl
 
