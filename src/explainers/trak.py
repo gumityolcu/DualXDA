@@ -12,6 +12,7 @@ class TRAK(Explainer):
         self.dataset=dataset
         self.batch_size=batch_size
         self.number_of_params=0
+        self.dir=dir
         for p in list(self.model.sim_parameters()):
             nn = 1
             for s in list(p.size()):
@@ -19,8 +20,8 @@ class TRAK(Explainer):
             self.number_of_params += nn
         projector_dict = {"cuda": CudaProjector(grad_dim=self.number_of_params,proj_dim=proj_dim,seed=21,device=device, proj_type=ProjectionType.normal, max_batch_size=32), "cpu": None}
         self.traker = TRAKer(model=model, task='image_classification', train_set_size=len(dataset),
-                             projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"))
-
+                             projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"),
+                             )
 
     def train(self):
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)

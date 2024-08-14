@@ -2,7 +2,7 @@ import argparse
 import yaml
 from matplotlib.gridspec import GridSpec
 from utils.data import load_datasets
-from utils.models import compute_accuracy, load_model, load_cifar_model
+from utils.models import compute_accuracy, load_model
 import logging
 from tqdm import tqdm
 import os
@@ -12,7 +12,7 @@ from metrics import *
 def evaluate(model_name, model_path, device, class_groups,
              dataset_name, dataset_type,
              data_root, xpl_roots, method_names,
-             save_dir, validation_size, num_classes, imagenet_class_ids, testsplit, pages):
+             save_dir, validation_size, num_classes, testsplit, pages):
     if not torch.cuda.is_available():
         device = "cpu"
     ds_kwargs = {
@@ -21,7 +21,6 @@ def evaluate(model_name, model_path, device, class_groups,
         'image_set': "test",
         'validation_size': validation_size,
         'only_train': False,
-        'imagenet_class_ids': imagenet_class_ids,
         'testsplit': testsplit
     }
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
@@ -682,7 +681,6 @@ if __name__ == "__main__":
         save_dir=train_config.get('save_dir', None),
         validation_size=train_config.get('validation_size', 2000),
         num_classes=train_config.get('num_classes'),
-        imagenet_class_ids=train_config.get('imagenet_class_ids', [i for i in range(397)]),
         testsplit=train_config.get('testsplit', "test"),
         pages=args.pages
     )

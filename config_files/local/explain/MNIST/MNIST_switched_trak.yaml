@@ -1,0 +1,15 @@
+accuracy: true
+batch_size: 16
+data_root: /home/yolcu/Documents/Code/DualView_wip/src/datasets
+dataset_name: MNIST
+dataset_type: switched
+device: cpu
+model_name: basic_conv
+model_path: /home/yolcu/Documents/Code/DualView_wip/checkpoints/MNIST/switched/MNIST_basic_conv_189
+num_batches_per_file: 1
+num_classes: 10
+num_files: 1
+save_dir: /home/yolcu/Documents/Code/DualView_wip/explanations/MNIST/switched/basic_conv_switched/trak
+start_file: 0
+validation_size: 2000
+xai_method: trak

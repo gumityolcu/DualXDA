@@ -1,8 +1,8 @@
 import argparse
 import torch
 from utils import xplain
-from utils.explainers import GradientProductExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, RPSimilarityExplainer, InfluenceFunctionExplainer, TracInExplainer
+from utils.explainers import GradCosExplainer, GradDotExplainer
+from explainers import TRAK, DualView, RepresenterPointsExplainer, InfluenceFunctionExplainer, TracInExplainer
 from utils.data import load_datasets_reduced
 from utils.models import compute_accuracy, load_model
 import yaml
@@ -11,16 +11,19 @@ import os
 
 
 def load_explainer(xai_method, model_path, save_dir, learning_rates, dataset_name):
+    if_params={
+        "MNIST": {'depth': 50, 'repeat': 1200},
+        "CIFAR": {'depth': 50, 'repeat': 1000},
+        "AwA": {'depth': 50, 'repeat': 500}
+    }
     explainers = {
-        'representer': (RepresenterPointsExplainer, {}),
-        'rp_similarity': (RPSimilarityExplainer, {"dir": save_dir, 'dimensions': 128}),
-        #'tracin': (TracInExplainer, {"ckpt_dir": os.path.dirname(model_path)}),
+        'representer': (RepresenterPointsExplainer, {"dir": save_dir}),
         'trak': (TRAK, {'proj_dim': 512, "dir":save_dir}),
         'dualview': (DualView, {"dir": save_dir}),
-        'graddot': (GradDotExplainer, {"dir":save_dir, "dimensions":100}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'learning_rates':learning_rates, 'dir':save_dir, 'dimensions':100}),
-        'influence': (InfluenceFunctionExplainer,
-                      {'depth': 50, 'repeat': 1200} if dataset_name == "MNIST" else {'depth': 50, 'repeat': 1000})
+        'graddot': (GradDotExplainer, {"dir":save_dir, "dimensions":128}),
+        'gradcos': (GradCosExplainer, {"dir":save_dir, "dimensions":128}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'learning_rates':learning_rates, 'dir':save_dir, 'dimensions':128}),
+        'influence': (InfluenceFunctionExplainer, if_params[dataset_name])
     }
     return explainers[xai_method]
 
@@ -29,7 +32,7 @@ def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
                   save_dir, validation_size, num_batches_per_file,
                   start_file, num_files, xai_method, learning_rates,
-                  num_classes, C_margin, imagenet_class_ids, testsplit):
+                  num_classes, C_margin, testsplit):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -41,7 +44,6 @@ def explain_model(model_name, model_path, device, class_groups,
         'image_set': "test",
         'validation_size': validation_size,
         "only_train": False,
-        'imagenet_class_ids': imagenet_class_ids,
         'testsplit': testsplit,
         'transform': None
     }
@@ -107,7 +109,6 @@ if __name__ == "__main__":
                   xai_method=train_config.get('xai_method', None),
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
-                  imagenet_class_ids=train_config.get('imagenet_class_ids', [i for i in range(397)]),
                   testsplit=train_config.get('testsplit', "test"),
                   learning_rates=train_config.get('learning_rates', None)
                   )
