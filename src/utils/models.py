@@ -87,6 +87,8 @@ def load_model(model_name, dataset_name, num_classes):
             return ResNetWrapper(resnet18(),output_dim=num_classes)
         else:
             return ResNetWrapper(resnet50(),output_dim=num_classes)
+    else:
+        return ResNetWrapper(resnet50(),output_dim=num_classes)
 
 def load_cifar_model(model_path,dataset_type,num_classes,device, train=False):
     model=resnet18()
