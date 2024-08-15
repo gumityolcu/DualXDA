@@ -46,7 +46,7 @@ def load_model(model_name, dataset_name, num_classes):
 
         return BasicConvModel(input_shape=params['input_shape'], convs=params['convs'], fc=params['fc'], num_classes=num_classes)
 
-    if model_name=="resnet18":
+    elif model_name=="resnet18":
         if dataset_name=="AWA":
             return ResNetWrapper(resnet18(weights=ResNet18_Weights.IMAGENET1K_V1), output_dim=num_classes)
         else:

@@ -57,8 +57,6 @@ class_names[47] = 'weasel'
 class_names[48] = 'wolf' 
 class_names[49] = 'zebra'
 
-class_labels = list(class_names.values())
-
 class AWA(VisionDataset):
     default_class_groups = [[i] for i in range(50)]
     name = 'AWA'
@@ -80,6 +78,7 @@ class AWA(VisionDataset):
         transforms.Normalize((0.,0.,0.), tuple(1/std)),
         transforms.Normalize(tuple(-mean), (1., 1., 1.))
     ])
+    class_labels = list(class_names.values())
 
     @staticmethod
     def to_0_1(data, d0_max=d0_max, d0_min=d0_min, d1_max=d1_max, d1_min=d1_min, d2_max=d2_max, d2_min=d2_min):

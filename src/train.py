@@ -184,9 +184,6 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     if dataset_type=="group":
         num_classes=len(class_groups)
     model = load_model(model_name, dataset_name, num_classes).to(device)
-
-    print(torch.cuda.memory_summary())
-
     tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
     tensorboarddir = os.path.join(save_dir, tensorboarddir)
     writer = SummaryWriter(tensorboarddir)
@@ -261,11 +258,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         cum_loss = 0
         cnt = 0
         for inputs, targets in tqdm(iter(loader)):
-
             inputs = inputs.to(device)
-
-            print(torch.cuda.memory_summary())
-
             targets = targets.long()
             if isinstance(loss, BCEWithLogitsLoss):
                 targets = one_hot(targets, num_classes).float()
