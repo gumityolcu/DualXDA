@@ -45,7 +45,8 @@ def explain_model(model_name, model_path, device, class_groups,
         'validation_size': validation_size,
         "only_train": False,
         'testsplit': testsplit,
-        'transform': None
+        'transform': None,
+        'num_classes': num_classes
     }
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)

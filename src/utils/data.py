@@ -53,12 +53,18 @@ class CorruptLabelDataset(Dataset):
             self.corrupt_labels = []
             corrupt = torch.rand(len(dataset))
             self.corrupt_samples = torch.squeeze((corrupt < p).nonzero())
-            torch.save(self.corrupt_samples, f'datasets/{dataset.name}_corrupt_ids')
+            if dataset.name == "AWA":
+                torch.save(self.corrupt_samples, f'../outputs/{dataset.name}_corrupt_ids')
+            else:
+                torch.save(self.corrupt_samples, f'datasets/{dataset.name}_corrupt_ids')
             for i in self.corrupt_samples:
                 _, y = self.dataset.__getitem__(i)
                 self.corrupt_labels.append(self.corrupt_label(y))
             self.corrupt_labels = torch.tensor(self.corrupt_labels)
-            torch.save(self.corrupt_labels, f"datasets/{dataset.name}_corrupt_labels")
+            if dataset.name == "AWA":
+                torch.save(self.corrupt_labels, f"../outputs/{dataset.name}_corrupt_labels")
+            else:
+                torch.save(self.corrupt_labels, f"datasets/{dataset.name}_corrupt_labels")
 
     def __len__(self):
         return len(self.dataset)
@@ -102,7 +108,10 @@ class MarkDataset(Dataset):
                 self.mark_samples = torch.load(f'datasets/{dataset.name}_mark_ids')
             else:
                 self.mark_samples = self.get_mark_sample_ids()
-                torch.save(self.mark_samples, f'datasets/{dataset.name}_mark_ids')
+                if dataset.name == "AWA":
+                    torch.save(self.mark_samples, f'../outputs/{dataset.name}_mark_ids')
+                else:
+                    torch.save(self.mark_samples, f'datasets/{dataset.name}_mark_ids')
         else:
             self.mark_samples = range(len(dataset))
 
@@ -173,22 +182,22 @@ class GroupLabelDataset(Dataset):
     class_group_by2 = [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]]
 
     @staticmethod
-    def check_class_groups(groups):
-        vals = [[] for _ in range(10)]
+    def check_class_groups(num_classes, groups):
+        vals = [[] for _ in range(num_classes)]
         for g, group in enumerate(groups):
             for i in group:
                 vals[i].append(g)
         for v in vals:
             assert (len(v) == 1)  # Check that this is the first time i is encountered
 
-    def __init__(self, dataset, class_groups=None):
+    def __init__(self, dataset, num_classes = 10, class_groups=None):
         self.dataset = dataset
         self.class_labels = [i for i in range(len(class_groups))]
         self.inverse_transform = dataset.inverse_transform
         if class_groups is None:
             class_groups = GroupLabelDataset.class_group_by2
         self.classes = class_groups
-        GroupLabelDataset.check_class_groups(class_groups)
+        GroupLabelDataset.check_class_groups(num_classes, class_groups)
 
     def __getitem__(self, item):
         x, y = self.dataset.__getitem__(item)
@@ -315,6 +324,7 @@ def load_datasets(dataset_name, dataset_type, **kwparams):
     validation_size = kwparams['validation_size']
     set = kwparams['image_set']
     transform=kwparams['transform']
+    num_classes = kwparams['num_classes']
 
     if dataset_name in ds_dict.keys():
         dscls = ds_dict[dataset_name]
@@ -323,8 +333,8 @@ def load_datasets(dataset_name, dataset_type, **kwparams):
     else:
         raise NameError(f"Unresolved dataset name : {dataset_name}.")
     if (dataset_type == "group") or (dataset_type == "groupk"):
-        ds = GroupLabelDataset(ds, class_groups=class_groups)
-        evalds = GroupLabelDataset(evalds, class_groups=class_groups)
+        ds = GroupLabelDataset(ds, num_classes=num_classes, class_groups=class_groups)
+        evalds = GroupLabelDataset(evalds, num_classes=num_classes, class_groups=class_groups)
     elif dataset_type == "corrupt":
         ds = CorruptLabelDataset(ds)
         evalds = CorruptLabelDataset(evalds)

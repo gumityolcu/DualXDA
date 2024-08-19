@@ -66,7 +66,8 @@ def evaluate(model_name, model_path, device, class_groups,
         'image_set': "test",
         'validation_size': validation_size,
         'only_train': False,
-        'transform': None
+        'transform': None,
+        'num_classes': num_classes
     }
     if metric_name in ["corrupt", "mark", "switched", "group"]:
         dataset_type=metric_name

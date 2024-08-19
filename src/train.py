@@ -206,7 +206,8 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         'image_set': "val",
         'validation_size': validation_size,
         'only_train': True,
-        'transform': augmentation
+        'transform': augmentation,
+        'num_classes': num_classes
     }
     corrupt = (dataset_type == "corrupt")
     group = (dataset_type == "group")
