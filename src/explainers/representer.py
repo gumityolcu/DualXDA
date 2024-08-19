@@ -87,8 +87,8 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
     name = "RepresenterPointsExplainer"
 
 
-    def __init__(self, model, dataset, device):
-        super(RepresenterPointsExplainer, self).__init__(model, dataset, device, normalize=False)
+    def __init__(self, model, dataset, device, dir):
+        super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=dir, normalize=False)
 
     def train(self):
         t0=time()

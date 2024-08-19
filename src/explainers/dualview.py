@@ -35,9 +35,7 @@ class DualView(FeatureKernelExplainer):
             self.read_variables()
         else:
             model = LinearSVC(multi_class="crammer_singer")
-            self.normalized_samples.to("cpu")
-            self.labels.to("cpu")
-            model.fit(self.normalized_samples,self.labels)
+            model.fit(self.normalized_samples.cpu(),self.labels.cpu())
 
             self.coefficients=torch.tensor(model.alpha_.T,dtype=torch.float,device=self.device)
             self.learned_weight=torch.tensor(model.coef_,dtype=torch.float, device=self.device)
