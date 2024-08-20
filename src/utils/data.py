@@ -175,7 +175,7 @@ class MarkDataset(Dataset):
             x[1:] = torch.zeros_like(x[1:]) * mask + x[1:] * (1 - mask)
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
-        return self.dataset.transform(to_pil_image(x))
+        return self.dataset.transform(x)
 
 
 class GroupLabelDataset(Dataset):
