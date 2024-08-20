@@ -257,14 +257,14 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         os.makedirs(save_dir,exist_ok=True)
     for e in range(epochs):
         y_true = torch.empty(0, device=device)
-        y_out = torch.empty((0, num_classes), device=device)
+        y_out = torch.empty((0, num_classes_model), device=device)
         cum_loss = 0
         cnt = 0
         for inputs, targets in tqdm(iter(loader)):
             inputs = inputs.to(device)
             targets = targets.long()
             if isinstance(loss, BCEWithLogitsLoss):
-                targets = one_hot(targets, num_classes).float()
+                targets = one_hot(targets, num_classes_model).float()
             targets = targets.to(device)
 
         
@@ -316,7 +316,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         learning_rates.append(scheduler.get_lr())
         scheduler.step()
         if (e + 1) % save_each == 0:
-            validation_loss = get_validation_loss(model, valds, loss, num_classes, device)
+            validation_loss = get_validation_loss(model, valds, loss, num_classes_model, device)
             validation_losses.append(validation_loss.detach().cpu())
             validation_epochs.append(e)
             save_dict = {
@@ -345,7 +345,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
 
             print(f"\n\nValidation loss: {validation_loss}\n\n")
             writer.add_scalar('Loss/val', validation_loss, base_epoch + e)
-            valeval = evaluate_model(model=model, device=device, num_classes=num_classes,
+            valeval = evaluate_model(model=model, device=device, num_classes=num_classes_model,
                                      data_root=data_root,
                                      batch_size=batch_size, num_batches_to_process=num_batches_eval,
                                      load_path=model_save_path, dataset_name=dataset_name, dataset_type=dataset_type,
@@ -379,8 +379,12 @@ def evaluate_model(model, device, num_classes, class_groups, data_root, batch_si
                    num_batches_to_process, load_path, dataset_name, dataset_type, validation_size, image_set):
     if not torch.cuda.is_available():
         device="cpu"
+    if dataset_type=="group":
+        num_classes_model=len(class_groups)
+    else: 
+        num_classes_model = num_classes
     if isinstance(model,str):
-        model = load_model(model, dataset_name, num_classes).to(device)
+        model = load_model(model, dataset_name, num_classes_model).to(device)
 
     kwparams = {
         'data_root': data_root,
@@ -403,7 +407,7 @@ def evaluate_model(model, device, num_classes, class_groups, data_root, batch_si
     # classes = ds.all_classes
     model.eval()
     y_true = torch.empty(0, device=device)
-    y_out = torch.empty((0, num_classes), device=device)
+    y_out = torch.empty((0, num_classes_model), device=device)
 
     for i, (inputs, targets) in enumerate(tqdm(iter(loader), total=min(num_batches_to_process, len(loader)))):
         inputs = inputs.to(device)
