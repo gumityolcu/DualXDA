@@ -23,6 +23,12 @@ class ResNetWrapper(torch.nn.Module):
     def forward(self, x):
         x=self.features(x)
         return self.classifier(x)
+
+    def influence_named_parameters(self):
+       return [("classifier.weight", self.classifier.weight)]
+
+    def sim_parameters(self):
+        return self.parameters()
     
 def load_model(model_name, dataset_name, num_classes):
     if dataset_name=="MNIST":
