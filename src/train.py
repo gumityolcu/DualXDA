@@ -345,7 +345,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
 
             print(f"\n\nValidation loss: {validation_loss}\n\n")
             writer.add_scalar('Loss/val', validation_loss, base_epoch + e)
-            valeval = evaluate_model(model=model, device=device, num_classes=num_classes_model,
+            valeval = evaluate_model(model=model, device=device, num_classes=num_classes,
                                      data_root=data_root,
                                      batch_size=batch_size, num_batches_to_process=num_batches_eval,
                                      load_path=model_save_path, dataset_name=dataset_name, dataset_type=dataset_type,
