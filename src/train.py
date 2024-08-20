@@ -182,8 +182,8 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     if not torch.cuda.is_available():
         device="cpu"
     if dataset_type=="group":
-        num_classes=len(class_groups)
-    model = load_model(model_name, dataset_name, num_classes).to(device)
+        num_classes_grouped=len(class_groups)
+    model = load_model(model_name, dataset_name, num_classes_grouped).to(device)
     tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
     tensorboarddir = os.path.join(save_dir, tensorboarddir)
     writer = SummaryWriter(tensorboarddir)
@@ -386,7 +386,8 @@ def evaluate_model(model, device, num_classes, class_groups, data_root, batch_si
         'class_groups': class_groups,
         'validation_size': validation_size,
         'only_train': True,
-        'transform': None
+        'transform': None,
+        'num_classes': num_classes
     }
     _, ds = load_datasets_reduced(dataset_name=dataset_name, dataset_type=dataset_type, kwparams=kwparams)
     if not len(ds) > 0:
