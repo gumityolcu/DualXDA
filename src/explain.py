@@ -14,7 +14,7 @@ def load_explainer(xai_method, model_path, save_dir, dataset_name):
     if_params={
         "MNIST": {'depth': 50, 'repeat': 1200},
         "CIFAR": {'depth': 50, 'repeat': 1000},
-        "AwA": {'depth': 50, 'repeat': 500}
+        "AWA": {'depth': 50, 'repeat': 500}
     }
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": save_dir}),
