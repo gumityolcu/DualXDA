@@ -28,7 +28,7 @@ class ResNetWrapper(torch.nn.Module):
        return [("classifier.weight", self.classifier.weight)]
 
     def sim_parameters(self):
-        return self.parameters()
+        return self.resnet.parameters()
     
 def load_model(model_name, dataset_name, num_classes):
     if dataset_name=="MNIST":
