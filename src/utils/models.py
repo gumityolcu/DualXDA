@@ -5,7 +5,7 @@ import tqdm
 
 class ResNetWrapper(torch.nn.Module):
     def __init__(self, module, output_dim):
-        super().__init__()
+        super(ResNetWrapper, self).__init__()
         self.resnet=module
         self.classifier=torch.nn.Linear(in_features=module.fc.in_features, out_features=output_dim, bias=True)
         seq_array=[
@@ -28,7 +28,7 @@ class ResNetWrapper(torch.nn.Module):
        return [("classifier.weight", self.classifier.weight)]
 
     def sim_parameters(self):
-        return self.resnet.parameters()
+        return self.parameters()
     
 def load_model(model_name, dataset_name, num_classes):
     if dataset_name=="MNIST":
