@@ -36,6 +36,10 @@ def explain_model(model_name, model_path, device, class_groups,
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+    if dataset_type=="group":
+        num_classes_model=len(class_groups)
+    else: 
+        num_classes_model = num_classes
     if not torch.cuda.is_available():
         device = "cpu"
     ds_kwargs = {
@@ -50,7 +54,7 @@ def explain_model(model_name, model_path, device, class_groups,
     }
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
-    model = load_model(model_name, dataset_name, num_classes)
+    model = load_model(model_name, dataset_name, num_classes_model)
     checkpoint = torch.load(model_path, map_location=device)
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
