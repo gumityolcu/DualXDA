@@ -137,6 +137,8 @@ class GradDotExplainer(Explainer):
         output.backward()
         cumul_grads = torch.empty(0, device=self.device)
         for par in self.model.sim_parameters():
+            print(par)
+            print(f"Has gradient: {par.grad != None}")
             grad = par.grad.flatten()
             cumul_grads = torch.cat((cumul_grads, grad), 0)
         if self.random_matrix is not None:
