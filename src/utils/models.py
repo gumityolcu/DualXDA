@@ -28,7 +28,6 @@ class ResNetWrapper(torch.nn.Module):
        return [("classifier.weight", self.classifier.weight)]
 
     def sim_parameters(self):
-        self.parameters().requires_grad = True
         return self.parameters()
     
 def load_model(model_name, dataset_name, num_classes):
