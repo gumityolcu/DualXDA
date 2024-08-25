@@ -56,6 +56,12 @@ def explain_model(model_name, model_path, device, class_groups,
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes_model)
     checkpoint = torch.load(model_path, map_location=device)
+    #get rid of model.resnet
+    checkpoint["model_state"]={
+        key:value for key, value in checkpoint["model_state"].items()
+     if "resnet" not in key
+     }
+    
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()

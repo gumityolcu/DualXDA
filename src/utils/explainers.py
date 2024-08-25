@@ -128,8 +128,8 @@ class GradDotExplainer(Explainer):
 
     def get_param_grad(self, x, index):
         x = x.to(self.device)
-        out = self.model(x[None, :, :])
         self.model.zero_grad()
+        out = self.model(x[None, :, :])
         if self.loss:
             output=torch.nn.functional.cross_entropy(out,torch.tensor([index],device=self.device))
         else:
@@ -137,8 +137,6 @@ class GradDotExplainer(Explainer):
         output.backward()
         cumul_grads = torch.empty(0, device=self.device)
         for par in self.model.parameters():
-            print(par)
-            print(f"Has gradient: {par.grad != None}")
             grad = par.grad.flatten()
             cumul_grads = torch.cat((cumul_grads, grad), 0)
         if self.random_matrix is not None:
