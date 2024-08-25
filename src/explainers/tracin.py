@@ -18,7 +18,7 @@ class TracInExplainer(Explainer):
 
         for i, ckpt in enumerate(ckpt_files):
             modelcopy=deepcopy(model)
-            checkpoint=torch.load(ckpt)
+            checkpoint=torch.load(ckpt, map_location=device)
             checkpoint = clear_resnet_from_checkpoints(checkpoint)
             modelcopy.load_state_dict(checkpoint["model_state"])
             dir_path=os.path.join(save_dir,f"_{i}")
