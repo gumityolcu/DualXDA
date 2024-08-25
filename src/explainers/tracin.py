@@ -6,6 +6,7 @@ from math import sqrt
 from tqdm import tqdm
 from utils.explainers import Explainer, GradDotExplainer
 from copy import deepcopy
+from utils.models import clear_resnet_from_checkpoints
 
 class TracInExplainer(Explainer):
     name="TracInExplainer"
@@ -18,6 +19,7 @@ class TracInExplainer(Explainer):
         for i, ckpt in enumerate(ckpt_files):
             modelcopy=deepcopy(model)
             checkpoint=torch.load(ckpt)
+            checkpoint = clear_resnet_from_checkpoints(checkpoint)
             modelcopy.load_state_dict(checkpoint["model_state"])
             dir_path=os.path.join(save_dir,f"_{i}")
             os.makedirs(dir_path,exist_ok=True)

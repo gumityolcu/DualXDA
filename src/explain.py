@@ -4,7 +4,7 @@ from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
 from explainers import TRAK, DualView, RepresenterPointsExplainer, InfluenceFunctionExplainer, TracInExplainer
 from utils.data import load_datasets_reduced
-from utils.models import compute_accuracy, load_model
+from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
 import logging
 import os
@@ -57,10 +57,7 @@ def explain_model(model_name, model_path, device, class_groups,
     model = load_model(model_name, dataset_name, num_classes_model)
     checkpoint = torch.load(model_path, map_location=device)
     #get rid of model.resnet
-    checkpoint["model_state"]={
-        key:value for key, value in checkpoint["model_state"].items()
-     if "resnet" not in key
-     }
+    checkpoint=clear_resnet_from_checkpoints(checkpoint)
     
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)

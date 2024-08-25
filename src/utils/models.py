@@ -3,6 +3,12 @@ from models import BasicConvModel
 from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 import tqdm
 
+def clear_resnet_from_checkpoints(checkpoint):
+    checkpoint["model_state"]={
+            key:value for key, value in checkpoint["model_state"].items()
+         if "resnet" not in key
+        }
+    return checkpoint
 class ResNetWrapper(torch.nn.Module):
     def __init__(self, module, output_dim):
         super(ResNetWrapper, self).__init__()
