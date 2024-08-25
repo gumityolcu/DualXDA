@@ -1,6 +1,15 @@
 accuracy: true
 batch_size: 20
 data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> c99f0bf (configs)
+=======
+batch_size: 16
+data_root: /home/fe/yolcu/Documents/Datasets
+>>>>>>> a0a18a1 (configs)
+>>>>>>> ceb566f (configs)
 dataset_name: CIFAR
 dataset_type: std
 device: cpu
@@ -9,6 +18,7 @@ model_name: resnet18
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/std/CIFAR_resnet18_189
 num_batches_per_file: 1
 num_classes: 10
@@ -17,26 +27,42 @@ save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/resn
 =======
 =======
 >>>>>>> b93da7a (fix resnet gradient based explainers bug)
+<<<<<<< HEAD
 >>>>>>> 7d3fe57 (fix resnet gradient based explainers bug)
+=======
+=======
+>>>>>>> a0a18a1 (configs)
+>>>>>>> ceb566f (configs)
 model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/std/CIFAR_resnet18
 num_batches_per_file: 1
 num_classes: 10
 num_files: 1
 save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/graddot
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> ceb566f (configs)
 <<<<<<< HEAD
 >>>>>>> c99f0bf (configs)
 =======
 =======
+=======
+>>>>>>> a0a18a1 (configs)
 model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/std/CIFAR_resnet18_189
 num_batches_per_file: 1
 num_classes: 10
 num_files: 1
 save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/resnet18_std/graddot
+<<<<<<< HEAD
 >>>>>>> ae35070 (fix resnet gradient based explainers bug)
 >>>>>>> b93da7a (fix resnet gradient based explainers bug)
+<<<<<<< HEAD
 >>>>>>> 7d3fe57 (fix resnet gradient based explainers bug)
+=======
+=======
+>>>>>>> a0a18a1 (configs)
+>>>>>>> ceb566f (configs)
 start_file: 0
 validation_size: 2000
 xai_method: graddot
