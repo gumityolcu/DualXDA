@@ -1,0 +1,15 @@
+accuracy: true
+batch_size: 20
+data_root: /mnt/dataset/
+dataset_name: AWA
+dataset_type: std
+device: cuda
+model_name: resnet50
+model_path: /mnt/checkpoints/AWA/std/AWA_resnet50_189
+num_batches_per_file: 1
+num_classes: 50
+num_files: 1
+save_dir: /mnt/outputs/
+start_file: 82
+validation_size: 2000
+xai_method: tracin

@@ -1,0 +1,15 @@
+accuracy: true
+batch_size: 20
+data_root: /mnt/dataset/
+dataset_name: MNIST
+dataset_type: switched
+device: cuda
+model_name: basic_conv
+model_path: /mnt/checkpoints/MNIST/switched/MNIST_basic_conv_189
+num_batches_per_file: 1
+num_classes: 10
+num_files: 1
+save_dir: /mnt/outputs/
+start_file: 43
+validation_size: 2000
+xai_method: trak
