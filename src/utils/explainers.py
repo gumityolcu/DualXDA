@@ -75,7 +75,7 @@ class GradDotExplainer(Explainer):
         super().__init__(model,dataset,device)
         self.loss=loss
         self.number_of_params=0
-        for p in list(self.model.sim_parameters()):
+        for p in list(self.model.parameters()):
             nn = 1
             for s in list(p.size()):
                 nn = nn * s
@@ -136,7 +136,7 @@ class GradDotExplainer(Explainer):
             output=out[0][index]
         output.backward()
         cumul_grads = torch.empty(0, device=self.device)
-        for par in self.model.sim_parameters():
+        for par in self.model.parameters():
             print(par)
             print(f"Has gradient: {par.grad != None}")
             grad = par.grad.flatten()

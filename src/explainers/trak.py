@@ -13,7 +13,7 @@ class TRAK(Explainer):
         self.batch_size=batch_size
         self.number_of_params=0
         self.dir=dir
-        for p in list(self.model.sim_parameters()):
+        for p in list(self.model.parameters()):
             nn = 1
             for s in list(p.size()):
                 nn = nn * s
