@@ -28,7 +28,13 @@ class TRAK(Explainer):
         self.traker.load_checkpoint(self.model.state_dict(),model_id=0)
         for (i,(x,y)) in enumerate(iter(ld)):
             batch=x.to(self.device), y.to(self.device)
-            self.traker.featurize(batch=batch,inds=torch.tensor([i*self.batch_size+j for j in range(min(self.batch_size,len(self.dataset)))]))
+            self.traker.featurize(
+                batch=batch,
+                inds = torch.tensor(
+                    [
+                        i*self.batch_size+j
+                                for j in range(min(self.batch_size,len(self.dataset)-i*self.batch_size))
+                     ]))
         self.traker.finalize_features()
 
     def explain(self, x, xpl_targets):
