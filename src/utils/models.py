@@ -6,10 +6,10 @@ import tqdm
 class ResNetWrapper(torch.nn.Module):
     def __init__(self, module, output_dim):
         super(ResNetWrapper, self).__init__()
-        self.resnet=module
+        print(module)
         self.classifier=torch.nn.Linear(in_features=module.fc.in_features, out_features=output_dim, bias=True)
         seq_array=[
-            torch.nn.Conv2d(3,module.bn1.num_features,kernel_size=3,padding=2,stride=1),
+            torch.nn.Conv2d(3, module.bn1.num_features,kernel_size=3,padding=2,stride=1),
             module.bn1,
             module.relu,
             module.maxpool,
