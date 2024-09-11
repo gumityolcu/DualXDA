@@ -18,11 +18,11 @@ def load_explainer(xai_method, model_path, save_dir, dataset_name, dataset_type)
     }
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": save_dir}),
-        'trak': (TRAK, {'proj_dim': 512, "dir":save_dir, "ds_name": dataset_name, "ds_type": dataset_type}),
+        'trak': (TRAK, {'proj_dim': 512, "dir":save_dir}),
         'dualview': (DualView, {"dir": save_dir}),
         'graddot': (GradDotExplainer, {"dir":save_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
         'gradcos': (GradCosExplainer, {"dir":save_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':save_dir, 'dimensions':1}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':save_dir, 'dimensions':1, "ds_name": dataset_name, "ds_type": dataset_type}),
         'influence': (InfluenceFunctionExplainer, if_params[dataset_name])
     }
     return explainers[xai_method]
