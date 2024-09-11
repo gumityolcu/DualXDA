@@ -70,7 +70,7 @@ class FeatureKernelExplainer(Explainer):
 
 class GradDotExplainer(Explainer):
     name="GradDotExplainer"
-    def __init__(self,model,dataset,dir,dimensions, loss=False, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self,model,dataset,dir,dimensions, ds_name, ds_type, loss=False, device="cuda" if torch.cuda.is_available() else "cpu"):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
         self.loss=loss
@@ -87,25 +87,25 @@ class GradDotExplainer(Explainer):
         self.dimensions=dimensions
         self.random_matrix=None
         self.train_grads=None
-
-
+        self.ds_name = ds_name
+        self.ds_type = ds_type
 
     def train(self):
         t0=time()
+        file_path_random_matrix = f'../src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}'
         if self.dimensions:
-            file_path=os.path.join(self.dir,"random_matrix_tensor")
-            if os.path.isfile(file_path):
-                self.random_matrix=torch.load(file_path,map_location=self.device)
+            if os.path.isfile(file_path_random_matrix):
+                self.random_matrix=torch.load(file_path_random_matrix, map_location=self.device)
             else:
                 self.random_matrix=self.make_random_matrix()
-                torch.save(self.random_matrix,file_path)
+                torch.save(self.random_matrix, file_path_random_matrix)
 
-        file_path=os.path.join(self.dir,"train_grads_tensor")
-        if os.path.isfile(file_path):
-            self.train_grads=torch.load(file_path,map_location=self.device)
+        file_path_train_grads = f'../src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}' if torch.cuda.is_available() else f'/mnt/outputs/train_grads_{self.ds_name}_{self.ds_type}'
+        if os.path.isfile(file_path_train_grads):
+            self.train_grads=torch.load(file_path_train_grads,map_location=self.device)
         else:
             self.train_grads=self.make_train_grads()
-            torch.save(self.train_grads,file_path)
+            torch.save(self.train_grads, file_path_train_grads)
         return time()-t0
 
     def make_random_matrix(self):
