@@ -92,16 +92,18 @@ class GradDotExplainer(Explainer):
 
     def train(self):
         t0=time()
-        file_path_random_matrix = f'../src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}'
+        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}'
         if self.dimensions:
             if os.path.isfile(file_path_random_matrix):
+                print("Random matrix found.")
                 self.random_matrix=torch.load(file_path_random_matrix, map_location=self.device)
             else:
                 self.random_matrix=self.make_random_matrix()
                 torch.save(self.random_matrix, file_path_random_matrix)
 
-        file_path_train_grads = f'../src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}' if torch.cuda.is_available() else f'/mnt/outputs/train_grads_{self.ds_name}_{self.ds_type}'
+        file_path_train_grads = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/outputs/train_grads_{self.ds_name}_{self.ds_type}'
         if os.path.isfile(file_path_train_grads):
+            print("Train grads found.")
             self.train_grads=torch.load(file_path_train_grads,map_location=self.device)
         else:
             self.train_grads=self.make_train_grads()
