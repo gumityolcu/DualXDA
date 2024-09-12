@@ -93,7 +93,7 @@ class GradDotExplainer(Explainer):
 
     def train(self):
         t0=time()
-        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/mnt/output/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
+        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
         #f'/opt/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
         if self.dimensions:
             if os.path.isfile(file_path_random_matrix):
@@ -103,7 +103,7 @@ class GradDotExplainer(Explainer):
                 self.random_matrix=self.make_random_matrix()
                 torch.save(self.random_matrix, file_path_random_matrix)
 
-        file_path_train_grads = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/mnt/output/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
+        file_path_train_grads = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/mnt/outputs/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
         #f'/opt/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
         if os.path.isfile(file_path_train_grads):
             print("Train grads found.")
