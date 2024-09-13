@@ -17,7 +17,6 @@ class TracInExplainer(Explainer):
         ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if "best" not in f and not os.path.isdir(os.path.join(ckpt_dir,f))]
 
         for i, ckpt in enumerate(ckpt_files):
-            print(f"Handling checkpoint number {i}")
             modelcopy=deepcopy(model)
             checkpoint=torch.load(ckpt, map_location=device)
             checkpoint = clear_resnet_from_checkpoints(checkpoint)
@@ -25,7 +24,6 @@ class TracInExplainer(Explainer):
             dir_path=os.path.join(save_dir,f"_{i}")
             os.makedirs(dir_path,exist_ok=True)
             explainers.append((checkpoint["optimizer_state"]["param_groups"][0]["lr"],GradDotExplainer(modelcopy,dataset, dir_path, dimensions, ds_name, ds_type, cp_nr=i, loss=True, device=device)))
-            torch.cuda.empty_cache()
         return explainers
 
     def __init__(self,model,dataset, dir, ckpt_dir, dimensions, ds_name, ds_type, device="cuda" if torch.cuda.is_available() else "cpu"):
@@ -35,8 +33,10 @@ class TracInExplainer(Explainer):
         self.explainers=TracInExplainer.load_explainers(model,dataset, ds_name, ds_type, dir, ckpt_dir, dimensions,device)
 
     def train(self):
-        for _, x in self.explainers:
+        for i, (_, x) in enumerate(self.explainers):
+            print(f"Handling checkpoint number {i}")
             x.train() 
+            torch.cuda.empty_cache()
     
     def explain(self, x, xpl_targets):
         attr=torch.zeros((x.shape[0], len(self.dataset)),device=self.device)
