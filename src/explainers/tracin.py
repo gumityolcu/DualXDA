@@ -32,6 +32,8 @@ class TracInExplainer(Explainer):
         self.dataset=dataset
         self.explainers=TracInExplainer.load_explainers(model,dataset, ds_name, ds_type, dir, ckpt_dir, dimensions,device)
 
+    # Old version: Created memory problems for AWA and ResNet-50
+    '''
     def train(self):
         for i, (_, x) in enumerate(self.explainers):
             print(f"Handling checkpoint number {i}")
@@ -43,4 +45,18 @@ class TracInExplainer(Explainer):
         for rate,xplainer in self.explainers:
             attr=attr+rate*xplainer.explain(x,xpl_targets)
         return attr/len(self.explainers)
+    '''
             
+    def train(self):
+        pass       
+    
+    def explain(self, x, xpl_targets):
+        attr=torch.zeros((x.shape[0], len(self.dataset)),device=self.device)
+        nr_explainers = len(self.explainers)
+        for i, (rate, xplainer) in enumerate(self.explainers):
+            print(f"Handling checkpoint number {i}")
+            xplainer.train()
+            attr=attr+rate*xplainer.explain(x,xpl_targets) 
+            del xplainer
+            torch.cuda.empty_cache()
+        return attr/nr_explainers
