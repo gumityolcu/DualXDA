@@ -31,8 +31,8 @@ class TracInExplainer(Explainer):
         super().__init__(model,dataset,device)
         self.dataset=dataset
 
-        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/dataset/dualview_random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}'
-        save_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}'
+        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{ds_name}_{ds_type}' if not torch.cuda.is_available() else f'/mnt/dataset/dualview_random_matrix_dim128/random_matrix_{ds_name}_{ds_type}'
+        save_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{ds_name}_{ds_type}' if not torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{ds_name}_{ds_type}'
         if os.path.isfile(file_path_random_matrix):
             print("Random matrix found.")
             self.random_matrix=torch.load(file_path_random_matrix, map_location=self.device)
