@@ -93,26 +93,26 @@ class GradDotExplainer(Explainer):
 
     def train(self):
         t0=time()
-        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/opt/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
-        #f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
-        #f'/opt/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
+        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/dataset/dualview_random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}'
+        save_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}'
         if self.dimensions:
             if os.path.isfile(file_path_random_matrix):
                 print("Random matrix found.")
                 self.random_matrix=torch.load(file_path_random_matrix, map_location=self.device)
+                print('Random matrix dimensions:', self.random_matrix.shape)
             else:
                 self.random_matrix=self.make_random_matrix()
-                torch.save(self.random_matrix, file_path_random_matrix)
+                torch.save(self.random_matrix, save_path_random_matrix)
 
-        file_path_train_grads = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/opt/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
-        #f'/mnt/outputs/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
-        #f'/opt/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
+        file_path_train_grads = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/mnt/dataset/dualview_random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
+        save_path_train_grads = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/mnt/outputs/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
         if os.path.isfile(file_path_train_grads):
             print("Train grads found.")
-            self.train_grads=torch.load(file_path_train_grads,map_location=self.device)
+            self.train_grads=torch.load(file_path_train_grads, map_location=self.device)
+            print('Train grads dimensions:', self.train_grads.shape)
         else:
             self.train_grads=self.make_train_grads()
-            torch.save(self.train_grads, file_path_train_grads)
+            torch.save(self.train_grads, save_path_train_grads)
         return time()-t0
 
     def make_random_matrix(self):

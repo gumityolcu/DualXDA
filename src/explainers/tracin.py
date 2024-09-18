@@ -46,7 +46,8 @@ class TracInExplainer(Explainer):
             attr=attr+rate*xplainer.explain(x,xpl_targets)
         return attr/len(self.explainers)
     '''
-            
+
+    # New version: For every checkpoint creates an explainer in load_explainers, then handles and afterwards deletes them one by one 
     def train(self):
         pass       
     
