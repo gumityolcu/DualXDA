@@ -74,7 +74,7 @@ class CorruptLabelDataset(Dataset):
         y = y_true
         if self.dataset.split == "train":
             if item in self.corrupt_samples:
-                y = int(self.corrupt_labels[torch.squeeze((self.corrupt_samples == item).nonzero())])
+                y = torch.tensor(self.corrupt_labels[torch.squeeze((self.corrupt_samples == item).nonzero())])
         return x, (y, y_true)
 
 
