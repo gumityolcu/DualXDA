@@ -11,7 +11,7 @@ from utils.models import clear_resnet_from_checkpoints
 class TracInExplainer(Explainer):
     name="TracInExplainer"
     @staticmethod
-    def load_explainers(model, dataset, ds_name, ds_type, save_dir, ckpt_dir, dimensions, device):
+    def load_explainers(model, dataset, ds_name, ds_type, save_dir, ckpt_dir, dimensions, device, random_matrix):
         explainers=[]
         assert os.path.isdir(ckpt_dir), f"Given checkpoint path {ckpt_dir} is not a directory."
         ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if "best" not in f and not os.path.isdir(os.path.join(ckpt_dir,f))]
@@ -23,14 +23,25 @@ class TracInExplainer(Explainer):
             modelcopy.load_state_dict(checkpoint["model_state"])
             dir_path=os.path.join(save_dir,f"_{i}")
             os.makedirs(dir_path,exist_ok=True)
-            explainers.append((checkpoint["optimizer_state"]["param_groups"][0]["lr"],GradDotExplainer(modelcopy,dataset, dir_path, dimensions, ds_name, ds_type, cp_nr=i, loss=True, device=device)))
+            explainers.append((checkpoint["optimizer_state"]["param_groups"][0]["lr"],GradDotExplainer(modelcopy, dataset, dir_path, dimensions, ds_name, ds_type, cp_nr=i, loss=True, device=device, random_matrix=random_matrix)))
         return explainers
 
     def __init__(self,model,dataset, dir, ckpt_dir, dimensions, ds_name, ds_type, device="cuda" if torch.cuda.is_available() else "cpu"):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
         self.dataset=dataset
-        self.explainers=TracInExplainer.load_explainers(model,dataset, ds_name, ds_type, dir, ckpt_dir, dimensions,device)
+
+        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/dataset/dualview_random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}'
+        save_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}'
+        if os.path.isfile(file_path_random_matrix):
+            print("Random matrix found.")
+            self.random_matrix=torch.load(file_path_random_matrix, map_location=self.device)
+            print('Random matrix dimensions:', self.random_matrix.shape)
+        else:
+            self.random_matrix=self.make_random_matrix()
+            torch.save(self.random_matrix, save_path_random_matrix)
+
+        self.explainers=TracInExplainer.load_explainers(model,dataset, ds_name, ds_type, dir, ckpt_dir, dimensions, device, self.random_matrix)
 
     # Old version: Created memory problems for AWA and ResNet-50
     '''
@@ -58,6 +69,4 @@ class TracInExplainer(Explainer):
             print(f"Handling checkpoint number {i}")
             xplainer.train()
             attr=attr+rate*xplainer.explain(x,xpl_targets) 
-            del xplainer
-            torch.cuda.empty_cache()
         return attr/nr_explainers

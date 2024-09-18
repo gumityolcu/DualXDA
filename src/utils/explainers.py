@@ -70,7 +70,7 @@ class FeatureKernelExplainer(Explainer):
 
 class GradDotExplainer(Explainer):
     name="GradDotExplainer"
-    def __init__(self,model,dataset,dir,dimensions, ds_name, ds_type, cp_nr=None, loss=False, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self,model,dataset,dir,dimensions, ds_name, ds_type, cp_nr=None, loss=False, device="cuda" if torch.cuda.is_available() else "cpu", random_matrix = None):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
         self.loss=loss
@@ -90,12 +90,13 @@ class GradDotExplainer(Explainer):
         self.ds_name = ds_name
         self.ds_type = ds_type
         self.cp_nr = cp_nr
+        self.random_matrix = random_matrix #can load random matrix directly for tracin
 
     def train(self):
         t0=time()
         file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/dataset/dualview_random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}'
         save_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}'
-        if self.dimensions:
+        if self.dimensions and self.random_matrix == None:
             if os.path.isfile(file_path_random_matrix):
                 print("Random matrix found.")
                 self.random_matrix=torch.load(file_path_random_matrix, map_location=self.device)
