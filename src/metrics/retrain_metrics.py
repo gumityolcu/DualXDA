@@ -377,7 +377,7 @@ class LinearDatamodelingScore(RetrainMetric):
         loss_array = np.empty((xpl.shape[0], self.samples))
         loss = CrossEntropyLoss()
         for i in range(self.samples):
-            cur_indices=self.sample_indices[i]
+            cur_indices=self.sample_indices[i].cpu()
             attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach().numpy()
             ds = RestrictedDataset(self.train, cur_indices)
             retrained_model = self.retrain(ds)
