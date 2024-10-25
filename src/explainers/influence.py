@@ -216,6 +216,18 @@ class BaseInfluenceModule(abc.ABC):
             s = grad_z @ stest
             scores.append(s)
         return torch.tensor(scores) / len(self.train_loader.dataset)
+    
+    def self_influences(
+            self,
+    ) -> torch.Tensor:
+        scores = []
+        train_grad_loader = self._loss_grad_loader_wrapper(batch_size=1, subset=None, train=True)
+        train_sample_loader = self._loader_wrapper(train=True, batch_size=1, subset=None)
+        for ((x, targets),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
+            stest = self.stest(x,targets)
+            s = grad_z @ stest
+            scores.append(s)
+        return torch.tensor(scores) / len(self.train_loader.dataset)
 
     # ====================================================
     # Private helper functions
@@ -338,6 +350,7 @@ class BaseInfluenceModule(abc.ABC):
         for grad_batch in self._sample_loss_grad_loader_wrapper(x,targets,train):
             grad = grad + grad_batch * x.shape[0]
         return grad / x.shape[0]
+    
     def _hvp_at_batch(self, batch, flat_params, vec, gnh):
 
         def f(theta_):
