@@ -34,9 +34,7 @@ class FeatureKernelExplainer(Explainer):
     def __init__(self, model, dataset, device, dir=None,normalize=False):
         super().__init__(model, dataset, device)
         # self.sanity_check = sanity_check
-        if dir is not None:
-            if not os.path.isdir(dir):
-                dir = None
+        os.makedirs(dir, exist_ok=True)
         feature_ds = FeatureDataset(self.model, dataset, device, dir)
         self.coefficients = None  # the coefficients for each training datapoint x class
         self.learned_weights = None

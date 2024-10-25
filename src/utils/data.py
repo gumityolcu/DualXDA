@@ -220,9 +220,9 @@ class FeatureDataset(Dataset):
         self.labels = torch.empty(size=(0,), device=self.device)
         loader = torch.utils.data.DataLoader(dataset, batch_size=32)
         super().__init__()
-        if os.path.exists(os.path.join(dir,"samples_tensor")):
-            self.samples = torch.load(os.path.join(dir, "samples_tensor"), map_location=self.device)
-            self.labels = torch.load(os.path.join(dir, "labels_tensor"), map_location=self.device)
+        if os.path.exists(os.path.join(dir,"samples")):
+            self.samples = torch.load(os.path.join(dir, "samples"), map_location=self.device)
+            self.labels = torch.load(os.path.join(dir, "labels"), map_location=self.device)
         else:
             for x, y in tqdm(iter(loader)):
                 x = x.to(self.device)

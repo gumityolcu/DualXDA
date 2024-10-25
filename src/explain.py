@@ -10,18 +10,18 @@ import logging
 import os
 
 
-def load_explainer(xai_method, model_path, cache_dir, dataset_name, dataset_type):
+def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
     if_params={
         "MNIST": {'depth': 50, 'repeat': 1200},
         "CIFAR": {'depth': 50, 'repeat': 1000},
         "AWA": {'depth': 50, 'repeat': 500}
     }
     explainers = {
-        'representer': (RepresenterPointsExplainer, {"dir": cache_dir}),
+        'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
         'trak': (TRAK, {'proj_dim': 512, "dir":cache_dir}),
-        'dualview': (DualView, {"dir": cache_dir}),
-        'graddot': (GradDotExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
+        'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
+        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
+        #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128, "ds_name": dataset_name, "ds_type": dataset_type}),
         'influence': (InfluenceFunctionExplainer, if_params[dataset_name])
     }
@@ -30,7 +30,7 @@ def load_explainer(xai_method, model_path, cache_dir, dataset_name, dataset_type
 
 def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
-                  save_dir, cache_dir, validation_size, num_batches_per_file,
+                  save_dir, cache_dir, grad_dir, features_dir, validation_size, num_batches_per_file,
                   start_file, num_files, xai_method,
                   num_classes, C_margin, testsplit):
     # (explainer_class, kwargs)
@@ -65,7 +65,7 @@ def explain_model(model_name, model_path, device, class_groups,
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
-    explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, dataset_name, dataset_type)
+    explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
     if C_margin is not None:
         kwargs["C"] = C_margin
     print(f"Generating explanations with {explainer_cls.name}")
@@ -110,7 +110,9 @@ if __name__ == "__main__":
                   data_root=train_config.get('data_root', None),
                   batch_size=train_config.get('batch_size', None),
                   save_dir=train_config.get('save_dir', None),
-                  cache_dir=train_config.get('cache_dir', train_config.get('save_dir', None)),
+                  cache_dir=train_config.get('cache_dir', None),
+                  grad_dir=train_config.get('grad_dir', None),
+                  features_dir=train_config.get('features_dir', None),
                   validation_size=train_config.get('validation_size', 2000),
                   num_batches_per_file=train_config.get('num_batches_per_file', 10),
                   start_file=train_config.get('start_file', 0),
@@ -118,5 +120,6 @@ if __name__ == "__main__":
                   xai_method=train_config.get('xai_method', None),
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
-                  testsplit=train_config.get('testsplit', "test")
+                  testsplit=train_config.get('testsplit', "test"),
+                  
                   )

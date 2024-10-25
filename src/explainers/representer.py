@@ -87,14 +87,16 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
     name = "RepresenterPointsExplainer"
 
 
-    def __init__(self, model, dataset, device, dir):
-        super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=dir, normalize=False)
+    def __init__(self, model, dataset, device, dir, features_dir):
+        super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=features_dir, normalize=False)
+        self.dir=dir
+        self.features_dir=features_dir
 
     def train(self):
-        if not os.path.isfile(os.path.join(self.dir, "samples")):
-            torch.save(self.normalized_samples, os.path.join(self.dir, "samples"))
-        if not os.path.isfile(os.path.join(self.dir, "labels")):
-            torch.save(self.labels,os.path.join(self.dir, "labels"))
+        if not os.path.isfile(os.path.join(self.features_dir, "samples")):
+            torch.save(self.normalized_samples, os.path.join(self.features_dir, "samples"))
+        if not os.path.isfile(os.path.join(self.features_dir, "labels")):
+            torch.save(self.labels,os.path.join(self.features_dir, "labels"))
         
         if os.path.isfile(os.path.isdir(os.path.join(self.dir,'coefficients'))):
             self.coefficients=torch.load(os.path.join(self.dir,'coefficients'), map_location=self.device)

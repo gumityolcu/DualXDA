@@ -16,15 +16,15 @@ class TracInExplainer(Explainer):
         explainers=[]
         assert os.path.isdir(ckpt_dir), f"Given checkpoint path {ckpt_dir} is not a directory."
         ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if "best" not in f and not os.path.isdir(os.path.join(ckpt_dir,f))]
-        epochs=sorted([int(f.split("_")[-1]) for f in ckpt_files])
-        last_epoch=epochs[-1]
+        best_epoch_seen=False
         for i, ckpt in enumerate(ckpt_files):
             modelcopy=deepcopy(model)
-            epoch=int(ckpt.split("_")[-1])
+            epoch=ckpt.split("_")[-1]
             checkpoint=torch.load(ckpt, map_location=device)
             checkpoint = clear_resnet_from_checkpoints(checkpoint)
             modelcopy.load_state_dict(checkpoint["model_state"])
-            grad_path=os.path.join(dir,f"_{epoch}") if epoch!=last_epoch else dir
+            grad_path=os.path.join(dir,epoch)
+            best_epoch_seen=best_epoch_seen or epoch=="best"
             os.makedirs(grad_path,exist_ok=True)
             mat_path=dir
             explainers.append(
@@ -33,7 +33,8 @@ class TracInExplainer(Explainer):
                     GradDotExplainer(
                         model=modelcopy,
                         dataset=dataset, 
-                        mat_dir=self.dir,
+                        mat_dir=mat_path,
+                        grad_dir=grad_path,
                         dimensions=dimensions,
                         ds_name=ds_name,
                         ds_type=ds_type,
@@ -42,6 +43,7 @@ class TracInExplainer(Explainer):
                         )
                 )
             )
+        assert best_epoch_seen, "No checkpoint with the _best suffix found in checkpoint directory."
         return explainers
 
     def __init__(self,model,dataset, dir, ckpt_dir, dimensions, ds_name, ds_type, device="cuda" if torch.cuda.is_available() else "cpu"):
