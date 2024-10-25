@@ -31,7 +31,7 @@ class Explainer(ABC):
 
 
 class FeatureKernelExplainer(Explainer):
-    def __init__(self, model, dataset, device, dir=None,normalize=True):
+    def __init__(self, model, dataset, device, dir=None,normalize=False):
         super().__init__(model, dataset, device)
         # self.sanity_check = sanity_check
         if dir is not None:
@@ -70,7 +70,7 @@ class FeatureKernelExplainer(Explainer):
 
 class GradDotExplainer(Explainer):
     name="GradDotExplainer"
-    def __init__(self,model,dataset,dir,dimensions, ds_name, ds_type, cp_nr=None, loss=False, device="cuda" if torch.cuda.is_available() else "cpu", random_matrix = None):
+    def __init__(self,model,dataset,mat_dir, grad_dir, dimensions, ds_name, ds_type, cp_nr=None, loss=False, device="cuda" if torch.cuda.is_available() else "cpu"):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
         self.loss=loss
@@ -83,38 +83,36 @@ class GradDotExplainer(Explainer):
         self.dataset = dataset
         self.norms=torch.ones(len(self.dataset),device=self.device)
 
-        self.dir=dir
+        self.mat_dir=mat_dir
+        self.grad_dir=grad_dir
         self.dimensions=dimensions
         self.random_matrix=None
         self.train_grads=None
         self.ds_name = ds_name
         self.ds_type = ds_type
-        self.cp_nr = cp_nr
-        self.random_matrix = random_matrix #can load random matrix directly for tracin
 
     def train(self):
         t0=time()
-        file_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/dataset/dualview_random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}'
-        save_path_random_matrix = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/random_matrix_{self.ds_name}_{self.ds_type}' if not torch.cuda.is_available() else f'/mnt/outputs/random_matrix_{self.ds_name}_{self.ds_type}'
-        if self.dimensions and self.random_matrix == None:
-            if os.path.isfile(file_path_random_matrix):
-                print("Random matrix found.")
-                self.random_matrix=torch.load(file_path_random_matrix, map_location=self.device)
-                print('Random matrix dimensions:', self.random_matrix.shape)
-            else:
-                self.random_matrix=self.make_random_matrix()
-                torch.save(self.random_matrix, save_path_random_matrix)
+        rand_mat_path=os.path.join(self.mat_dir, "random_matrix")
+        if os.path.isfile(rand_mat_path):
+            print("Random matrix found.")
+            self.random_matrix=torch.load(rand_mat_path, map_location=self.device)
+            assert self.dimensions==self.random_matrix.shape[0], f"Cached random matrix has dimension {self.random_matrix.shape[0]} but expected {self.dimensions}"
+            print('Random matrix dimensions:', self.random_matrix.shape)
+        else:
+            self.random_matrix=self.make_random_matrix()
+            torch.save(self.random_matrix, rand_mat_path)
+        
+        grads_path=os.path.join(self.grad_dir, "grads")
 
-        file_path_train_grads = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/mnt/dataset/dualview_random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
-        save_path_train_grads = f'C:/Users/weckbecker/DualView-wip/src/explainers/random_matrix_dim128/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}' if not torch.cuda.is_available() else f'/mnt/outputs/train_grads_{self.ds_name}_{self.ds_type}{"_cp" if self.cp_nr != None else ""}{self.cp_nr if self.cp_nr != None else ""}'
-        if os.path.isfile(file_path_train_grads):
+        if os.path.isfile(grads_path):
             print("Train grads found.")
-            self.train_grads=torch.load(file_path_train_grads, map_location=self.device)
+            self.train_grads=torch.load(grads_path, map_location=self.device)
             print('Train grads dimensions:', self.train_grads.shape)
         else:
             self.train_grads=self.make_train_grads()
-            torch.save(self.train_grads, save_path_train_grads)
-        return time()-t0
+            torch.save(self.train_grads, grads_path)
+        return torch.tensor(time()-t0)
 
     def make_random_matrix(self):
         unitvar = torch.randn((self.dimensions,self.number_of_params),device=self.device)
@@ -151,7 +149,7 @@ class GradDotExplainer(Explainer):
             cumul_grads=torch.matmul(self.random_matrix,cumul_grads)
         return cumul_grads
     
-
+# outdated, doesn't use the fancy caching mechanism, just saves everything in the output folder
 class GradCosExplainer(GradDotExplainer):
     name="GradCosExplainer"
     def get_param_grad(self, x, index):
