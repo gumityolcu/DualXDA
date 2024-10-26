@@ -19,6 +19,8 @@ class DualView(FeatureKernelExplainer):
             dir=dir[:-1]
         self.dir=dir
         self.features_dir=features_dir
+        os.makedirs(self.dir, exist_ok=True)
+        os.makedirs(self.features_dir, exist_ok=True)
 
     def read_variables(self):
         self.learned_weight = torch.load(os.path.join(self.dir,"weights"), map_location=self.device).to(torch.float)

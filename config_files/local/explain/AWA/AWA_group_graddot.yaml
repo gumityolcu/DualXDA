@@ -1,6 +1,6 @@
 accuracy: true
 batch_size: 20
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/AWA/group/tracin
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/tracin
 class_groups:
 - - 0
   - 1

@@ -1,7 +1,7 @@
 C: 0.1
 accuracy: true
 batch_size: 200
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/AWA/std/dualview_0.1
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/std/dualview_0.1
 data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
 dataset_name: AWA
 dataset_type: std

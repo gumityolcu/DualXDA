@@ -1,6 +1,6 @@
 accuracy: true
 batch_size: 20
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/MNIST/group/trak
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/group/trak
 class_groups:
 - - 0
   - 1

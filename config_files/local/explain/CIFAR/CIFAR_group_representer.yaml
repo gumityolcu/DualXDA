@@ -1,6 +1,6 @@
 accuracy: true
 batch_size: 20
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/CIFAR/group/representer
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/group/representer
 class_groups:
 - - 0
   - 1

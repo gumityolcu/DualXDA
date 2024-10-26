@@ -52,7 +52,6 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     explanations = torch.empty((0, len(train)), device=device)
     i = 0
     j = start_file
-    print(f"Starting file {j:02d}")
     file_indices = torch.zeros(int(len(test) / batch_size) + 1, dtype=torch.int)
     file_indices[start_file * num_batches_per_file:(start_file + num_files) * num_batches_per_file] = 1
     iter_loader = itertools.compress(test_ld, file_indices)
@@ -71,7 +70,6 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             explanations = torch.empty((0, len(train)), device=device)
             print(f"Finished file {j:02d}")
             j = j + 1
-            print(f"Starting file {j:02d}")
 
     if not i == 0:
         torch.save(explanations, os.path.join(save_dir, f"{explainer_cls.name}_{j:02d}"))

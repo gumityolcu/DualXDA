@@ -1,6 +1,6 @@
 accuracy: true
 batch_size: 20
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/CIFAR/corrupt/gradcos
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/corrupt/gradcos
 data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
 dataset_name: CIFAR
 dataset_type: corrupt

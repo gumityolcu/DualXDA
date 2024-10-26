@@ -1,6 +1,6 @@
 accuracy: true
 batch_size: 20
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/AWA/std/gradcos
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/std/gradcos
 data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
 dataset_name: AWA
 dataset_type: std
