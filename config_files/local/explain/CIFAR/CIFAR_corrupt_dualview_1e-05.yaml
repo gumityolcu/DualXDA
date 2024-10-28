@@ -2,7 +2,7 @@ C: 1.0e-05
 accuracy: true
 batch_size: 200
 cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/corrupt/dualview_1e-05
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
+data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
 dataset_name: CIFAR
 dataset_type: corrupt
 device: cpu

@@ -75,7 +75,7 @@ class CorruptLabelDataset(Dataset):
         if self.dataset.split == "train":
             if item in self.corrupt_samples:
                 y = torch.tensor(self.corrupt_labels[torch.squeeze((self.corrupt_samples == item).nonzero())])
-        return x, (y, y_true)
+        return x, (int(y), y_true)
 
 
 class MarkDataset(Dataset):
@@ -175,7 +175,7 @@ class MarkDataset(Dataset):
             x[1:] = torch.zeros_like(x[1:]) * mask + x[1:] * (1 - mask)
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
-        return self.dataset.transform(x)
+        return self.dataset.transform(x.numpy().transpose(1, 2, 0))
 
 
 class GroupLabelDataset(Dataset):

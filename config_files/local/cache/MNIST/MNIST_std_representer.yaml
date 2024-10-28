@@ -1,7 +1,7 @@
 accuracy: true
 batch_size: 20
 cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/std/representer
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
+data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
 dataset_name: MNIST
 dataset_type: std
 device: cpu

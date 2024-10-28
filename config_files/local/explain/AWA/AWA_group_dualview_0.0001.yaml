@@ -53,7 +53,7 @@ class_groups:
   - 47
 - - 48
   - 49
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
+data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
 dataset_name: AWA
 dataset_type: group
 device: cpu

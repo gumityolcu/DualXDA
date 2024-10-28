@@ -2,7 +2,7 @@ C: 0.01
 accuracy: true
 batch_size: 200
 cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/corrupt/dualview_0.01
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
+data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
 dataset_name: AWA
 dataset_type: corrupt
 device: cpu

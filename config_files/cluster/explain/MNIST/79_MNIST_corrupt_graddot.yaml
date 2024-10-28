@@ -8,7 +8,7 @@ device: cuda
 features_dir: /mnt/cache/MNIST/corrupt/features
 grad_dir: /mnt/cache/MNIST/corrupt/tracin/best
 model_name: basic_conv
-model_path: /mnt/checkpoints/MNIST/corrupt/MNIST_basic_conv
+model_path: /mnt/checkpoints/MNIST/corrupt/MNIST_basic_conv_best
 num_batches_per_file: 1
 num_classes: 10
 num_files: 1
