@@ -24,6 +24,7 @@ class TracInExplainer(Explainer):
             checkpoint = clear_resnet_from_checkpoints(checkpoint)
             modelcopy.load_state_dict(checkpoint["model_state"])
             grad_path=os.path.join(dir,epoch)
+            print(f"epoch being processed: {epoch}")
             best_epoch_seen=best_epoch_seen or epoch=="best"
             os.makedirs(grad_path,exist_ok=True)
             mat_path=dir
