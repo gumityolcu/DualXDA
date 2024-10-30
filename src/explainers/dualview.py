@@ -12,13 +12,14 @@ from tqdm import tqdm
 
 class DualView(FeatureKernelExplainer):
     name = "DualViewExplainer"
-    def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, normalize=False):
+    def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, max_iter=50000, normalize=False):
         super().__init__(model, dataset, device, features_dir, normalize=normalize)
         self.C=C
         if dir[-1]=="\\":
             dir=dir[:-1]
         self.dir=dir
         self.features_dir=features_dir
+        self.max_iter=max_iter
         os.makedirs(self.dir, exist_ok=True)
         os.makedirs(self.features_dir, exist_ok=True)
 
@@ -38,7 +39,7 @@ class DualView(FeatureKernelExplainer):
         if os.path.isfile(os.path.join(self.dir,'weights')) and os.path.isdir(os.path.join(self.dir,'coefficients')):
             self.read_variables()
         else:
-            model = LinearSVC(multi_class="crammer_singer")
+            model = LinearSVC(multi_class="crammer_singer", max_iter=self.max_iter, C=self.C)
             model.fit(self.normalized_samples.cpu(),self.labels.cpu())
 
             self.coefficients=torch.tensor(model.alpha_.T,dtype=torch.float,device=self.device)
