@@ -51,6 +51,7 @@ class TracInExplainer(Explainer):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
         self.dataset=dataset
+        self.dir=dir
         self.explainers=self.load_explainers(model,dataset, ds_name, ds_type, dir, ckpt_dir, dimensions, device)
 
     # Old version: Created memory problems for AWA and ResNet-50
@@ -68,10 +69,15 @@ class TracInExplainer(Explainer):
         return attr/len(self.explainers)
     '''
 
-    # New version: For every checkpoint creates an explainer in load_explainers, then handles and afterwards deletes them one by one 
     def train(self):
-        pass       
-    
+        time=0.
+        for i, (_, x) in enumerate(self.explainers):
+            time=time+x.train() 
+            torch.cuda.empty_cache()
+        self.train_time=time
+        torch.save(self.train_time, os.path.join(self.dir, "train_time"))
+        return self.train_time
+
     def explain(self, x, xpl_targets):
         attr=torch.zeros((x.shape[0], len(self.dataset)),device=self.device)
         nr_explainers = len(self.explainers)

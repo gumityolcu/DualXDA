@@ -107,10 +107,14 @@ class GradDotExplainer(Explainer):
             print("Train grads found.")
             self.train_grads=torch.load(grads_path, map_location=self.device)
             print('Train grads dimensions:', self.train_grads.shape)
+            self.train_time=torch.load(os.path.join(self.grad_dir, "train_time"), map_location=self.device)
         else:
             self.train_grads=self.make_train_grads()
             torch.save(self.train_grads, grads_path)
-        return torch.tensor(time()-t0)
+            print(f"saved grads at {grads_path}")
+            self.train_time=time()-t0
+            torch.save(self.train_time, os.path.join(self.grad_dir, "train_time"))
+        return self.train_time
 
     def make_random_matrix(self):
         unitvar = torch.randn((self.dimensions,self.number_of_params),device=self.device)
