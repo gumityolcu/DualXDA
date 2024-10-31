@@ -1,0 +1,12 @@
+batch_size: 16
+data_root: /mnt/dataset
+dataset_name: MNIST
+dataset_type: switched
+device: cuda
+metric: switched
+model_name: basic_conv
+num_classes: 10
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: gradcos
+xpl_root: /mnt/xpl/MNIST/switched_one_file/gradcos/

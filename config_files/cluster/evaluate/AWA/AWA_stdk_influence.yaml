@@ -1,0 +1,12 @@
+batch_size: 16
+data_root: /mnt/dataset
+dataset_name: AWA
+dataset_type: std
+device: cuda
+metric: stdk
+model_name: resnet50
+num_classes: 50
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: influence
+xpl_root: /mnt/xpl/AWA/std/influence/
