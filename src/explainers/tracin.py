@@ -15,7 +15,7 @@ class TracInExplainer(Explainer):
     def load_explainers(self, model, dataset, ds_name, ds_type, dir, ckpt_dir, dimensions, device):
         explainers=[]
         assert os.path.isdir(ckpt_dir), f"Given checkpoint path {ckpt_dir} is not a directory."
-        ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if "best" not in f and not os.path.isdir(os.path.join(ckpt_dir,f))]
+        ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if not os.path.isdir(os.path.join(ckpt_dir,f))]
         best_epoch_seen=False
         for i, ckpt in enumerate(ckpt_files):
             modelcopy=deepcopy(model)
