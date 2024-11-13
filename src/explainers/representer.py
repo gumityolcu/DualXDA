@@ -87,12 +87,25 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
     name = "RepresenterPointsExplainer"
 
 
-    def __init__(self, model, dataset, device, dir):
-        super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=dir, normalize=False)
+    def __init__(self, model, dataset, device, dir, features_dir):
+        super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=features_dir, normalize=False)
+        self.dir=dir
+        self.features_dir=features_dir
 
     def train(self):
+        if not os.path.isfile(os.path.join(self.features_dir, "samples")):
+            torch.save(self.normalized_samples, os.path.join(self.features_dir, "samples"))
+        if not os.path.isfile(os.path.join(self.features_dir, "labels")):
+            torch.save(self.labels,os.path.join(self.features_dir, "labels"))
+        
+        if os.path.isfile(os.path.isdir(os.path.join(self.dir,'coefficients'))):
+            self.coefficients=torch.load(os.path.join(self.dir,'coefficients'), map_location=self.device)
+            self.learned_weight=torch.load(os.path.join(self.dir,'weights'), map_location=self.device)
+            self.train_time=torch.load(os.path.join(self.dir,'train_time'), map_location=self.device)
+            return self.train_time
+
         t0=time()
-        X=self.samples
+        X=self.normalized_samples
         Y=softmax_torch(self.model.classifier(X), X.shape[0])
         model=softmax(self.model.classifier.weight.data.T,self.device)
         X=X.to("cpu")
@@ -161,5 +174,9 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         print(corr)
         sys.stdout.flush()
         self.coefficients = weight_matrix
+        self.train_time=torch.tensor(elapsed_time)
+        torch.save(self.train_time,os.path.join(self.dir,'train_time'))
+        torch.save(self.learned_weight,os.path.join(self.dir,'weights'))
+        torch.save(self.coefficients,os.path.join(self.dir,'coefficients'))
         #return weight_matrix
         return elapsed_time

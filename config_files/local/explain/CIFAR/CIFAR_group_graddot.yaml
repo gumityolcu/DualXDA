@@ -1,5 +1,6 @@
 accuracy: true
-batch_size: 16
+batch_size: 20
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/group/tracin
 class_groups:
 - - 0
   - 1
@@ -11,16 +12,18 @@ class_groups:
   - 7
 - - 8
   - 9
-data_root: /home/yolcu/Documents/Code/DualView_wip/src/datasets
+data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
 dataset_name: CIFAR
 dataset_type: group
 device: cpu
+features_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/group/features
+grad_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/group/tracin/best
 model_name: resnet18
-model_path: /home/yolcu/Documents/Code/DualView_wip/checkpoints/CIFAR/group/CIFAR_resnet18_189
+model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/group/CIFAR_resnet18_best
 num_batches_per_file: 1
 num_classes: 10
 num_files: 1
-save_dir: /home/yolcu/Documents/Code/DualView_wip/explanations/CIFAR/group/resnet18_group/graddot
-start_file: 0
+save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/group/tracin
+start_file: 99
 validation_size: 2000
 xai_method: graddot

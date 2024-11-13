@@ -1,0 +1,12 @@
+batch_size: 16
+data_root: /mnt/dataset
+dataset_name: CIFAR
+dataset_type: std
+device: cuda
+metric: stdk
+model_name: resnet18
+num_classes: 10
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: trak
+xpl_root: /mnt/xpl/CIFAR/std/trak/

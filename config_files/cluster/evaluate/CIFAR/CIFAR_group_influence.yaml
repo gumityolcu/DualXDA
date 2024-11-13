@@ -1,0 +1,26 @@
+batch_size: 16
+cache_dir: /mnt/cache/CIFAR/group/influence
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: /mnt/dataset
+dataset_name: CIFAR
+dataset_type: group
+device: cuda
+features_dir: /mnt/cache/CIFAR/group/features
+grad_dir: /mnt/cache/CIFAR/group/tracin/best
+metric: groupk
+model_name: resnet18
+num_classes: 10
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: influence
+xpl_root: /mnt/explanations/CIFAR/group/influence/
