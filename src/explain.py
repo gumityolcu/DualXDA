@@ -11,7 +11,7 @@ import os
 
 
 def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
-    if_params={
+    lissa_params={
         "MNIST": {'depth': 50, 'repeat': 1200},
         "CIFAR": {'depth': 50, 'repeat': 1000},
         "AWA": {'depth': 50, 'repeat': 500}
@@ -23,7 +23,8 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'influence': (LiSSAInfluenceFunctionExplainer, if_params[dataset_name])
+        'lissa': (LiSSAInfluenceFunctionExplainer, lissa_params[dataset_name]),
+        'arnoldi': (LiSSAInfluenceFunctionExplainer, lissa_params[dataset_name]),
     }
     return explainers[xai_method]
 
