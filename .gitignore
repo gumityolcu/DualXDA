@@ -1,4 +1,5 @@
-
+# generators
+config_files/*.ipynb
 
 # files created form the repo
 explanations/
