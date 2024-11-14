@@ -1,5 +1,5 @@
 from .dualview import *
 from .representer import *
-from .influence import *
+from .lissa_influence import *
 from .trak import *
 from .tracin import *

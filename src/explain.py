@@ -2,7 +2,7 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, InfluenceFunctionExplainer, TracInExplainer
+from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer
 from utils.data import load_datasets_reduced
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
@@ -23,7 +23,7 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'influence': (InfluenceFunctionExplainer, if_params[dataset_name])
+        'influence': (LiSSAInfluenceFunctionExplainer, if_params[dataset_name])
     }
     return explainers[xai_method]
 
