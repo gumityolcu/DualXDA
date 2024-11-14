@@ -12,9 +12,9 @@ import os
 
 def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
     lissa_params={
-        "MNIST": {'depth': 50, 'repeat': 1200},
-        "CIFAR": {'depth': 50, 'repeat': 1000},
-        "AWA": {'depth': 50, 'repeat': 500}
+        "MNIST": {'depth': 6000, 'repeat': 10},
+        "CIFAR": {'depth': 5000, 'repeat': 10},
+        "AWA": {'depth': 3500, 'repeat': 10}
     }
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
