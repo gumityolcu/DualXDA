@@ -204,7 +204,11 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         self.train()
 
     def train(self):
-        train_time = self.captum_explainer.compute_R()
+        if os.path.exists(os.path.join(self.dir, "R")):
+            self.captum_explainer.R = torch.load(os.path.join(self.dir, "R"))
+        else:
+            train_time = self.captum_explainer.compute_R()
+            torch.save(self.captum_explainer.R, os.path.join(self.dir, "R"))
 
         if os.path.exists(os.path.join(self.dir, "train_time")):
             train_time = torch.load(os.path.join(self.dir, "train_time"))
@@ -219,9 +223,10 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
             hessian_dataset_indices = torch.load(os.path.join(dir, "hessian_dataset_indices"))
         else:
             hessian_dataset_indices = torch.randperm(len(train_dataset))[:hessian_dataset_size]
+            torch.save(hessian_dataset_indices, os.path.join(dir, "hessian_dataset_indices"))
         return torch.utils.data.Subset(train_dataset, hessian_dataset_indices)
 
-    def explain(self, test_tensor, targets):
+    def explain(self, x, xpl_targets):
         """
         Compute influence scores for the test samples.
 
@@ -237,14 +242,14 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         torch.Tensor
             2D Tensor of shape (test_samples, train_dataset_size) containing the influence scores.
         """
-        test_tensor = test_tensor.to(self.device)
+        x = x.to(self.device)
 
-        if isinstance(targets, list):
-            targets = torch.tensor(targets).to(self.device)
+        if isinstance(xpl_targets, list):
+            xpl_targets = torch.tensor(xpl_targets).to(self.device)
         else:
-            targets = targets.to(self.device)
+            xpl_targets = xpl_targets.to(self.device)
 
-        influence_scores = self.captum_explainer.influence(inputs=(test_tensor, targets))
+        influence_scores = self.captum_explainer.influence(inputs=(x, xpl_targets))
         return influence_scores
 
     def self_influence(self, batch_size) -> torch.Tensor:
