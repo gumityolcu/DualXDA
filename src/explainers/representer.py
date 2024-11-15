@@ -91,6 +91,8 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=features_dir, normalize=False)
         self.dir=dir
         self.features_dir=features_dir
+        os.makedirs(self.dir, exist_ok=True)
+        os.makedirs(self.features_dir, exist_ok=True)
 
     def train(self):
         if not os.path.isfile(os.path.join(self.features_dir, "samples")):
