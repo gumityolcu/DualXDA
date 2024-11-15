@@ -88,6 +88,8 @@ class GradDotExplainer(Explainer):
         self.train_grads=None
         self.ds_name = ds_name
         self.ds_type = ds_type
+        os.makedirs(self.mat_dir, exist_ok=True)
+        os.makedirs(self.grad_dir, exist_ok=True)
 
     def train(self):
         t0=time()
