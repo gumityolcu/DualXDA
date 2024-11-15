@@ -78,12 +78,12 @@ class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
         ) 
         return t - time()
 
-class ArnoldiInfluenceFunctions(Explainer):
-
+class ArnoldiInfluenceFunctionExplainer(Explainer):
+    name="ArnoldiInfluenceFunctionExplainer"
     def __init__(
         self,
         model,
-        train_dataset,
+        dataset,
         dir,
         loss_fn = torch.nn.CrossEntropyLoss(reduction="none"),
         layers = None,
@@ -108,7 +108,7 @@ class ArnoldiInfluenceFunctions(Explainer):
         ----------
         model : Union[torch.nn.Module, pl.LightningModule]
             The model to be used for the influence computation.
-        train_dataset : torch.utils.data.Dataset
+        dataset : torch.utils.data.Dataset
             Training dataset to be used for the influence computation.
         checkpoint : str
             Checkpoint file for the model.
@@ -172,17 +172,17 @@ class ArnoldiInfluenceFunctions(Explainer):
         
         super().__init__(
             model=model,
-            train_dataset=train_dataset,
+            dataset=dataset,
             device=device
         )
 
         self.dir=dir
 
-        hessian_dataset = self.get_hessian_dataset(dir, hessian_dataset_size, train_dataset)
+        hessian_dataset = ArnoldiInfluenceFunctionExplainer.get_hessian_dataset(dir, hessian_dataset_size, dataset)
 
         explainer_kwargs = {
                 "model": model,
-                "train_dataset": self.train_dataset,
+                "train_dataset": dataset,
                 "layers": layers,
                 "loss_fn": loss_fn,
                 "batch_size": batch_size,
@@ -214,7 +214,7 @@ class ArnoldiInfluenceFunctions(Explainer):
         return train_time
 
     def get_hessian_dataset(dir, hessian_dataset_size, train_dataset):
-        os.makedirs(dir, exists_ok=True)
+        os.makedirs(dir, exist_ok=True)
         if os.path.exists(os.path.join(dir, "hessian_dataset_indices")):
             hessian_dataset_indices = torch.load(os.path.join(dir, "hessian_dataset_indices"))
         else:

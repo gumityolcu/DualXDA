@@ -2,7 +2,7 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer
+from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer
 from utils.data import load_datasets_reduced
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
@@ -14,8 +14,25 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
     lissa_params={
         "MNIST": {'depth': 6000, 'repeat': 10},
         "CIFAR": {'depth': 5000, 'repeat': 10},
-        "AWA": {'depth': 3500, 'repeat': 10}
+        "AWA": {'depth': 3700, 'repeat': 10}
     }
+
+    arnoldi_params={
+        "MNIST": {"layers": None, "projection_dim": 128, "arnoldi_dim":200, "hessian_dataset_size": 5000},
+        "CIFAR": {"layers": None, "projection_dim": 128, "arnoldi_dim":200, "hessian_dataset_size": 5000},
+        "AWA": {"layers": None, "projection_dim": 128, "hessian_dataset_size": 5000},
+    }
+
+    trak_params={}
+
+    dualview_params={}
+
+    graddot_params={}
+
+    tracin_params={}
+
+    representer_params={}
+
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
         'trak': (TRAK, {'proj_dim': 512, "dir":cache_dir}),
@@ -24,9 +41,16 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128, "ds_name": dataset_name, "ds_type": dataset_type}),
         'lissa': (LiSSAInfluenceFunctionExplainer, lissa_params[dataset_name]),
-        'arnoldi': (LiSSAInfluenceFunctionExplainer, lissa_params[dataset_name]),
+        'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
     }
     return explainers[xai_method]
+
+
+        # arnoldi constructor
+        # layers = None, OOO
+        # projection_dim = 50, OOO
+        # hessian_dataset_size = 5000, OOO
+
 
 
 def explain_model(model_name, model_path, device, class_groups,
@@ -67,9 +91,12 @@ def explain_model(model_name, model_path, device, class_groups,
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
     explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    
     if C_margin is not None:
         kwargs["C"] = C_margin
+    
     print(f"Generating explanations with {explainer_cls.name}")
+    
     xplain(
         model=model,
         train=train,
@@ -121,6 +148,4 @@ if __name__ == "__main__":
                   xai_method=train_config.get('xai_method', None),
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
-                  testsplit=train_config.get('testsplit', "test"),
-                  
-                  )
+                  testsplit=train_config.get('testsplit', "test"))
