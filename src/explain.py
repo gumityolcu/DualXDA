@@ -96,7 +96,6 @@ def explain_model(model_name, model_path, device, class_groups,
         kwargs["C"] = C_margin
     
     print(f"Generating explanations with {explainer_cls.name}")
-    
     xplain(
         model=model,
         train=train,
@@ -108,7 +107,8 @@ def explain_model(model_name, model_path, device, class_groups,
         num_batches_per_file=num_batches_per_file,
         save_dir=save_dir,
         start_file=start_file,
-        num_files=num_files
+        num_files=num_files,
+        graddot=True if xai_method == "graddot" else False,
     )
 
 
@@ -148,4 +148,5 @@ if __name__ == "__main__":
                   xai_method=train_config.get('xai_method', None),
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
-                  testsplit=train_config.get('testsplit', "test"))
+                  testsplit=train_config.get('testsplit', "test"),
+                  )

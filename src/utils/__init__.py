@@ -44,12 +44,17 @@ def zennit_inner_product_explanation(model, train, test, composite_cls=EpsilonAl
 
 
 def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_batches_per_file, save_dir,
-           start_file, num_files):
+           start_file, num_files, graddot=False):
+    # the graddot parameter indicates if we are generating graddot attributions
+    # if it is true, graddot.explain will be called a second time with normalize=True to generate gradcos along the way
+
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     explainer.train()
 
     test_ld = DataLoader(test, batch_size=batch_size, shuffle=False)
     explanations = torch.empty((0, len(train)), device=device)
+    if graddot:
+        gradcos_explanations = torch.empty((0, len(train)), device=device)
     i = 0
     j = start_file
     file_indices = torch.zeros(int(len(test) / batch_size) + 1, dtype=torch.int)
@@ -61,13 +66,19 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             y = y.to(device)
             preds = torch.argmax(model(x), dim=1)
         xpl = explainer.explain(x=x, xpl_targets=preds)
-        #xpl = explainer.explain(x=x, xpl_targets=y) to explain actual labels
         explanations = torch.cat((explanations, xpl), dim=0)
+        if graddot:
+            xpl = explainer.explain(x=x, xpl_targets=preds, normalize=True)
+            gradcos_explanations = torch.cat((gradcos_explanations, xpl), dim=0)
+        #xpl = explainer.explain(x=x, xpl_targets=y) to explain actual labels
         i = i + 1
         if i == num_batches_per_file:
             i = 0
             torch.save(explanations, os.path.join(save_dir, f"{explainer_cls.name}_{j:02d}"))
             explanations = torch.empty((0, len(train)), device=device)
+            if graddot:
+                torch.save(gradcos_explanations, os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}"))
+                gradcos_explanations = torch.empty((0, len(train)), device=device)
             print(f"Finished file {j:02d}")
             j = j + 1
 
