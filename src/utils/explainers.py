@@ -29,6 +29,8 @@ class Explainer(ABC):
     def save_coefs(self, dir):
         pass
 
+        
+
 
 class FeatureKernelExplainer(Explainer):
     def __init__(self, model, dataset, device, dir=None,normalize=False):
@@ -64,8 +66,13 @@ class FeatureKernelExplainer(Explainer):
         return torch.squeeze(xpl)
 
 
-    def self_influences(self):
-        return self.coefficients[torch.arange(self.coefficients.shape[0]), self.labels]
+    def self_influences(self, only_coefs=False):
+        self_coefs = self.coefficients[torch.arange(self.coefficients.shape[0]), self.labels]
+        if only_coefs:
+            return self_coefs
+        else:
+            return self.normalized_samples.norm(dim=-1)*self_coefs
+        
 
     def save_coefs(self, dir):
         torch.save(self.coefficients, os.path.join(dir, f"{self.name}_coefs"))
