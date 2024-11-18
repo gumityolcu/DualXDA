@@ -1,4 +1,5 @@
 batch_size: 128
+cache_dir: /mnt/cache/AWA/group/representer
 class_groups:
 - - 0
   - 1
@@ -54,10 +55,12 @@ data_root: /mnt/dataset
 dataset_name: AWA
 dataset_type: group
 device: cuda
+features_dir: /mnt/cache/AWA/group/features
+grad_dir: /mnt/cache/AWA/group/tracin/best
 metric: groupk
 model_name: resnet50
 num_classes: 50
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: representer
-xpl_root: /mnt/xpl/AWA/group/representer/
+xpl_root: /mnt/explanations/AWA/group/representer/

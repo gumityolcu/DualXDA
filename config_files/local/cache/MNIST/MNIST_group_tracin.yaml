@@ -1,6 +1,6 @@
 accuracy: true
 batch_size: 20
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/group/tracin
+cache_dir: c:\Users\weckbecker\DualView-wip/cache/MNIST/group/tracin
 class_groups:
 - - 0
   - 1
@@ -12,18 +12,18 @@ class_groups:
   - 7
 - - 8
   - 9
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
+data_root: c:\Users\weckbecker\DualView-wip/../Datasets
 dataset_name: MNIST
 dataset_type: group
 device: cpu
-features_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/group/features
-grad_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/group/tracin/best
+features_dir: c:\Users\weckbecker\DualView-wip/cache/MNIST/group/features
+grad_dir: c:\Users\weckbecker\DualView-wip/cache/MNIST/group/tracin/best
 model_name: basic_conv
-model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/MNIST/group/MNIST_basic_conv_best
+model_path: c:\Users\weckbecker\DualView-wip/checkpoints/MNIST/group/MNIST_basic_conv_best
 num_batches_per_file: 0
 num_classes: 10
 num_files: 0
-save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/MNIST/group/tracin
+save_dir: c:\Users\weckbecker\DualView-wip/explanations/MNIST/group/tracin
 start_file: 0
 validation_size: 2000
 xai_method: tracin

@@ -1,7 +1,7 @@
 C: 1.0
 accuracy: true
 batch_size: 200
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/dualview_1.0
+cache_dir: c:\Users\weckbecker\DualView-wip/cache/AWA/group/dualview_1.0
 class_groups:
 - - 0
   - 1
@@ -53,18 +53,18 @@ class_groups:
   - 47
 - - 48
   - 49
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
+data_root: c:\Users\weckbecker\DualView-wip/../Datasets
 dataset_name: AWA
 dataset_type: group
 device: cpu
-features_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/features
-grad_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/tracin/best
+features_dir: c:\Users\weckbecker\DualView-wip/cache/AWA/group/features
+grad_dir: c:\Users\weckbecker\DualView-wip/cache/AWA/group/tracin/best
 model_name: resnet50
-model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/AWA/group/AWA_resnet50_best
+model_path: c:\Users\weckbecker\DualView-wip/checkpoints/AWA/group/AWA_resnet50_best
 num_batches_per_file: 1
 num_classes: 50
 num_files: 1
-save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/group/dualview_1.0
+save_dir: c:\Users\weckbecker\DualView-wip/explanations/AWA/group/dualview_1.0
 start_file: 9
 validation_size: 2000
 xai_method: dualview

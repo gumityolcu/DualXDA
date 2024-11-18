@@ -17,7 +17,7 @@ dataset_type: group
 device: cuda
 features_dir: /mnt/cache/MNIST/group/features
 grad_dir: /mnt/cache/MNIST/group/tracin/best
-metric: groupk
+metric: group
 model_name: basic_conv
 num_classes: 10
 save_dir: /mnt/outputs/
