@@ -1,0 +1,16 @@
+C: 0.01
+batch_size: 16
+cache_dir: c:\Users\weckbecker\DualView-wip/cache/MNIST/corrupt/dualview_0.01
+data_root: c:\Users\weckbecker\DualView-wip/src/datasets
+dataset_name: MNIST
+dataset_type: corrupt
+device: cpu
+features_dir: c:\Users\weckbecker\DualView-wip/cache/MNIST/corrupt/features
+grad_dir: c:\Users\weckbecker\DualView-wip/cache/MNIST/corrupt/tracin/best
+metric: corrupt
+model_name: basic_conv
+num_classes: 10
+save_dir: c:\Users\weckbecker\DualView-wip/test_output
+validation_size: 2000
+xai_method: dualview
+xpl_root: c:\Users\weckbecker\DualView-wip/explanations/MNIST/std/dualview/
