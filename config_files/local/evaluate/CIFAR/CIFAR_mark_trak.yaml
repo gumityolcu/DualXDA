@@ -1,0 +1,16 @@
+batch_size: 16
+cache_dir: c:\Users\weckbecker\DualView-wip/cache/CIFAR/mark/trak
+data_root: c:\Users\weckbecker\DualView-wip/src/datasets
+dataset_name: CIFAR
+dataset_type: mark
+device: cpu
+features_dir: c:\Users\weckbecker\DualView-wip/cache/CIFAR/mark/features
+grad_dir: c:\Users\weckbecker\DualView-wip/cache/CIFAR/mark/tracin/best
+metric: mark
+model_name: resnet18
+model_path: c:\Users\weckbecker\DualView-wip/checkpoints/CIFAR/mark/resnet18_mark/CIFAR_resnet18_best
+num_classes: 10
+save_dir: c:\Users\weckbecker\DualView-wip/test_output
+validation_size: 2000
+xai_method: trak
+xpl_root: c:\Users\weckbecker\DualView-wip/explanations/CIFAR/mark/trak/
