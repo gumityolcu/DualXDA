@@ -53,17 +53,18 @@ class FeatureKernelExplainer(Explainer):
         return (features - self.mean) / self.stdvar
 
     def explain(self, x, xpl_targets):
-        assert self.coefficients is not None
-        x = x.to(self.device)
-        f = self.model.features(x)
-        if self.normalize:
-            f = self.normalize_features(f)
-        crosscorr = torch.matmul(f, self.normalized_samples.T)
-        crosscorr = crosscorr[:, :, None]
-        xpl = self.coefficients * crosscorr
-        indices = xpl_targets[:, None, None].expand(-1, self.samples.shape[0], 1)
-        xpl = torch.gather(xpl, dim=-1, index=indices)
-        return torch.squeeze(xpl)
+        with torch.no_grad():
+            assert self.coefficients is not None
+            x = x.to(self.device)
+            f = self.model.features(x)
+            if self.normalize:
+                f = self.normalize_features(f)
+            crosscorr = torch.matmul(f, self.normalized_samples.T)
+            crosscorr = crosscorr[:, :, None]
+            xpl = self.coefficients * crosscorr
+            indices = xpl_targets[:, None, None].expand(-1, self.samples.shape[0], 1)
+            xpl = torch.gather(xpl, dim=-1, index=indices)
+            return torch.squeeze(xpl)
 
 
     def self_influences(self, only_coefs=False):
