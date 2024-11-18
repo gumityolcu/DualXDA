@@ -46,3 +46,12 @@ class TRAK(Explainer):
         self.traker.score(batch=(x,xpl_targets), num_samples=x.shape[0])
         return torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
 
+    def self_influences(self):
+        raise NotImplementedError
+        if os.path.exists(os.path.join(self.dir, "self_influences")):
+            self_inf=torch.load(os.path.join(self.dir, "self_influences"))
+        else:
+            self_inf=torch.zeros((len(self.dataset),), device=self.device)
+            pass # TODO implement self_influences
+            torch.save(self_inf, os.path.join(self.dir, "self_influences"))
+        return self_inf

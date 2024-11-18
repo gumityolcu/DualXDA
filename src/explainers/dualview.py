@@ -52,12 +52,7 @@ class DualView(FeatureKernelExplainer):
             print(f"Training took {self.train_time} seconds")
         return self.train_time
 
-    def self_influences(self, only_coefs=False):
-        self_coefs=super().self_influences()
-        if only_coefs:
-            return self_coefs
-        else:
-            return self.normalized_samples.norm(dim=-1)*self_coefs
+
         
 
 class DualView_Shark(FeatureKernelExplainer):
