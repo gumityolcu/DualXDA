@@ -25,7 +25,7 @@ class DualView(FeatureKernelExplainer):
 
     def read_variables(self):
         self.learned_weight = torch.load(os.path.join(self.dir,"weights"), map_location=self.device).to(torch.float)
-        self.coefficients=torch.load(os.path.join(self.dir,"dualview_coefficients"), map_location=self.device).to(torch.float)
+        self.coefficients=torch.load(os.path.join(self.dir,"coefficients"), map_location=self.device).to(torch.float)
         self.train_time=torch.load(os.path.join(self.dir,"train_time"), map_location=self.device).to(torch.float)
 
     def train(self):
@@ -51,6 +51,14 @@ class DualView(FeatureKernelExplainer):
             torch.save(self.coefficients,os.path.join(self.dir,'coefficients'))
             print(f"Training took {self.train_time} seconds")
         return self.train_time
+
+    def self_influences(self, only_coefs=False):
+        self_coefs=super().self_influences()
+        if only_coefs:
+            return self_coefs
+        else:
+            return self.normalized_samples.norm(dim=-1)*self_coefs
+        
 
 class DualView_Shark(FeatureKernelExplainer):
     name = "DualViewSHARKExplainer"

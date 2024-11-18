@@ -252,7 +252,7 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         influence_scores = self.captum_explainer.influence(inputs=(x, xpl_targets))
         return influence_scores
 
-    def self_influence(self, batch_size) -> torch.Tensor:
+    def self_influences(self) -> torch.Tensor:
         """
         Compute self-influence scores.
 
@@ -266,6 +266,10 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         torch.Tensor
             Self-influence scores for each datapoint in train_dataset.
         """
-        influence_scores = self.captum_explainer.self_influence(inputs_dataset=None)
-        return influence_scores
+        if os.path.exists(os.path.join(self.dir, "self_influences")):
+            self_inf = torch.load(os.path.join(self.dir, "self_influences"))
+        else:
+            self_inf = self.captum_explainer.self_influence(inputs_dataset=None)
+            torch.save(self_inf, os.path.join(self.dir, "self_influences"))
+        return self_inf
 

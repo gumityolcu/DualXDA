@@ -75,6 +75,7 @@ class TracInExplainer(Explainer):
             time=time+x.train() 
             torch.cuda.empty_cache()
         self.train_time=time
+        self.self_influences()
         torch.save(self.train_time, os.path.join(self.dir, "train_time"))
         return self.train_time
 
@@ -82,7 +83,17 @@ class TracInExplainer(Explainer):
         attr=torch.zeros((x.shape[0], len(self.dataset)),device=self.device)
         nr_explainers = len(self.explainers)
         for i, (rate, xplainer) in enumerate(self.explainers):
-            print(f"Handling checkpoint number {i}")
-            xplainer.train()
             attr=attr+rate*xplainer.explain(x,xpl_targets) 
         return attr/nr_explainers
+
+    def self_influences(self):
+        if os.path.exists(os.path.join(self.dir, "self_influences")):
+            self_inf=torch.load(os.path.join(self.dir, "self_influences"))
+        else:
+            self_inf=torch.zeros((len(self.dataset),), device=self.device)
+            nr_explainers = len(self.explainers)
+            for i, (rate, xplainer) in enumerate(self.explainers):
+                self_inf=self_inf+rate*xplainer.self_influences()
+            self_inf = self_inf/nr_explainers
+            torch.save(self_inf, os.path.join(self.dir, "self_influences"))
+        return self_inf

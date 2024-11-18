@@ -63,6 +63,10 @@ class FeatureKernelExplainer(Explainer):
         xpl = torch.gather(xpl, dim=-1, index=indices)
         return torch.squeeze(xpl)
 
+
+    def self_influences(self):
+        return self.coefficients[torch.arange(self.coefficients.shape[0]), self.labels]
+
     def save_coefs(self, dir):
         torch.save(self.coefficients, os.path.join(dir, f"{self.name}_coefs"))
 
@@ -144,6 +148,9 @@ class GradDotExplainer(Explainer):
         if normalize:
             xpl=xpl/self.norms
         return xpl
+
+    def self_influences(self):
+        return self.norms
     
     def get_param_grad(self, x, index, norm = False, normalize = False):
         x = x.to(self.device)
