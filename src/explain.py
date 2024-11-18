@@ -2,7 +2,7 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, InfluenceFunctionExplainer, TracInExplainer
+from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer
 from utils.data import load_datasets_reduced
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
@@ -11,21 +11,47 @@ import os
 
 
 def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
-    if_params={
+    lissa_params={
         "MNIST": {'depth': 6000, 'repeat': 10},
         "CIFAR": {'depth': 5000, 'repeat': 10},
-        "AWA": {'depth': 3500, 'repeat': 10}
+        "AWA": {'depth': 3700, 'repeat': 10}
     }
+
+    arnoldi_params={
+        #"MNIST": {"layers": None, "projection_dim": 128, "arnoldi_dim":200, "hessian_dataset_size": 5000},
+        "MNIST": {"layers": ["classifier"], "projection_dim": 100, "arnoldi_dim":150, "hessian_dataset_size": 10000},
+        "CIFAR": {"layers": None, "projection_dim": 128, "arnoldi_dim":200, "hessian_dataset_size": 5000},
+        "AWA": {"layers": None, "projection_dim": 128, "hessian_dataset_size": 5000},
+    }
+
+    trak_params={}
+
+    dualview_params={}
+
+    graddot_params={}
+
+    tracin_params={}
+
+    representer_params={}
+
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
         'trak': (TRAK, {'proj_dim': 2000, "dir":cache_dir}),
         'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
-        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":1472, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'gradcos': (GradCosExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":1472, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':1472, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'influence': (InfluenceFunctionExplainer, if_params[dataset_name])
+        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
+        #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128, "ds_name": dataset_name, "ds_type": dataset_type}),
+        'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, **lissa_params[dataset_name]}),
+        'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
     }
     return explainers[xai_method]
+
+
+        # arnoldi constructor
+        # layers = None, OOO
+        # projection_dim = 50, OOO
+        # hessian_dataset_size = 5000, OOO
+
 
 
 def explain_model(model_name, model_path, device, class_groups,
@@ -66,8 +92,10 @@ def explain_model(model_name, model_path, device, class_groups,
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
     explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    
     if C_margin is not None:
         kwargs["C"] = C_margin
+    
     print(f"Generating explanations with {explainer_cls.name}")
     xplain(
         model=model,
@@ -80,7 +108,8 @@ def explain_model(model_name, model_path, device, class_groups,
         num_batches_per_file=num_batches_per_file,
         save_dir=save_dir,
         start_file=start_file,
-        num_files=num_files
+        num_files=num_files,
+        graddot=True if xai_method == "graddot" else False,
     )
 
 
@@ -121,5 +150,4 @@ if __name__ == "__main__":
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
                   testsplit=train_config.get('testsplit', "test"),
-                  
                   )

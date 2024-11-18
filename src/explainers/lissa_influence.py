@@ -1,3 +1,5 @@
+import os
+
 import torch.utils.data
 from utils.explainers import Explainer
 from torch.utils.data import DataLoader
@@ -436,10 +438,10 @@ class LiSSAInfluenceModule(BaseInfluenceModule):
 
         return ihvp / self.repeat
 
-class InfluenceFunctionExplainer(Explainer):
-    name = "InfluenceFunctionExplainer"
+class LiSSAInfluenceFunctionExplainer(Explainer):
+    name = "LiSSAInfluenceFunctionExplainer"
 
-    def __init__(self, model, dataset, device, depth, repeat, train_loss=cross_entropy,
+    def __init__(self, model, dataset, device, depth, repeat, dir, train_loss=cross_entropy,
                  train_regularization=(lambda x: 0), test_loss=cross_entropy):
         class MyObjective(BaseObjective):
             def train_outputs(self, model, batch):
@@ -457,16 +459,18 @@ class InfluenceFunctionExplainer(Explainer):
             def test_loss(self, model, params, batch):
                 return test_loss(model(batch[0]), batch[1])
 
-        super(InfluenceFunctionExplainer, self).__init__(model, dataset, device)
+        super(LiSSAInfluenceFunctionExplainer, self).__init__(model, dataset, device)
         self.dataset = dataset
         self.depth = depth
         self.repeat = repeat
         self.device = device
+        self.dir = dir
         self.influence_module = LiSSAInfluenceModule(model, MyObjective(),
                                                      torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False),
                                                      depth=depth, repeat=repeat, scale=1.0, damp=0.001, device=device)
 
     def train(self):
+        self.self_influences()
         return 0.
 
     def explain(self, x, xpl_targets):
@@ -479,5 +483,10 @@ class InfluenceFunctionExplainer(Explainer):
             xpl=torch.concatenate((xpl,scores[None].to(self.device)),dim=0)
         return xpl
     
-    def self_explain(self):
-        return self.influence_module.self_influences()
+    def self_influences(self):
+        if os.path.exists(os.path.join(self.dir, "self_influences")):
+            self_inf = torch.load(os.path.join(self.dir, "self_influences"))
+        else:
+            self_inf = self.influence_module.self_influences()
+            torch.save(self_inf, os.path.join(self.dir, "self_influences"))
+        return self_inf

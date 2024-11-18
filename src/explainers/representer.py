@@ -182,3 +182,10 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         torch.save(self.coefficients,os.path.join(self.dir,'coefficients'))
         #return weight_matrix
         return elapsed_time
+
+    def self_influences(self, only_coefs=False):
+        self_coefs=super().self_influences()
+        if only_coefs:
+            return self_coefs
+        else:
+            return self.normalized_samples.norm(dim=-1)*self_coefs

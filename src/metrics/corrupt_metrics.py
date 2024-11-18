@@ -16,12 +16,13 @@ class CorruptLabelMetric(Metric):
         self.num_test_samples = 0
         self.ds_name = train.dataset.name
 
-    def __call__(self, xpl, start_index):
-        xpl.to(self.device)
-        xpl = torch.abs(xpl)
-        xpl = xpl / xpl.max(dim=-1)[0][:, None]  # Normalize each sample's explanations to have max 1.
-        self.num_test_samples += xpl.shape[0]
-        self.scores = self.scores + xpl.sum(dim=0)
+    # def __call__(self, xpl, start_index):
+    #     xpl.to(self.device)
+    #     xpl = torch.abs(xpl)
+    #     xpl = xpl / xpl.max(dim=-1)[0][:, None]  # Normalize each sample's explanations to have max 1.
+    #     self.num_test_samples += xpl.shape[0]
+    #     self.scores = self.scores + xpl.sum(dim=0)
+
 
     def compute_score(self, score_array):
         sorted_indices = torch.argsort(score_array, descending=True)

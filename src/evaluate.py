@@ -137,20 +137,23 @@ def evaluate(model_name, model_path, device, class_groups,
         file_root = file_list[0].split('_')[0]
         num_files=len(file_list)
         #check if merged xpl exists
-        if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-            xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
-        #merge all xpl
+        if metric_name == "corrupt":
+            pass
         else:
-            xpl_all = torch.empty(0, device=device)
-            for i in range(num_files):
-                fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
-                xpl = torch.load(fname, map_location=torch.device(device))
-                xpl.to(device)
-                xpl_all = torch.cat((xpl_all, xpl), 0)
-            torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
-            
-        metric(xpl_all, 0)
-        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
+            if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
+                xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
+            #merge all xpl
+            else:
+                xpl_all = torch.empty(0, device=device)
+                for i in range(num_files):
+                    fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
+                    xpl = torch.load(fname, map_location=torch.device(device))
+                    xpl.to(device)
+                    xpl_all = torch.cat((xpl_all, xpl), 0)
+                torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
+                
+            metric(xpl_all, 0)
+            metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
 
 
 if __name__ == "__main__":
@@ -170,7 +173,8 @@ if __name__ == "__main__":
 
     save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
 
-    evaluate(model_name=train_config.get('model_name', None),
+    evaluate(
+                model_name=train_config.get('model_name', None),
                 model_path=train_config.get('model_path', None),
                 device=train_config.get('device', 'cuda'),
                 class_groups=train_config.get('class_groups', None),
@@ -190,4 +194,4 @@ if __name__ == "__main__":
                 scheduler=train_config.get('scheduler', None),
                 weight_decay=train_config.get('weight_decay', None),
                 augmentation=train_config.get('augmentation', None)
-             )
+    )
