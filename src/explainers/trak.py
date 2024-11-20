@@ -4,6 +4,7 @@ from utils.explainers import Explainer
 from trak.projectors import ProjectionType
 import os
 import torch
+from time import time
 
 class TRAK(Explainer):
     name = "TRAK"
