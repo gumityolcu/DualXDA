@@ -24,6 +24,7 @@ class TRAK(Explainer):
                              )
 
     def train(self):
+        t=time()
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
         self.traker.load_checkpoint(self.model.state_dict(),model_id=0)
         for (i,(x,y)) in enumerate(iter(ld)):

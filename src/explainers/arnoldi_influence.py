@@ -201,8 +201,6 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         
         self.captum_explainer = CustomArnoldiInfluenceFunction(**explainer_kwargs)
 
-        self.train()
-
     def train(self):
         if os.path.exists(os.path.join(self.dir, "R")):
             self.captum_explainer.R = torch.load(os.path.join(self.dir, "R"))
@@ -214,7 +212,7 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
             train_time = torch.load(os.path.join(self.dir, "train_time"))
         else:
             torch.save(train_time, os.path.join(self.dir, "train_time"))
-
+        self.self_influences() #compute to save in cache
         return train_time
 
     def get_hessian_dataset(dir, hessian_dataset_size, train_dataset):
