@@ -5,6 +5,7 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
 
   ../src /opt
   ../scikit-learn-dual /sklearn
+  ../captum /captum
 
 %post
 
@@ -23,7 +24,7 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
   pip install zennit
   pip install tensorboard
   pip install /sklearn
-  pip install captum@git+https://github.com/pytorch/captum
+  pip install /captum
 
 %runscript
 
