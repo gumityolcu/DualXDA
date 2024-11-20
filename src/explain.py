@@ -36,11 +36,11 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
 
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
-        'trak': (TRAK, {'proj_dim': 2000, "dir":cache_dir}),
+        'trak': (TRAK, {'proj_dim': 2048, "dir":cache_dir}),
         'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
-        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128, "ds_name": dataset_name, "ds_type": dataset_type}),
+        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":1472, "ds_name": dataset_name, "ds_type": dataset_type}),
+        #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":1472, "ds_name": dataset_name, "ds_type": dataset_type}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':1472, "ds_name": dataset_name, "ds_type": dataset_type}),
         'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, **lissa_params[dataset_name]}),
         'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
     }
