@@ -10,7 +10,7 @@ import logging
 import os
 
 
-def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
+def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type, dimension):
     lissa_params={
         "MNIST": {'depth': 6000, 'repeat': 10},
         "CIFAR": {'depth': 5000, 'repeat': 10},
@@ -36,11 +36,11 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
 
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
-        'trak': (TRAK, {'proj_dim': 2048, "dir":cache_dir}),
+        'trak': (TRAK, {'proj_dim': dimension, "dir":cache_dir}),
         'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
-        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":1472, "ds_name": dataset_name, "ds_type": dataset_type}),
+        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":dimension, "ds_name": dataset_name, "ds_type": dataset_type}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":1472, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':1472, "ds_name": dataset_name, "ds_type": dataset_type}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':dimension, "ds_name": dataset_name, "ds_type": dataset_type}),
         'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, **lissa_params[dataset_name]}),
         'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
     }
@@ -58,7 +58,7 @@ def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
                   save_dir, cache_dir, grad_dir, features_dir, validation_size, num_batches_per_file,
                   start_file, num_files, xai_method,
-                  num_classes, C_margin, testsplit):
+                  num_classes, C_margin, testsplit, dimension):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -91,7 +91,7 @@ def explain_model(model_name, model_path, device, class_groups,
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
-    explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type, dimension)
     
     if C_margin is not None:
         kwargs["C"] = C_margin
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         except yaml.YAMLError as exc:
             logging.info(exc)
 
-    save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
+    save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}_{train_config.get('dimension', 128)}"
 
     explain_model(model_name=train_config.get('model_name', None),
                   model_path=train_config.get('model_path', None),
@@ -150,4 +150,5 @@ if __name__ == "__main__":
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
                   testsplit=train_config.get('testsplit', "test"),
+                  dimension=train_config.get('dimension', 128)
                   )
