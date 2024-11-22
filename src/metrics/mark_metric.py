@@ -30,24 +30,34 @@ class MarkImageMetric(Metric):
     def __init__(self, train, test, model, device="cuda"):
         self.marked_cls = train.cls_to_mark
         self.marked_samples = train.mark_samples.to(device)
-        targs=train.dataset.targets
-        if isinstance(targs,list):
-            targs=torch.tensor(targs,device=device)
-        self.train_labels = targs.to(device)
-        self.pred_labels = self.get_pred_labels(model, test, self.marked_cls, device).to(device)
-        self.test_labels = test.dataset.test_targets.to(device)
-        nonmarked_class_samples = torch.nonzero(self.test_labels != self.marked_cls).squeeze().to(device)
-        self.eval_ids = torch.tensor([i for i in nonmarked_class_samples if self.pred_labels[i]==self.marked_cls]).to(device)
+        if train.dataset.name != "AWA":
+            targs=train.dataset.targets
+            if isinstance(targs,list):
+                targs=torch.tensor(targs,device=device)
+            self.train_labels = targs.to(device)
+            self.test_labels = test.dataset.test_targets.to(device)
+            nonmarked_class_samples = torch.nonzero(self.test_labels != self.marked_cls).squeeze().to(device)     
+            self.pred_labels = self.get_pred_labels(model, test, self.marked_cls, device).to(device)
+            self.eval_ids = torch.tensor([i for i in nonmarked_class_samples if self.pred_labels[i]==self.marked_cls]).to(device) 
+        self.train = train
+        self.test = test 
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.device = device
 
     def __call__(self, xpl, start_index):
         xpl.to(self.device)
         most_influential_ids = xpl.argmax(axis=-1)
-        passed = [1. if most_influential_ids[i] in self.marked_samples else 0.
-                  for i in range(xpl.shape[0])]
-        passed = torch.tensor(passed, device=self.device)
-        self.scores = torch.cat((self.scores, passed), dim=0)
+        if self.train.dataset.name != "AWA":
+            passed = [1. if most_influential_ids[i] in self.marked_samples else 0.
+                    for i in range(xpl.shape[0])]
+            passed = torch.tensor(passed, device=self.device)
+            self.scores = torch.cat((self.scores, passed), dim=0)
+        else:
+            passed = [1. if most_influential_ids[i] in self.marked_samples else 0.
+                for i in range(xpl.shape[0])]
+            passed = torch.tensor(passed, device=self.device)
+            self.scores = torch.cat((self.scores, passed), dim=0)
+
 
     def get_result(self, dir, file_name):
         self.scores = self.scores.to('cpu').numpy()

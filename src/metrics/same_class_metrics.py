@@ -7,19 +7,33 @@ class SameClassMetric(Metric):
     name = "SameClassMetric"
 
     def __init__(self, train, test, device="cuda"):
-        if isinstance(train.targets,list):
-            train.targets=torch.tensor(train.targets,device=device)
-        self.train_labels = train.targets.to(device)
-        self.test_labels = test.test_targets.to(device)
+        if train.name != 'AWA':
+            if isinstance(train.targets,list):
+                train.targets=torch.tensor(train.targets,device=device)
+            self.train_labels = train.targets.to(device)
+            self.test_labels = test.test_targets.to(device)
+
+        self.train = train
+        self.test = test
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.device = device
 
+
     def __call__(self, xpl, start_index):
         xpl.to(self.device)
-        most_influential_labels = self.train_labels[xpl.argmax(axis=-1)]
-        test_labels = self.test_labels[start_index:start_index + xpl.shape[0]]
-        is_equal = (test_labels == most_influential_labels) * 1.
-        self.scores = torch.cat((self.scores, is_equal), dim=0)
+        if self.train.name != 'AWA':
+            most_influential_labels = self.train_labels[xpl.argmax(axis=-1)]
+            test_labels = self.test_labels[start_index:start_index + xpl.shape[0]]
+            is_equal = (test_labels == most_influential_labels) * 1.
+            self.scores = torch.cat((self.scores, is_equal), dim=0)
+        else:
+            most_influential_indices = xpl.argmax(axis=-1)
+            for i in range(len(most_influential_indices)):
+                most_influential_label = self.train[most_influential_indices[i]][1]
+                test_label = self.test[start_index+i][1]
+                is_equal = (test_label == most_influential_label) * 1.
+                self.scores = torch.cat((self.scores, torch.tensor([is_equal])), dim=0)
+
 
     def get_result(self, dir=None, file_name=None):
         self.scores = self.scores.to('cpu').numpy()
