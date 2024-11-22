@@ -31,8 +31,8 @@ def evaluate(model_name, model_path, device, class_groups,
     model.to(device)
     page_size = 5
     offset = 0
-    if dataset_name == "CIFAR":
-        offset = 5
+    # if dataset_name == "CIFAR":
+    #     offset = 5
 
     fname_roots = [f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}" for xpl_root in xpl_roots]
     acc, all_indices = compute_accuracy(model, test, device=device)

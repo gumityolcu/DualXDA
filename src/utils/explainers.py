@@ -116,7 +116,7 @@ class GradDotExplainer(Explainer):
             torch.save(self.random_matrix, rand_mat_path)
         
         grads_path=os.path.join(self.grad_dir, "grads")
-        norms_path=os.path.join(self.grad_dir, "norms")
+        norms_path=os.path.join(self.grad_dir, "self_influences")
 
         if os.path.isfile(grads_path):
             print("Train grads found.")
