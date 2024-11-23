@@ -65,6 +65,7 @@ class KronfluenceExplainer(Explainer):
         }
         super(KronfluenceExplainer, self).__init__(model, dataset, device)
         self.dir = dir
+        os.makedirs(self.dir,exist_ok=True)
         self.dataset=dataset
         self.batch_size=batch_size
         task=ClassificationTask()
