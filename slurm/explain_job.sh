@@ -45,9 +45,9 @@ else
           --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
           --bind ${LOCAL_JOB_DIR}/cache:/mnt/cache \
           ../singularity/explain.sif --config_file /mnt/config_files/cluster/$2/$3/${fname_config}
-
+fi
 cd ${LOCAL_JOB_DIR}
-tar -czf $3_$2_${fname_config}-output_data_.tgz outputs
+tar -czf $3_$2_${fname_config}-output_data_${SLURM_JOB_ID}.tgz outputs
 cp $3_$2_${fname_config}-output_data_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}
 
 rm -rf ${LOCAL_JOB_DIR}/*
