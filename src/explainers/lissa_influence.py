@@ -465,6 +465,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
         self.repeat = repeat
         self.device = device
         self.dir = dir
+        os.makedirs(self.dir,exist_ok=True)
         self.influence_module = LiSSAInfluenceModule(model, MyObjective(),
                                                      torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False),
                                                      depth=depth, repeat=repeat, scale=1.0, damp=0.001, device=device)
