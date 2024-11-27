@@ -147,7 +147,7 @@ class MarkDataset(Dataset):
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
 
-        return self.dataset.transform(x.numpy().transpose(1, 2, 0))
+        return self.dataset.transform(x.permute(1,2,0))
 
     def mark_image_middle_square(self, x):
         x = self.dataset.inverse_transform(x)
@@ -159,7 +159,7 @@ class MarkDataset(Dataset):
             x[1:] = torch.zeros_like(x[1:]) * mask + x[1:] * (1 - mask)
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
-        return self.dataset.transform(x.numpy().transpose(1, 2, 0))
+        return self.dataset.transform(x.permute(1,2,0))
 
     def mark_image(self, x):
         x = self.dataset.inverse_transform(x)
@@ -175,7 +175,7 @@ class MarkDataset(Dataset):
             x[1:] = torch.zeros_like(x[1:]) * mask + x[1:] * (1 - mask)
         # plt.imshow(x.permute(1,2,0).squeeze())
         # plt.show()
-        return self.dataset.transform(x.numpy().transpose(1, 2, 0))
+        return self.dataset.transform(x.permute(1,2,0))
 
 
 class GroupLabelDataset(Dataset):
