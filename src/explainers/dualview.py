@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 class DualView(FeatureKernelExplainer):
     name = "DualViewExplainer"
-    def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, max_iter=50000, normalize=False):
+    def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, max_iter=1000000, normalize=False):
         super().__init__(model, dataset, device, features_dir, normalize=normalize)
         self.C=C
         if dir[-1]=="\\":
