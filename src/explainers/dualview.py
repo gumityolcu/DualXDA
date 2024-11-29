@@ -41,7 +41,7 @@ class DualView(FeatureKernelExplainer):
         else:
             model = LinearSVC(multi_class="crammer_singer", max_iter=self.max_iter, C=self.C)
             model.fit(self.normalized_samples.cpu(),self.labels.cpu())
-            accuracy = model.score(self.normalized_samples, self.labels)
+            accuracy = model.score(self.normalized_samples.cpu(), self.labels.cpu())
             print(f"SVC Accuracy: {accuracy:.2f}")
 
             self.coefficients=torch.tensor(model.alpha_.T,dtype=torch.float,device=self.device)
