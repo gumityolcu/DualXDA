@@ -31,6 +31,25 @@ from utils.explainers import Explainer
 
 ## todo checkpoint_load_func should be created here and checkpoint is a dict which is taken from the supplied model
 
+
+class OnDeviceDataset(torch.utils.data.Dataset):
+    """Wrapper to move a dataset to a device."""
+
+    def __init__(
+        self,
+        dataset,
+        device
+    ):
+        self.dataset = dataset
+        self.device = device
+
+    def __getitem__(self, idx):
+        data, target = self.dataset[idx]
+        return data.to(self.device), torch.tensor(target).to(self.device)
+
+    def __len__(self):
+        return len(self.dataset)
+
 class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
     def __init__(
         self,
@@ -48,9 +67,10 @@ class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
         arnoldi_tol = 1e-1,
         hessian_reg = 1e-3,
         hessian_inverse_tol = 1e-4,
-        projection_on_cpu = True,
+        projection_on_cpu = False,
         show_progress = False
     ):
+        projection_on_cpu = False
         checkpoint = model.state_dict()
         def checkpoints_load_func(model, ckpt):
             model.load_state_dict(ckpt) 
@@ -89,164 +109,6 @@ class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
             self.show_progress,
         ) 
         return t - time()
-    
-    def _retrieve_projections_arnoldi_influence_function(
-        self,
-        dataloader,
-        projection_on_cpu,
-        show_progress,
-    ):
-        """
-
-        Returns the `R` described in the documentation for
-        `ArnoldiInfluenceFunction`. The returned `R` represents a set of
-        parameters in parameter space. However, since this implementation does *not*
-        flatten parameters, each of those parameters is represented as a tuple of
-        tensors. Therefore, `R` is represented as a list of tuple of tensors, and
-        can be viewed as a linear function that takes in a tuple of tensors
-        (representing a parameter), and returns a vector, where the i-th entry is
-        the dot-product (as it would be defined over tuple of tensors) of the parameter
-        (i.e. the input to the linear function) with the i-th entry of `R`.
-
-        Can specify that projection should always be saved on cpu. if so, gradients are
-        always moved to same device as projections before multiplying (moving
-        projections to gpu when multiplying would defeat the purpose of moving them to
-        cpu to save gpu memory).
-
-        Returns:
-            R (list of tuple of tensors): List of tuple of tensors of length
-                    `projection_dim` (initialization argument). Each element
-                    corresponds to a parameter in parameter-space, is represented as a
-                    tuple of tensors, and together, define a projection that can be
-                    applied to parameters (represented as tuple of tensors).
-        """
-        # create function that computes hessian-vector product, given a vector
-        # represented as a tuple of tensors
-
-        # first figure out names of params that require gradients. this is need to
-        # create that function, as it replaces params based on their names
-        params = tuple(
-            self.model.parameters()
-            if self.layer_modules is None
-            else _extract_parameters_from_layers(self.layer_modules)
-        )
-        # the same position in `params` and `param_names` correspond to each other
-        param_names = _params_to_names(params, self.model)
-
-        # get factory that given a batch, returns a function that given params as
-        # tuple of tensors, returns loss over the batch
-        # pyre-fixme[3]: Return type must be annotated.
-        # pyre-fixme[2]: Parameter must be annotated.
-        def tensor_tuple_loss_given_batch(batch):
-            # pyre-fixme[53]: Captured variable `param_names` is not annotated.
-            # pyre-fixme[53]: Captured variable `batch` is not annotated.
-            # pyre-fixme[3]: Return type must be annotated.
-            # pyre-fixme[2]: Parameter must be annotated.
-            def tensor_tuple_loss(*params):
-                # `params` is a tuple of tensors, and assumed to be order specified by
-                # `param_names`
-                features, labels = tuple(batch[0:-1]), batch[-1]
-                features=tuple(f.to(self.model_device) for f in features)
-                labels=labels.to(self.model_device)
-                _output = _functional_call(
-                    self.model, dict(zip(param_names, params)), features
-                )
-
-                # compute the total loss for the batch, adjusting the output of
-                # `self.loss_fn` based on `self.reduction_type`
-                return _compute_batch_loss_influence_function_base(
-                    self.loss_fn, _output, labels, self.reduction_type
-                )
-
-            return tensor_tuple_loss
-
-        # define function that given batch and vector, returns HVP of loss using the
-        # batch and vector
-        # pyre-fixme[53]: Captured variable `params` is not annotated.
-        # pyre-fixme[3]: Return type must be annotated.
-        # pyre-fixme[2]: Parameter must be annotated.
-        def batch_HVP(batch, v):
-            tensor_tuple_loss = tensor_tuple_loss_given_batch(batch)
-            return torch.autograd.functional.hvp(tensor_tuple_loss, params, v=v)[1]
-
-        # define function that returns HVP of loss over `dataloader`, given a
-        # specified vector
-        # pyre-fixme[3]: Return type must be annotated.
-        # pyre-fixme[2]: Parameter must be annotated.
-        def HVP(v):
-            _hvp = None
-
-            _dataloader = dataloader
-            if show_progress:
-                _dataloader = tqdm(
-                    dataloader, desc="processing `hessian_dataset` batch"
-                )
-
-            # the HVP of loss using the entire `dataloader` is the sum of the
-            # per-batch HVP's
-            return _dataset_fn(_dataloader, batch_HVP, _parameter_add, v)
-
-            for batch in _dataloader:
-                hvp = batch_HVP(batch, v)
-                if _hvp is None:
-                    _hvp = hvp
-                else:
-                    _hvp = _parameter_add(_hvp, hvp)
-            return _hvp
-
-        # now that can compute the hessian-vector product (of loss over `dataloader`),
-        # can perform arnoldi iteration
-
-        # we always perform the HVP computations on the device where the model is.
-        # effectively this means we do the computations on gpu if available. this
-        # is necessary because the HVP is computationally expensive.
-
-        # get initial random vector, and place it on the same device as the model.
-        # `_parameter_arnoldi` needs to know which device the model is on, and
-        # will infer it through the device of this random vector
-        b = _parameter_to(
-            tuple(torch.randn_like(param) for param in params),
-            device=self.model_device,
-        )
-
-        # perform the arnoldi iteration, see its documentation for what its return
-        # values are.  note that `H` is *not* the Hessian.
-        qs, H = _parameter_arnoldi(
-            HVP,
-            b,
-            self.arnoldi_dim,
-            self.arnoldi_tol,
-            torch.device("cpu") if projection_on_cpu else self.model_device,
-            show_progress,
-        )
-
-        # `ls`` and `vs`` are (approximately) the top eigenvalues / eigenvectors of the
-        # matrix used (implicitly) to compute Hessian-vector products by the `HVP`
-        # input to `_parameter_arnoldi`. this matrix is the Hessian of the loss,
-        # summed over the examples in `dataloader`. note that because the vectors in
-        # the Hessian-vector product are actually tuples of tensors representing
-        # parameters, `vs`` is a list of tuples of tensors.  note that here, `H` is
-        # *not* the Hessian (`qs` and `H` together define the Krylov subspace of the
-        # Hessian)
-
-        ls, vs = _parameter_distill(
-            qs, H, self.projection_dim, self.hessian_reg, self.hessian_inverse_tol
-        )
-
-        # if `vs` were a 2D tensor whose columns contain the top eigenvectors of the
-        # aforementioned hessian, then `R` would be `vs @ torch.diag(ls ** -0.5)`, i.e.
-        # scaling each column of `vs` by the corresponding entry in `ls ** -0.5`.
-        # however, since `vs` is instead a list of tuple of tensors, `R` should be
-        # a list of tuple of tensors, where each entry in the list is scaled by the
-        # corresponding entry in `ls ** 0.5`, which we first compute.
-        # pyre-fixme[58]: `/` is not supported for operand types `float` and `Tensor`.
-        ls = (1.0 / ls) ** 0.5
-
-        # then, scale each entry in `vs` by the corresponding entry in `ls ** 0.5`
-        # since each entry in `vs` is a tuple of tensors, we use a helper function
-        # that takes in a tuple of tensors, and a scalar, and multiplies every tensor
-        # by the scalar.
-        return [_parameter_multiply(v, l) for (v, l) in zip(vs, ls)]
 
 
 class ArnoldiInfluenceFunctionExplainer(Explainer):
@@ -340,7 +202,7 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         **explainer_kwargs : Any
             Additional keyword arguments passed to the explainer.
         """
-        
+        dataset=OnDeviceDataset(dataset, device)
         super().__init__(
             model=model,
             dataset=dataset,
