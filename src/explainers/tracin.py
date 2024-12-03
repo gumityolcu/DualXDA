@@ -88,7 +88,7 @@ class TracInExplainer(Explainer):
 
     def self_influences(self):
         if os.path.exists(os.path.join(self.dir, "self_influences")):
-            self_inf=torch.load(os.path.join(self.dir, "self_influences"))
+            self_inf=torch.load(os.path.join(self.dir, "self_influences"), map_location=self.device)
         else:
             self_inf=torch.zeros((len(self.dataset),), device=self.device)
             nr_explainers = len(self.explainers)

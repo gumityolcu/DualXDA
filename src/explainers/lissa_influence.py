@@ -225,7 +225,8 @@ class BaseInfluenceModule(abc.ABC):
         scores = []
         train_grad_loader = self._loss_grad_loader_wrapper(batch_size=1, subset=None, train=True)
         train_sample_loader = self._loader_wrapper(train=True, batch_size=1, subset=None)
-        for ((x, targets),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
+        for ((batch, _),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
+            (x, targets) = batch
             stest = self.stest(x,targets)
             s = grad_z @ stest
             scores.append(s)
@@ -486,7 +487,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
     
     def self_influences(self):
         if os.path.exists(os.path.join(self.dir, "self_influences")):
-            self_inf = torch.load(os.path.join(self.dir, "self_influences"))
+            self_inf = torch.load(os.path.join(self.dir, "self_influences"), map_location=self.device)
         else:
             self_inf = self.influence_module.self_influences()
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))

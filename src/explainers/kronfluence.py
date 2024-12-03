@@ -90,7 +90,7 @@ class KronfluenceExplainer(Explainer):
     )   
         t=time()-t
         if os.path.exists(os.path.join(self.dir, "train_time")):
-            self.train_time = torch.load(os.path.join(self.dir, "train_time"))
+            self.train_time = torch.load(os.path.join(self.dir, "train_time"), map_location=self.device)
         else:
             torch.save(t, os.path.join(self.dir, "train_time"))
             self.train_time=t
@@ -115,10 +115,10 @@ class KronfluenceExplainer(Explainer):
         
     def self_influences(self):
         if os.path.exists(os.path.join(self.dir, "self_influences")):
-            return torch.load(os.path.join(self.dir, "self_influences"))
+            return torch.load(os.path.join(self.dir, "self_influences"),map_location=self.device)
         else:
             score_args = ScoreArguments(**self.score_kwargs)
-            self.analyzer.compute_self_scores(scores_name="self", factors_name="ekfac", score_args=score_args, train_dataset=self.dataset)
+            self.analyzer.compute_self_scores(scores_name="self", factors_name="exp_factors", score_args=score_args, train_dataset=self.dataset)
             scores = self.analyzer.load_self_scores(scores_name="self")
             torch.save(scores, os.path.join(self.dir, "self_influences"))
             return scores
