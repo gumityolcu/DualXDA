@@ -81,7 +81,14 @@ class FeatureKernelExplainer(Explainer):
 class GradDotExplainer(Explainer):
     name="GradDotExplainer"
     gradcos_name="GradCosExplainer"
-    def __init__(self,model,dataset,mat_dir, grad_dir, dimensions, ds_name, ds_type, cp_nr=None, loss=False, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self,
+                 model,
+                 dataset,
+                 mat_dir,
+                 grad_dir,
+                 dimensions,
+                 loss=False,
+                 device="cuda" if torch.cuda.is_available() else "cpu"):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
         self.loss=loss
@@ -98,8 +105,6 @@ class GradDotExplainer(Explainer):
         self.dimensions=dimensions
         self.random_matrix=None
         self.train_grads=None
-        self.ds_name = ds_name
-        self.ds_type = ds_type
         os.makedirs(self.mat_dir, exist_ok=True)
         os.makedirs(self.grad_dir, exist_ok=True)
 

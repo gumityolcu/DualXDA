@@ -146,7 +146,7 @@ class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
                 # `params` is a tuple of tensors, and assumed to be order specified by
                 # `param_names`
                 features, labels = tuple(batch[0:-1]), batch[-1]
-                features=features.to(self.model_device)
+                features=tuple(f.to(self.model_device) for f in features)
                 labels=labels.to(self.model_device)
                 _output = _functional_call(
                     self.model, dict(zip(param_names, params)), features
