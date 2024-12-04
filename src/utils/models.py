@@ -31,7 +31,7 @@ class ResNetWrapper(torch.nn.Module):
         return self.classifier(x)
 
     def influence_named_parameters(self):
-       return [("classifier.weight", self.classifier.weight)]
+       return [("classifier.weight", self.classifier.weight), ("classifier.bias", self.classifier.bias)]
 
     def sim_parameters(self):
         return self.parameters()

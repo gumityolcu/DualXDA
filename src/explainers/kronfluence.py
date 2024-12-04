@@ -94,7 +94,6 @@ class KronfluenceExplainer(Explainer):
         else:
             torch.save(t, os.path.join(self.dir, "train_time"))
             self.train_time=t
-        self.self_influences() #compute to save in cache
         return self.train_time
         
     def explain(self, x, xpl_targets):

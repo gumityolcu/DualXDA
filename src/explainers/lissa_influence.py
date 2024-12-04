@@ -324,13 +324,34 @@ class BaseInfluenceModule(abc.ABC):
     # Loss and autograd helpers
 
     def _loss_grad_loader_wrapper(self, train, **kwargs):
-        params = self._model_params(with_names=False)
+        params = self._model_params(with_names=False)        
         flat_params = self._flatten_params_like(params)
 
         for batch, batch_size in self._loader_wrapper(train=train, **kwargs):
-            loss_fn = self.objective.train_loss if train else self.objective.test_loss
-            loss = loss_fn(model=self.model, params=flat_params, batch=batch)
-            yield self._flatten_params_like(torch.autograd.grad(loss, params)), batch_size
+            # loss_fn = self.objective.train_loss if train else self.objective.test_loss
+            # loss = loss_fn(model=self.model, params=flat_params, batch=batch)
+            # yield self._flatten_params_like(torch.autograd.grad(loss, params)), batch_size
+
+            #=========================            
+            #v2
+            outputs = self.objective.train_outputs(self.model, batch)
+            if train:
+                loss=self.objective.train_loss_on_outputs(outputs, batch) + self.objective.train_regularization(params)
+            else:
+                loss=self.objective.test_loss(self.model, params, batch)
+            loss.backward()
+            param_grads = tuple(p.grad for p in self._model_params(with_names=False))
+            assert all([p is not None for p in param_grads])
+            assert all([not torch.isclose(p, torch.zeros_like(p)).all() for p in param_grads]) or torch.isclose(loss,torch.tensor(0.))
+            yield self._flatten_params_like(param_grads), batch_size
+            #=========================
+            #v3
+            # loss=cross_entropy(self.model(batch[0]),batch[1])
+            # loss.backward()
+            # param_grads = tuple(p.grad for _, p in self.model.influence_named_parameters())
+            # assert all([p is not None for p in param_grads])
+            # assert all([not torch.isclose(p, torch.zeros_like(p)).all() for p in param_grads]) or torch.isclose(loss,torch.tensor(0.))
+            # yield self._flatten_params_like(param_grads), batch_size
 
 
     def _sample_loss_grad_loader_wrapper(self, x,targets,train):
@@ -443,7 +464,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
     name = "LiSSAInfluenceFunctionExplainer"
 
     def __init__(self, model, dataset, device, depth, repeat, dir, train_loss=cross_entropy,
-                 train_regularization=(lambda x: 0), test_loss=cross_entropy):
+                 train_regularization=(lambda x: torch.tensor(0., device=x[0].device if x is not None else "cpu")), test_loss=cross_entropy):
         class MyObjective(BaseObjective):
             def train_outputs(self, model, batch):
                 return model(batch[0])
@@ -472,7 +493,6 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
                                                      depth=depth, repeat=repeat, scale=1.0, damp=0.001, device=device)
 
     def train(self):
-        self.self_influences()
         return 0.
 
     def explain(self, x, xpl_targets):

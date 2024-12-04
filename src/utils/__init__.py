@@ -44,13 +44,16 @@ def zennit_inner_product_explanation(model, train, test, composite_cls=EpsilonAl
 
 
 def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_batches_per_file, save_dir,
-           start_file, num_files, graddot=False):
+           start_file, num_files, graddot=False, self_influence=False):
     torch.manual_seed(42)
     # the graddot parameter indicates if we are generating graddot attributions
     # if it is true, graddot.explain will be called a second time with normalize=True to generate gradcos along the way
 
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     explainer.train()
+    if self_influence:
+        explainer.self_influences()
+        exit()
 
     test_ld = DataLoader(test, batch_size=batch_size, shuffle=False)
     explanations = torch.empty((0, len(train)), device=device)

@@ -245,7 +245,6 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
             train_time = torch.load(os.path.join(self.dir, "train_time"))
         else:
             torch.save(train_time, os.path.join(self.dir, "train_time"))
-        self.self_influences() #compute to save in cache
         return train_time
 
     def get_hessian_dataset(dir, hessian_dataset_size, train_dataset):

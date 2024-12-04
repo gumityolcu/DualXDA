@@ -66,7 +66,6 @@ class TracInExplainer(Explainer):
             time=time+graddot.train() 
             torch.cuda.empty_cache()
         self.train_time=time
-        self.self_influences()
         torch.save(self.train_time, os.path.join(self.dir, "train_time"))
         return self.train_time
 
