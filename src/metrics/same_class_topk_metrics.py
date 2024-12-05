@@ -6,10 +6,13 @@ class TopKSameClassMetric(Metric):
     name = "TopKSameClassMetric"
 
     def __init__(self, train, test, k=5, device="cuda"):
-        if isinstance(train.targets,list):
-            train.targets=torch.tensor(train.targets,device=device)
-        self.train_labels = train.targets.to(device)
-        self.test_labels = test.test_targets.to(device)
+        if train.name != "AWA":
+            if isinstance(train.targets,list):
+                train.targets=torch.tensor(train.targets,device=device)
+            self.train_labels = train.targets.to(device)
+            self.test_labels = test.test_targets.to(device)
+        self.train = train
+        self.test = test
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.k = k
         self.device = device
@@ -18,13 +21,19 @@ class TopKSameClassMetric(Metric):
         xpl.to(self.device)
         if xpl.nelement() == 0: #to exit if xpl is empty
             return
-        print(xpl.shape)
-        topk_idx = xpl.topk(self.k)[1]
-        print(topk_idx.shape)
-        topk_most_influential_labels = torch.stack([self.train_labels.index_select(dim=0, index=topk_idx[i]) for i in range(len(topk_idx))]).t() #throws errors if xpl is empty tensor
-        test_labels = self.test_labels[start_index:start_index + xpl.shape[0]].repeat(self.k, 1)
-        is_equal_ratio = torch.mean((test_labels == topk_most_influential_labels) * 1., axis=0)
-        self.scores = torch.cat((self.scores, is_equal_ratio), dim=0)
+        if self.train.name != "AWA":
+            topk_idx = xpl.topk(self.k)[1]
+            topk_most_influential_labels = torch.stack([self.train_labels.index_select(dim=0, index=topk_idx[i]) for i in range(len(topk_idx))]).t() #throws errors if xpl is empty tensor
+            test_labels = self.test_labels[start_index:start_index + xpl.shape[0]].repeat(self.k, 1)
+            is_equal_ratio = torch.mean((test_labels == topk_most_influential_labels) * 1., axis=0)
+            self.scores = torch.cat((self.scores, is_equal_ratio), dim=0)
+        else:
+            topk_idx = xpl.topk(self.k)[1]
+            for i in range(topk_idx.shape[0]):
+                topk_most_influential_labels = self.train[topk_idx[i]][1]
+                test_label = self.test[start_index+i][1].repeat(self.k, 1)
+                is_equal = torch.mean((test_label == topk_most_influential_labels) * 1., axis=0)
+                self.scores = torch.cat((self.scores, torch.tensor(is_equal)), dim=0)
 
     def get_result(self, dir=None, file_name=None):
         self.scores = self.scores.to('cpu').numpy()

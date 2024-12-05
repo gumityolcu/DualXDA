@@ -1,5 +1,5 @@
 import argparse
-from utils.data import load_datasets
+from utils.data import load_datasets_reduced
 from utils.models import load_model
 from explain import load_explainer
 import yaml
@@ -7,7 +7,7 @@ import logging
 from metrics import *
 
 
-def load_metric(metric_name, dataset_name, train, test, device, coef_root, model,
+def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                 epochs, loss, lr, momentum, optimizer, scheduler,
                 weight_decay, augmentation,):
     base_dict={
@@ -17,13 +17,13 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
     }
     retrain_dict={
         "dataset_name": dataset_name,
-        "model": model,
+        "model_name": model_name,
         "epochs": epochs,
         "loss": loss,
         "lr": lr,
         "momentum": momentum,
-        "optimizer":optimizer,
-        "scheduler":scheduler,
+        "optimizer": optimizer,
+        "scheduler": scheduler,
         "weight_decay": weight_decay,
         "augmentation": augmentation
     }
@@ -45,7 +45,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
                 "add_batch_in_neg": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
                 "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
                 "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
-                "lds": (LinearDatamodelingScore,retrain_dict), "labelflip": (LabelFlipMetric, retrain_dict)}
+                "lds": (LinearDatamodelingScore, retrain_dict), "labelflip": (LabelFlipMetric, retrain_dict)}
     if metric_name not in ret_dict.keys():
         raise Exception(f"{metric_name} is not a metric name")
     metric_cls, metric_kwargs = ret_dict[metric_name]
@@ -61,13 +61,15 @@ def evaluate(model_name, model_path, device, class_groups,
              weight_decay, augmentation, xai_method, cache_dir, grad_dir, features_dir):
     if not torch.cuda.is_available():
         device="cpu"
+    if augmentation not in [None, '']:
+        augmentation = load_augmentation(augmentation, dataset_name)
     ds_kwargs = {
         'data_root': data_root,
         'class_groups': class_groups,
         'image_set': "test",
         'validation_size': validation_size,
         'only_train': False,
-        'transform': None,
+        'transform': augmentation,
         'num_classes': num_classes
     }
     if metric_name in ["corrupt", "mark", "switched", "group"]:
@@ -76,14 +78,14 @@ def evaluate(model_name, model_path, device, class_groups,
         dataset_type="group"
     else:
         dataset_type = "std"
-    train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
+    train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes).to(device)
     #if dataset_type == 'mark': # do we need these lines? not clear yet.
     #    checkpoint = torch.load(model_path, map_location=device)
     #    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
-    metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model,
+    metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation)
     print(f"Computing metric {metric.name}")

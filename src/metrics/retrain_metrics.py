@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 import copy
 from utils.data import RestrictedDataset, FlipLabelDataset
 from train import load_loss, load_optimizer, load_scheduler, load_augmentation
+from evaluate import load_model
 from tqdm import tqdm
 import numpy as np
 from torchmetrics.regression import SpearmanCorrCoef
@@ -13,14 +14,13 @@ from torchmetrics.regression import KendallRankCorrCoef
 class RetrainMetric(Metric):
     name = "RetrainMetric"
     
-    def __init__(self, dataset_name, train, test, model,
+    def __init__(self, dataset_name, train, test, model_name,
                  epochs, loss, lr, momentum, optimizer, scheduler,
              weight_decay, augmentation, device):
         self.dataset_name = dataset_name
         self.train = train
         self.test = test
-        self.num_classes = 10
-        self.model = model #load model WITHOUT checkpoint in evaluate script for this metric!
+        self.model_name = model_name #load model WITHOUT checkpoint in evaluate script for this metric!
         self.device = device
         self.batch_size = 64
         self.epochs = epochs
@@ -40,27 +40,27 @@ class RetrainMetric(Metric):
         learning_rates=[]
         train_losses = []
 
-        model = copy.deepcopy(self.model).to(self.device)
+        model = load_model(self.model_name, self.dataset_name, self.num_classes).to(self.device)
+        model.train()
         loss = load_loss(self.loss)
         optimizer = load_optimizer(self.optimizer, model, self.lr, self.weight_decay, self.momentum)
-        scheduler = load_scheduler(self.scheduler, optimizer)
-        augmentation = load_augmentation(self.augmentation, self.dataset_name)
+        scheduler = load_scheduler(self.scheduler, optimizer, self.epochs)
         train_acc = []
-        loader = DataLoader(ds, batch_size=32, shuffle=True)
+        loader = DataLoader(ds, batch_size=self.batch_size, shuffle=True)
 
-        model.train()
+        #print(optimizer.param_groups)
+        #for param_group in optimizer.param_groups:
+        #    print(param_group['lr'])
+        #print("Loop done.")
 
         for e in range(self.epochs):
             y_true = torch.empty(0, device=self.device)
             y_out = torch.empty((0, self.num_classes), device=self.device)
             cum_loss = 0
             cnt = 0
-            for inputs, targets in tqdm(iter(loader)):
+            for i, (inputs, targets) in enumerate(tqdm(iter(loader))):
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
-            
-                if self.augmentation is not None:
-                    inputs=augmentation(inputs)
 
                 y_true = torch.cat((y_true, targets), 0)
 
@@ -69,10 +69,27 @@ class RetrainMetric(Metric):
                 l = loss(logits, targets)
                 y_out = torch.cat((y_out, logits.detach().clone()), 0)
                 l.backward()
+                #print(model.classifier.bias)
                 optimizer.step()
+                #print(model.classifier.bias)
                 cum_loss = cum_loss + l
                 cnt = cnt + inputs.shape[0]
+                #print(y_out)
+                #print(f"Batch {i + 1}: Loss = {l.item()}")
+
+                #for name, param in model.named_parameters():
+                #    if param.grad is not None:
+                #        print(f"Layer: {name} | Gradients: {param.grad.abs().mean()}")
+                #    else:
+                #        print(f"Layer: {name} has no gradients!")
+
+                #print(y_true)
+                #print(y_out)
+                #print(l.item())
+                #print(optimizer)
             y_pred = torch.argmax(y_out, dim=1)
+            #print(y_true)
+            #print(y_pred)
             train_loss = cum_loss.detach().cpu()
             acc = (y_true == y_pred).sum() / y_out.shape[0]
             train_acc.append(acc)
@@ -84,6 +101,8 @@ class RetrainMetric(Metric):
             print(f"Epoch {e + 1}/{self.epochs} loss: {cum_loss}")  # / cnt}")
             print("\n==============\n")
             learning_rates.append(scheduler.get_lr())
+            current_lr = scheduler.get_last_lr() if hasattr(scheduler, 'get_last_lr') else [group['lr'] for group in optimizer.param_groups]
+            print(f"Current learning rate: {current_lr}")
             scheduler.step()
         return model
     
@@ -108,11 +127,11 @@ class RetrainMetric(Metric):
 class BatchRetraining(RetrainMetric):
     name = "BatchRetraining"
 
-    def __init__(self, dataset_name, train, test, model, 
+    def __init__(self, dataset_name, train, test, model_name, 
                  epochs, loss, lr, momentum, optimizer, scheduler,
                  weight_decay, augmentation, batch_nr=10, device="cuda", mode="cum"):
         # mode should be one of "cum", "neg_cum", "leave_batch_out", "single_batch"
-        super().__init__(dataset_name, train, test, model,
+        super().__init__(dataset_name, train, test, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, device)
         self.batch_nr = batch_nr
@@ -352,9 +371,9 @@ class LinearDatamodelingScore(RetrainMetric):
 class LinearDatamodelingScore(RetrainMetric):
     name = "LinearDatamodelingScore"
 
-    def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, alpha=0.05, samples=10, device="cuda"):
-        super().__init__(dataset_name, train, test, model,
+    def __init__(self, dataset_name, train, test, model_name, epochs, loss, lr, momentum, optimizer, scheduler,
+                 weight_decay, augmentation, alpha=0.5, samples=10, device="cuda"):
+        super().__init__(dataset_name, train, test, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, device)
         self.alpha = alpha
@@ -367,7 +386,6 @@ class LinearDatamodelingScore(RetrainMetric):
             np.random.choice(len(train), size= int(self.alpha * len(train)), replace=False) for _ in range(samples)
         ],device=device)
 
-
     def __call__(self, xpl, start_index=0):
         xpl.to(self.device)
         self.n_test = xpl.shape[0]
@@ -378,8 +396,11 @@ class LinearDatamodelingScore(RetrainMetric):
         loss = CrossEntropyLoss()
         for i in range(self.samples):
             cur_indices=self.sample_indices[i].cpu()
+            #print(cur_indices)
             attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach().numpy()
+            #print(attribution_array)
             ds = RestrictedDataset(self.train, cur_indices)
+            #print(len(ds))
             retrained_model = self.retrain(ds)
             loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).cpu().detach().numpy()
         self.attribution_array=torch.cat((self.attribution_array,attribution_array), dim=0)

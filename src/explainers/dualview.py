@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 class DualView(FeatureKernelExplainer):
     name = "DualViewExplainer"
-    def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, max_iter=500000, normalize=False):
+    def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, max_iter=1000000, normalize=False):
         super().__init__(model, dataset, device, features_dir, normalize=normalize)
         self.C=C
         if dir[-1]=="\\":
@@ -41,6 +41,8 @@ class DualView(FeatureKernelExplainer):
         else:
             model = LinearSVC(multi_class="crammer_singer", max_iter=self.max_iter, C=self.C)
             model.fit(self.normalized_samples.cpu(),self.labels.cpu())
+            accuracy = model.score(self.normalized_samples.cpu(), self.labels.cpu())
+            print(f"SVC Accuracy: {accuracy:.2f}")
 
             self.coefficients=torch.tensor(model.alpha_.T,dtype=torch.float,device=self.device)
             self.learned_weight=torch.tensor(model.coef_,dtype=torch.float, device=self.device)
