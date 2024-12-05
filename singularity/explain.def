@@ -5,6 +5,7 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
 
   ../src /opt
   ../scikit-learn-dual /sklearn
+  ../captum /captum
 
 %post
 
@@ -23,11 +24,16 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
   pip install zennit
   pip install tensorboard
   pip install /sklearn
+  pip install /captum
+  pip install kronfluence
 
 %runscript
 
   cd /opt/src
   pwd
   ls
-  pip install traker[fast] --user
+  if [ "$1" = "--trak" ]; then
+    pip install traker[fast] --user
+    shift
+  fi
   python explain.py "$@"

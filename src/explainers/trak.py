@@ -4,6 +4,7 @@ from utils.explainers import Explainer
 from trak.projectors import ProjectionType
 import os
 import torch
+from time import time
 
 class TRAK(Explainer):
     name = "TRAK"
@@ -24,6 +25,7 @@ class TRAK(Explainer):
                              )
 
     def train(self):
+        t=time()
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
         self.traker.load_checkpoint(self.model.state_dict(),model_id=0)
         for (i,(x,y)) in enumerate(iter(ld)):
@@ -46,3 +48,27 @@ class TRAK(Explainer):
         self.traker.score(batch=(x,xpl_targets), num_samples=x.shape[0])
         return torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
 
+    def self_influences(self):
+        if os.path.exists(os.path.join(self.dir, "self_influences")):
+            self_inf=torch.load(os.path.join(self.dir, "self_influences"))
+        else:
+            self_inf=torch.zeros((len(self.dataset),), device=self.device)
+            self.compute_self_influences_brute_force()
+            torch.save(self_inf, os.path.join(self.dir, "self_influences"))
+        return self_inf
+    
+    def compute_self_influences_brute_force(self):
+        pass # TODO : implement self-influences and caching
+        # ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
+        
+        # for (i,(x,y)) in enumerate(iter(ld)):
+        #     self.traker.start_scoring_checkpoint(model_id=0,
+        #                                      checkpoint=self.model.state_dict(),
+        #                                      exp_name=f'self_influences_{i}',
+        #                                     num_targets=x.shape[0])
+        #     self.traker.score(batch=(x,y), num_samples=x.shape[0])
+        #     xpl = torch.from_numpy(self.traker.finalize_scores(exp_name=f'self_influences_{i}')).T.to(self.device)
+        #     batch=x.to(self.device), y.to(self.device)
+        #     self.traker.score(batch=batch, num_samples=min(self.batch_size,len(self.dataset)-i*self.batch_size))
+        #     self_inf[i*self.batch_size:i*self.batch_size+min(self.batch_size,len(self.dataset)-i*self.batch_size)]=torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device).diag()
+        # return self_inf
