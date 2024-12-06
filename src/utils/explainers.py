@@ -29,6 +29,8 @@ class Explainer(ABC):
     def save_coefs(self, dir):
         pass
 
+        
+
 
 class FeatureKernelExplainer(Explainer):
     def __init__(self, model, dataset, device, dir=None,normalize=False):
@@ -51,21 +53,27 @@ class FeatureKernelExplainer(Explainer):
         return (features - self.mean) / self.stdvar
 
     def explain(self, x, xpl_targets):
-        assert self.coefficients is not None
-        x = x.to(self.device)
-        f = self.model.features(x)
-        if self.normalize:
-            f = self.normalize_features(f)
-        crosscorr = torch.matmul(f, self.normalized_samples.T)
-        crosscorr = crosscorr[:, :, None]
-        xpl = self.coefficients * crosscorr
-        indices = xpl_targets[:, None, None].expand(-1, self.samples.shape[0], 1)
-        xpl = torch.gather(xpl, dim=-1, index=indices)
-        return torch.squeeze(xpl)
+        with torch.no_grad():
+            assert self.coefficients is not None
+            x = x.to(self.device)
+            f = self.model.features(x)
+            if self.normalize:
+                f = self.normalize_features(f)
+            crosscorr = torch.matmul(f, self.normalized_samples.T)
+            crosscorr = crosscorr[:, :, None]
+            xpl = self.coefficients * crosscorr
+            indices = xpl_targets[:, None, None].expand(-1, self.samples.shape[0], 1)
+            xpl = torch.gather(xpl, dim=-1, index=indices)
+            return torch.squeeze(xpl)
 
 
-    def self_influences(self):
-        return self.coefficients[torch.arange(self.coefficients.shape[0]), self.labels]
+    def self_influences(self, only_coefs=False):
+        self_coefs = self.coefficients[torch.arange(self.coefficients.shape[0]), self.labels]
+        if only_coefs:
+            return self_coefs
+        else:
+            return self.normalized_samples.norm(dim=-1)*self_coefs
+        
 
     def save_coefs(self, dir):
         torch.save(self.coefficients, os.path.join(dir, f"{self.name}_coefs"))
@@ -73,7 +81,14 @@ class FeatureKernelExplainer(Explainer):
 class GradDotExplainer(Explainer):
     name="GradDotExplainer"
     gradcos_name="GradCosExplainer"
-    def __init__(self,model,dataset,mat_dir, grad_dir, dimensions, ds_name, ds_type, cp_nr=None, loss=False, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self,
+                 model,
+                 dataset,
+                 mat_dir,
+                 grad_dir,
+                 dimensions,
+                 loss=False,
+                 device="cuda" if torch.cuda.is_available() else "cpu"):
         # if dimension=None, no random projection will be done
         super().__init__(model,dataset,device)
         self.loss=loss
@@ -90,8 +105,6 @@ class GradDotExplainer(Explainer):
         self.dimensions=dimensions
         self.random_matrix=None
         self.train_grads=None
-        self.ds_name = ds_name
-        self.ds_type = ds_type
         os.makedirs(self.mat_dir, exist_ok=True)
         os.makedirs(self.grad_dir, exist_ok=True)
 
@@ -108,7 +121,7 @@ class GradDotExplainer(Explainer):
             torch.save(self.random_matrix, rand_mat_path)
         
         grads_path=os.path.join(self.grad_dir, "grads")
-        norms_path=os.path.join(self.grad_dir, "norms")
+        norms_path=os.path.join(self.grad_dir, "self_influences")
 
         if os.path.isfile(grads_path):
             print("Train grads found.")

@@ -2,7 +2,7 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer
+from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer
 from utils.data import load_datasets_reduced
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
@@ -18,12 +18,21 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
     }
 
     arnoldi_params={
-        #"MNIST": {"layers": None, "projection_dim": 128, "arnoldi_dim":200, "hessian_dataset_size": 5000},
         "MNIST": {"layers": None, "projection_dim": 100, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "CIFAR": {"layers": None, "projection_dim": 128, "arnoldi_dim":200, "hessian_dataset_size": 10000},
         "AWA": {"layers": None, "projection_dim": 128, "hessian_dataset_size": 10000},
     }
+    kronfluence_params={}
 
+    # if we want seperate kwargs for each dataset, below is a dictionary with default values
+    # kronfluence_params={
+    #     "covariance_max_examples": 100000,
+    #     "covariance_data_partitions": 1,
+    #     "lambda_max_examples": 100000,
+    #     "lambda_data_partitions": 1,
+    #     "use_iterative_lambda_aggregation": False,
+    #     "score_data_partitions":1
+    #     }
     trak_params={}
 
     dualview_params={}
@@ -43,6 +52,7 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128, "ds_name": dataset_name, "ds_type": dataset_type}),
         'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, **lissa_params[dataset_name]}),
         'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
+        'kronfluence': (KronfluenceExplainer, {'dir':cache_dir, **kronfluence_params}),
     }
     return explainers[xai_method]
 
@@ -110,6 +120,7 @@ def explain_model(model_name, model_path, device, class_groups,
         start_file=start_file,
         num_files=num_files,
         graddot=True if xai_method == "graddot" else False,
+        self_influence=(dataset_type=="corrupt")
     )
 
 

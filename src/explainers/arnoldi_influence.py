@@ -11,13 +11,44 @@ from captum.influence import (
 )
 
 # TODO Should be imported directly from captum.influence once available
-from captum.influence._core.arnoldi_influence_function import ArnoldiInfluenceFunction
-from captum.influence._core.influence_function import InfluenceFunctionBase
+from captum.influence._core.arnoldi_influence_function import ArnoldiInfluenceFunction, \
+                                                              InfluenceFunctionBase, \
+                                                                _extract_parameters_from_layers, \
+                                                                _params_to_names, \
+                                                                _functional_call, \
+                                                                _compute_batch_loss_influence_function_base, \
+                                                                _parameter_add, \
+                                                                _dataset_fn, \
+                                                                _parameter_arnoldi, \
+                                                                _parameter_distill, \
+                                                                _parameter_multiply, \
+                                                                _parameter_to
+from tqdm import tqdm
+                                                                
 
 
 from utils.explainers import Explainer
 
 ## todo checkpoint_load_func should be created here and checkpoint is a dict which is taken from the supplied model
+
+
+class OnDeviceDataset(torch.utils.data.Dataset):
+    """Wrapper to move a dataset to a device."""
+
+    def __init__(
+        self,
+        dataset,
+        device
+    ):
+        self.dataset = dataset
+        self.device = device
+
+    def __getitem__(self, idx):
+        data, target = self.dataset[idx]
+        return data.to(self.device), torch.tensor(target).to(self.device)
+
+    def __len__(self):
+        return len(self.dataset)
 
 class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
     def __init__(
@@ -36,9 +67,10 @@ class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
         arnoldi_tol = 1e-1,
         hessian_reg = 1e-3,
         hessian_inverse_tol = 1e-4,
-        projection_on_cpu = True,
+        projection_on_cpu = False,
         show_progress = False
     ):
+        projection_on_cpu = False
         checkpoint = model.state_dict()
         def checkpoints_load_func(model, ckpt):
             model.load_state_dict(ckpt) 
@@ -77,6 +109,7 @@ class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
             self.show_progress,
         ) 
         return t - time()
+
 
 class ArnoldiInfluenceFunctionExplainer(Explainer):
     name="ArnoldiInfluenceFunctionExplainer"
@@ -169,7 +202,7 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         **explainer_kwargs : Any
             Additional keyword arguments passed to the explainer.
         """
-        
+        dataset=OnDeviceDataset(dataset, device)
         super().__init__(
             model=model,
             dataset=dataset,
@@ -201,11 +234,9 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         
         self.captum_explainer = CustomArnoldiInfluenceFunction(**explainer_kwargs)
 
-        self.train()
-
     def train(self):
         if os.path.exists(os.path.join(self.dir, "R")):
-            self.captum_explainer.R = torch.load(os.path.join(self.dir, "R"))
+            self.captum_explainer.R = torch.load(os.path.join(self.dir, "R"), map_location=self.device)
         else:
             train_time = self.captum_explainer.compute_R()
             torch.save(self.captum_explainer.R, os.path.join(self.dir, "R"))
@@ -214,7 +245,6 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
             train_time = torch.load(os.path.join(self.dir, "train_time"))
         else:
             torch.save(train_time, os.path.join(self.dir, "train_time"))
-
         return train_time
 
     def get_hessian_dataset(dir, hessian_dataset_size, train_dataset):

@@ -60,6 +60,7 @@ class DualView(FeatureKernelExplainer):
             return self_coefs
         else:
             return self.normalized_samples.norm(dim=-1)*self_coefs
+
         
 
 class DualView_Shark(FeatureKernelExplainer):

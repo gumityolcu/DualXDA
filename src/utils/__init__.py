@@ -44,12 +44,16 @@ def zennit_inner_product_explanation(model, train, test, composite_cls=EpsilonAl
 
 
 def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_batches_per_file, save_dir,
-           start_file, num_files, graddot=False):
+           start_file, num_files, graddot=False, self_influence=False):
+    torch.manual_seed(42)
     # the graddot parameter indicates if we are generating graddot attributions
     # if it is true, graddot.explain will be called a second time with normalize=True to generate gradcos along the way
 
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     explainer.train()
+    if self_influence:
+        explainer.self_influences()
+        exit()
 
     test_ld = DataLoader(test, batch_size=batch_size, shuffle=False)
     explanations = torch.empty((0, len(train)), device=device)
@@ -88,42 +92,43 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
 
     return explanations
 
+#below function is outdated, copy xplain() from above and include time measurement
 
-def xplain_to_compute_time(model, train, test, device, explainer_clses, kwargses,
-                           save_dirs, err, start_page, num_pages, page_size, skip=0):
-    explainers = [explainer_clses[i](model=model, dataset=train, device=device, **(kwargses[i])) for i in
-                  range(len(kwargses))]
-    test_ld = DataLoader(test, batch_size=1, shuffle=False)
-    i = 0
-    for page in range(num_pages):
-        xpl_timeses = [[] for t in range(len(explainers))]
-        reses = [{} for t in range(len(explainers))]
-        xpl_instance_ids = [skip + start_page * page_size + page * page_size + i for i in range(page_size)]
-        selection_tensor = torch.zeros(len(test_ld))
-        selection_tensor[xpl_instance_ids] = 1.
-        iter_loader = itertools.compress(test_ld, selection_tensor)
-        for u, (x, y) in enumerate(iter_loader):
-            with torch.no_grad():
-                x = x.to(device)
-                y = y.to(device)
-                preds = torch.argmax(model(x), dim=1)
-            for t in range(len(explainers)):
-                explainer = explainers[t]
-                save_dir = save_dirs[t]
-                if u == 0:
-                    train_time = explainer.train()
-                    reses[t] = {'training': train_time}
-                print(f"Starting page {page} with page_size={page_size}")
-                last_time = time()
-                xpl = explainer.explain(x=x, xpl_targets=preds)
-                xpl_timeses[t].append(time() - last_time)
-                # print(xpl_times)
-                # explanations=torch.cat((explanations, xpl), dim=0)
-                i = i + 1
-                reses[t]["xpl"] = xpl_timeses[t]
-                with open(os.path.join(save_dir, f"resources_page_{page}"), 'w', encoding='utf-8') as f:
-                    json.dump(reses[t], f, ensure_ascii=False, indent=4)
-            print(f"Ended page {page} with page_size={page_size}")
+# def xplain_to_compute_time(model, train, test, device, explainer_clses, kwargses,
+#                            save_dirs, err, start_page, num_pages, page_size, skip=0):
+#     explainers = [explainer_clses[i](model=model, dataset=train, device=device, **(kwargses[i])) for i in
+#                   range(len(kwargses))]
+#     test_ld = DataLoader(test, batch_size=1, shuffle=False)
+#     i = 0
+#     for page in range(num_pages):
+#         xpl_timeses = [[] for t in range(len(explainers))]
+#         reses = [{} for t in range(len(explainers))]
+#         xpl_instance_ids = [skip + start_page * page_size + page * page_size + i for i in range(page_size)]
+#         selection_tensor = torch.zeros(len(test_ld))
+#         selection_tensor[xpl_instance_ids] = 1.
+#         iter_loader = itertools.compress(test_ld, selection_tensor)
+#         for u, (x, y) in enumerate(iter_loader):
+#             with torch.no_grad():
+#                 x = x.to(device)
+#                 y = y.to(device)
+#                 preds = torch.argmax(model(x), dim=1)
+#             for t in range(len(explainers)):
+#                 explainer = explainers[t]
+#                 save_dir = save_dirs[t]
+#                 if u == 0:
+#                     train_time = explainer.train()
+#                     reses[t] = {'training': train_time}
+#                 print(f"Starting page {page} with page_size={page_size}")
+#                 last_time = time()
+#                 xpl = explainer.explain(x=x, xpl_targets=preds)
+#                 xpl_timeses[t].append(time() - last_time)
+#                 # print(xpl_times)
+#                 # explanations=torch.cat((explanations, xpl), dim=0)
+#                 i = i + 1
+#                 reses[t]["xpl"] = xpl_timeses[t]
+#                 with open(os.path.join(save_dir, f"resources_page_{page}"), 'w', encoding='utf-8') as f:
+#                     json.dump(reses[t], f, ensure_ascii=False, indent=4)
+#             print(f"Ended page {page} with page_size={page_size}")
 
 
 class Metric(ABC):
