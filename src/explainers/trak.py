@@ -3,25 +3,34 @@ from trak.projectors import CudaProjector, ChunkedCudaProjector
 from utils.explainers import Explainer
 from trak.projectors import ProjectionType
 import os
+from glob import glob
+from shutil import copytree, rmtree
 import torch
 from time import time
 
 class TRAK(Explainer):
     name = "TRAK"
-    def __init__(self, model, dataset, dir, device, proj_dim=100, batch_size=32):
+    def __init__(self, model, dataset, base_cache_dir, dir, device, proj_dim=100, batch_size=32):
         super(TRAK, self).__init__(model, dataset, device)
         self.dataset=dataset
         self.batch_size=batch_size
         self.number_of_params=0
         self.dir=dir
+        self.base_cache_dir=base_cache_dir
+        if os.path.isdir(os.path.join(base_cache_dir, "trak_results")):
+            copytree(os.path.join(base_cache_dir, "trak_results"), os.path.join(dir, "trak_results"))
         for p in list(self.model.parameters()):
             nn = 1
             for s in list(p.size()):
                 nn = nn * s
             self.number_of_params += nn
-        projector_dict = {"cuda": CudaProjector(grad_dim=self.number_of_params,proj_dim=proj_dim,seed=21,device=device, proj_type=ProjectionType.normal, max_batch_size=32), "cpu": None}
+        if device=="cuda":
+            projector=CudaProjector(grad_dim=self.number_of_params,proj_dim=proj_dim,seed=21,device=device, proj_type=ProjectionType.normal, max_batch_size=32)
+        else:
+            projector=None
         self.traker = TRAKer(model=model, task='image_classification', train_set_size=len(dataset),
-                             projector=projector_dict[device], proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"),
+                             projector=projector, proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"),
+                             device=device
                              )
 
     def train(self):
@@ -46,7 +55,23 @@ class TRAK(Explainer):
                                              exp_name='test',
                                             num_targets=x.shape[0])
         self.traker.score(batch=(x,xpl_targets), num_samples=x.shape[0])
-        return torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
+        ret_xpl = torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device)
+        self.clean_cache()
+        return ret_xpl
+    
+    def clean_cache(self):
+        # this restores the cache folder to the initial state before any explanations were generated
+        for f in glob(os.path.join(self.dir, "trak_results", "scores", "*")):
+            pass
+            os.remove(f)
+        for f in glob(os.path.join(self.dir, "trak_results", "0", "test*")):
+            pass
+            os.remove(f)
+        with open(os.path.join(self.dir, "trak_results", "experiments.json"), "w") as f:
+            f.write("{}")
+
+    def delete_cache(self):
+        rmtree(os.path.join(self.dir, "trak_results"))
 
     def self_influences(self):
         if os.path.exists(os.path.join(self.dir, "self_influences")):
@@ -56,6 +81,9 @@ class TRAK(Explainer):
             self.compute_self_influences_brute_force()
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf
+    
+    def __del__(self):
+        self.delete_cache()
     
     def compute_self_influences_brute_force(self):
         pass # TODO : implement self-influences and caching

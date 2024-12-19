@@ -10,7 +10,7 @@ import logging
 import os
 
 
-def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
+def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
     lissa_params={
         "MNIST": {'depth': 6000, 'repeat': 10},
         "CIFAR": {'depth': 5000, 'repeat': 10},
@@ -45,7 +45,7 @@ def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, da
 
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
-        'trak': (TRAK, {'proj_dim': 2048, "dir":cache_dir}),
+        'trak': (TRAK, {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir}),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
         'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
@@ -101,7 +101,7 @@ def explain_model(model_name, model_path, device, class_groups,
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
-    explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
     
     if C_margin is not None:
         kwargs["C"] = C_margin
