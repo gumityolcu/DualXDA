@@ -10,6 +10,7 @@
 
 source "/etc/slurm/local_job_dir.sh"
 
+start=`date +%s`
 
 mkdir -p ${LOCAL_JOB_DIR}/outputs
 
@@ -20,7 +21,6 @@ echo "TAR DONE"
 tar -C ${LOCAL_JOB_DIR} -zxf ${LOCAL_JOB_DIR}/config_files.tgz home/fe/yolcu/DualView/config_files --strip-components=4
 tar -C ${LOCAL_JOB_DIR} -zxf ${LOCAL_JOB_DIR}/checkpoints.tgz home/fe/yolcu/DualView/checkpoints --strip-components=4
 tar -C ${LOCAL_JOB_DIR} -zxf ${LOCAL_JOB_DIR}/cache.tgz home/fe/yolcu/DualView/cache --strip-components=4
-
 
 fname_config=$(basename "$1")
 config_name=${fname_config::-5}
@@ -51,3 +51,8 @@ tar -czf $3_$2_${fname_config}-output_data_${SLURM_JOB_ID}.tgz outputs
 cp $3_$2_${fname_config}-output_data_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}
 
 rm -rf ${LOCAL_JOB_DIR}/*
+
+end=`date +%s`
+runtime=$((end-start))
+echo "Runtime: $runtime"
+echo "In minutes: $(($runtime / 60))"
