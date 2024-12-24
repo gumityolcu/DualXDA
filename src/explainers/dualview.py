@@ -36,7 +36,7 @@ class DualView(FeatureKernelExplainer):
         if not os.path.isfile(os.path.join(self.features_dir, "labels")):
             torch.save(self.labels,os.path.join(self.features_dir, "labels"))
         
-        if os.path.isfile(os.path.join(self.dir,'weights')) and os.path.isdir(os.path.join(self.dir,'coefficients')):
+        if os.path.isfile(os.path.join(self.dir,'weights')) and os.path.isfile(os.path.join(self.dir,'coefficients')):
             self.read_variables()
         else:
             model = LinearSVC(multi_class="crammer_singer", max_iter=self.max_iter, C=self.C)

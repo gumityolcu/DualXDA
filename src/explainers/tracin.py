@@ -72,7 +72,7 @@ class TracInExplainer(Explainer):
     def explain(self, x, xpl_targets):
         attr=torch.zeros((x.shape[0], len(self.dataset)),device=self.device)
         nr_explainers = len(self.explainers_info)
-        for i, (rate, path) in enumerate(self.explainers):
+        for i, (rate, path) in enumerate(self.explainers_info):
             graddot=GradDotExplainer(
                 model=self.model,
                 dataset=self.dataset,
@@ -90,7 +90,7 @@ class TracInExplainer(Explainer):
         else:
             self_inf=torch.zeros((len(self.dataset),), device=self.device)
             nr_explainers = len(self.explainers_info)
-            for i, (rate, path) in enumerate(self.explainers):
+            for i, (rate, path) in enumerate(self.explainers_info):
                 graddot=GradDotExplainer(
                 model=self.model,
                 dataset=self.dataset,

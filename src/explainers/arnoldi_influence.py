@@ -130,7 +130,7 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         hessian_dataset_size = 5000,
         hessian_reg = 1e-3,
         hessian_inverse_tol = 1e-4,
-        projection_on_cpu = True,
+        projection_on_cpu = False,
         show_progress = False,
         device = "cuda",
     ):
@@ -280,7 +280,7 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
             xpl_targets = xpl_targets.to(self.device)
 
         influence_scores = self.captum_explainer.influence(inputs=(x, xpl_targets))
-        return influence_scores
+        return influence_scores.to(self.device)
 
     def self_influences(self) -> torch.Tensor:
         """
