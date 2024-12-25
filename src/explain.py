@@ -12,9 +12,9 @@ import os
 
 def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
     lissa_params={
-        "MNIST": {'depth': 6000, 'repeat': 10},
-        "CIFAR": {'depth': 5000, 'repeat': 10},
-        "AWA": {'depth': 3700, 'repeat': 10}
+        "MNIST": {'depth': 6000, 'repeat': 10, "scale": 500},
+        "CIFAR": {'depth': 5000, 'repeat': 10, "scale": 5000},
+        "AWA": {'depth': 3700, 'repeat': 10, "scale": 5000}
     }
 
     arnoldi_params={
@@ -50,7 +50,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128,  "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128}),
-        'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, 'scale':5000, **lissa_params[dataset_name]}),
+        'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, **lissa_params[dataset_name]}),
         'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
         'kronfluence': (KronfluenceExplainer, {'dir':cache_dir, **kronfluence_params}),
     }
