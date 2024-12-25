@@ -66,12 +66,14 @@ class TracInExplainer(Explainer):
             time=time+graddot.train() 
             torch.cuda.empty_cache()
         self.train_time=time
-        torch.save(self.train_time, os.path.join(self.dir, "train_time"))
+        if not os.path.isfile(os.path.join(self.dir, "train_time")):
+            torch.save(self.train_time, os.path.join(self.dir, "train_time"))
         return self.train_time
 
     def explain(self, x, xpl_targets):
         attr=torch.zeros((x.shape[0], len(self.dataset)),device=self.device)
         nr_explainers = len(self.explainers_info)
+        print("started explanations here!")
         for i, (rate, path) in enumerate(self.explainers_info):
             graddot=GradDotExplainer(
                 model=self.model,
@@ -81,7 +83,8 @@ class TracInExplainer(Explainer):
                 dimensions=self.dimensions,
                 loss=True,
                 device=self.device)
-            attr=attr+rate*graddot.explain(x,xpl_targets) 
+            graddot.train()
+            attr=attr+rate*graddot.explain(x,xpl_targets, normalize_test=False) 
         return attr/nr_explainers
 
     def self_influences(self):

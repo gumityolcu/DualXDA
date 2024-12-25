@@ -79,7 +79,7 @@ class FeatureKernelExplainer(Explainer):
         torch.save(self.coefficients, os.path.join(dir, f"{self.name}_coefs"))
 
 class GradDotExplainer(Explainer):
-    name="GradDotExplainer"
+    name="GradDotExplainer"     
     gradcos_name="GradCosExplainer"
     def __init__(self,
                  model,
@@ -153,12 +153,12 @@ class GradDotExplainer(Explainer):
             train_grads[i], grad_norms[i] = self.get_param_grad(x,y,norm=True)
         return train_grads, grad_norms
 
-    def explain(self, x, xpl_targets, normalize=False):
+    def explain(self, x, xpl_targets, normalize_train=False, normalize_test=True):
         xpl=torch.empty(x.shape[0],len(self.dataset),device=self.device)
         for i in tqdm(range(x.shape[0])):
-            test_grad=self.get_param_grad(x[i],xpl_targets[i], normalize=True) # normalize the test gradient to prevent overflow. doesn't change the tda ranking
+            test_grad=self.get_param_grad(x[i],xpl_targets[i], normalize=normalize_test) # normalize the test gradient to prevent overflow by default. doesn't change the tda ranking. but normalize_test=False for calls from within the TracInExplainer
             xpl[i]=torch.matmul(self.train_grads,test_grad)
-        if normalize:
+        if normalize_train:
             xpl=xpl/self.norms
         return xpl
 
