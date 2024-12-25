@@ -156,7 +156,7 @@ class GradDotExplainer(Explainer):
     def explain(self, x, xpl_targets, normalize=False):
         xpl=torch.empty(x.shape[0],len(self.dataset),device=self.device)
         for i in tqdm(range(x.shape[0])):
-            test_grad=self.get_param_grad(x[i],xpl_targets[i], normalize=normalize)
+            test_grad=self.get_param_grad(x[i],xpl_targets[i], normalize=True) # normalize the test gradient to prevent overflow. doesn't change the tda ranking
             xpl[i]=torch.matmul(self.train_grads,test_grad)
         if normalize:
             xpl=xpl/self.norms
