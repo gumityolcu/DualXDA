@@ -16,11 +16,10 @@ mkdir -p ${LOCAL_JOB_DIR}/outputs
 
 tar -czf ${LOCAL_JOB_DIR}/config_files.tgz ${HOME}/DualView/config_files
 tar -czf ${LOCAL_JOB_DIR}/checkpoints.tgz ${HOME}/DualView/checkpoints
-tar -czf ${LOCAL_JOB_DIR}/cache.tgz ${HOME}/DualView/cache
+
 echo "TAR DONE"
 tar -C ${LOCAL_JOB_DIR} -zxf ${LOCAL_JOB_DIR}/config_files.tgz home/fe/yolcu/DualView/config_files --strip-components=4
 tar -C ${LOCAL_JOB_DIR} -zxf ${LOCAL_JOB_DIR}/checkpoints.tgz home/fe/yolcu/DualView/checkpoints --strip-components=4
-tar -C ${LOCAL_JOB_DIR} -zxf ${LOCAL_JOB_DIR}/cache.tgz home/fe/yolcu/DualView/cache --strip-components=4
 
 fname_config=$(basename "$1")
 config_name=${fname_config::-5}
@@ -33,7 +32,7 @@ if [[ "$fname_config" == *"trak"* ]]; then
         --bind ${LOCAL_JOB_DIR}/checkpoints:/mnt/checkpoints \
         --bind ${DATAPOOL3}/datasets:/mnt/dataset \
         --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
-        --bind ${LOCAL_JOB_DIR}/cache:/mnt/cache \
+        --bind ${HOME}/DualView/cache:/mnt/cache \
         ../singularity/explain.sif --trak --config_file /mnt/config_files/cluster/$2/$3/${fname_config}
 else
   singularity \
@@ -43,7 +42,7 @@ else
           --bind ${LOCAL_JOB_DIR}/checkpoints:/mnt/checkpoints \
           --bind ${DATAPOOL3}/datasets:/mnt/dataset \
           --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
-          --bind ${LOCAL_JOB_DIR}/cache:/mnt/cache \
+          --bind ${HOME}/cache:/mnt/cache \
           ../singularity/explain.sif --config_file /mnt/config_files/cluster/$2/$3/${fname_config}
 fi
 cd ${LOCAL_JOB_DIR}
