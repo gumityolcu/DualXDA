@@ -46,7 +46,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
                 "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
                 "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
                 "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': cache_dir}}),
-                "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
+                #"lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "labelflip": (LabelFlipMetric, retrain_dict)}
     if metric_name not in ret_dict.keys():
         raise Exception(f"{metric_name} is not a metric name")
@@ -140,7 +140,7 @@ def evaluate(model_name, model_path, device, class_groups,
 
 
     if metric_name == "corrupt":
-        explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+        explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
         explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
         selfinf=explainer.self_influences()
         metric(selfinf)

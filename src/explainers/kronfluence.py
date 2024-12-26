@@ -104,7 +104,6 @@ class KronfluenceExplainer(Explainer):
             score_args=score_args,
             factors_name="exp_factors",
             query_dataset=eval_dataset,
-            query_indices=list(range(2000)),
             train_dataset=self.dataset,
             per_device_query_batch_size=self.batch_size,
             overwrite_output_dir=False,# this parameter allows loading from cache

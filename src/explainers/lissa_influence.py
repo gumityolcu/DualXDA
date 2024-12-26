@@ -463,7 +463,7 @@ class LiSSAInfluenceModule(BaseInfluenceModule):
 class LiSSAInfluenceFunctionExplainer(Explainer):
     name = "LiSSAInfluenceFunctionExplainer"
 
-    def __init__(self, model, dataset, device, depth, repeat, dir, train_loss=cross_entropy,
+    def __init__(self, model, dataset, device, depth, repeat, scale, dir, train_loss=cross_entropy,
                  train_regularization=(lambda x: torch.tensor(0., device=x[0].device if x is not None else "cpu")), test_loss=cross_entropy):
         class MyObjective(BaseObjective):
             def train_outputs(self, model, batch):
@@ -490,7 +490,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
         os.makedirs(self.dir,exist_ok=True)
         self.influence_module = LiSSAInfluenceModule(model, MyObjective(),
                                                      torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False),
-                                                     depth=depth, repeat=repeat, scale=1.0, damp=0.001, device=device)
+                                                     depth=depth, repeat=repeat, scale=scale, damp=0.001, device=device)
 
     def train(self):
         return 0.

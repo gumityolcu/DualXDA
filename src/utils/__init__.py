@@ -47,7 +47,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
            start_file, num_files, graddot=False, self_influence=False):
     torch.manual_seed(42)
     # the graddot parameter indicates if we are generating graddot attributions
-    # if it is true, graddot.explain will be called a second time with normalize=True to generate gradcos along the way
+    # if it is true, graddot.explain will be called a second time with normalize_train=True to generate gradcos along the way
 
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     explainer.train()
@@ -72,7 +72,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         xpl = explainer.explain(x=x, xpl_targets=preds)
         explanations = torch.cat((explanations, xpl), dim=0)
         if graddot:
-            xpl = explainer.explain(x=x, xpl_targets=preds, normalize=True)
+            xpl = explainer.explain(x=x, xpl_targets=preds, normalize_train=True)
             gradcos_explanations = torch.cat((gradcos_explanations, xpl), dim=0)
         #xpl = explainer.explain(x=x, xpl_targets=y) to explain actual labels
         i = i + 1
