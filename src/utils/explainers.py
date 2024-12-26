@@ -39,7 +39,7 @@ class FeatureKernelExplainer(Explainer):
         os.makedirs(dir, exist_ok=True)
         feature_ds = FeatureDataset(self.model, dataset, device, dir)
         self.coefficients = None  # the coefficients for each training datapoint x class
-        self.learned_weights = None
+        self.learned_weight = None
         self.normalize=normalize
         self.samples = feature_ds.samples.to(self.device)
         self.mean = self.samples.sum(0) / self.samples.shape[0]

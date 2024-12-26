@@ -49,7 +49,7 @@ class DualView(FeatureKernelExplainer):
             self.train_time = torch.tensor(time.time() - tstart)
 
             torch.save(self.train_time,os.path.join(self.dir,'train_time'))
-            torch.save(self.learned_weights,os.path.join(self.dir,'weights'))
+            torch.save(self.learned_weight,os.path.join(self.dir,'weights'))
             torch.save(self.coefficients,os.path.join(self.dir,'coefficients'))
             print(f"Training took {self.train_time} seconds")
         return self.train_time
