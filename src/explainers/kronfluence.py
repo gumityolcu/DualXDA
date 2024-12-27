@@ -117,6 +117,6 @@ class KronfluenceExplainer(Explainer):
         else:
             score_args = ScoreArguments(**self.score_kwargs)
             self.analyzer.compute_self_scores(scores_name="self", factors_name="exp_factors", score_args=score_args, train_dataset=self.dataset)
-            scores = self.analyzer.load_self_scores(scores_name="self")
+            scores = self.analyzer.load_self_scores(scores_name="self")["all_modules"]
             torch.save(scores, os.path.join(self.dir, "self_influences"))
             return scores
