@@ -46,7 +46,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
                 "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
                 "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
                 "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': cache_dir}}),
-                #"lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
+                "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "labelflip": (LabelFlipMetric, retrain_dict)}
     if metric_name not in ret_dict.keys():
         raise Exception(f"{metric_name} is not a metric name")
