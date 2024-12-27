@@ -70,33 +70,23 @@ class TRAK(Explainer):
         with open(os.path.join(self.dir, "trak_results", "experiments.json"), "w") as f:
             f.write("{}")
 
-    def delete_cache(self):
-        rmtree(os.path.join(self.dir, "trak_results"))
 
     def self_influences(self):
         if os.path.exists(os.path.join(self.dir, "self_influences")):
             self_inf=torch.load(os.path.join(self.dir, "self_influences"))
         else:
-            self_inf=torch.zeros((len(self.dataset),), device=self.device)
-            self.compute_self_influences_brute_force()
+            self_inf=self.compute_self_influences_brute_force()
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf
-    
-    def __del__(self):
-        self.delete_cache()
-    
+
     def compute_self_influences_brute_force(self):
-        pass # TODO : implement self-influences and caching
-        # ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
-        
-        # for (i,(x,y)) in enumerate(iter(ld)):
-        #     self.traker.start_scoring_checkpoint(model_id=0,
-        #                                      checkpoint=self.model.state_dict(),
-        #                                      exp_name=f'self_influences_{i}',
-        #                                     num_targets=x.shape[0])
-        #     self.traker.score(batch=(x,y), num_samples=x.shape[0])
-        #     xpl = torch.from_numpy(self.traker.finalize_scores(exp_name=f'self_influences_{i}')).T.to(self.device)
-        #     batch=x.to(self.device), y.to(self.device)
-        #     self.traker.score(batch=batch, num_samples=min(self.batch_size,len(self.dataset)-i*self.batch_size))
-        #     self_inf[i*self.batch_size:i*self.batch_size+min(self.batch_size,len(self.dataset)-i*self.batch_size)]=torch.from_numpy(self.traker.finalize_scores(exp_name='test')).T.to(self.device).diag()
-        # return self_inf
+        ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
+        self.traker.start_scoring_checkpoint(model_id=0,
+                             checkpoint=self.model.state_dict(),
+                             exp_name=f'test_self_influences',
+                             num_targets=x.shape[0]) 
+        for (i,(x,y)) in enumerate(iter(ld)):  
+            batch=x.to(self.device), y.to(self.device)
+            self.traker.score(batch=batch, num_samples=x.shape[0])
+        selfinf = torch.from_numpy(self.traker.finalize_scores(exp_name=f'test_self_influences_{i}')).T.to(self.device)
+        return selfinf
