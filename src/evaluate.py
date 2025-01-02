@@ -153,26 +153,27 @@ def evaluate(model_name, model_path, device, class_groups,
     
     ################
 
-    #check if merged xpl exists
-    if not os.path.isdir(xpl_root):
-        raise Exception(f"Can not find standard explanation directory {xpl_root}")
-    file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-    file_root = file_list[0].split('_')[0]
-    num_files=len(file_list)
-    if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-        xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
-    #merge all xpl
-    else:
-        xpl_all = torch.empty(0, device=device)
-        for i in range(num_files):
-            fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
-            xpl = torch.load(fname, map_location=torch.device(device))
-            xpl.to(device)
-            xpl_all = torch.cat((xpl_all, xpl), 0)
-        torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
-        
-    metric(xpl_all, 0)
-    metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
+    if metric_name != 'lds_cache':
+        #check if merged xpl exists
+        if not os.path.isdir(xpl_root):
+            raise Exception(f"Can not find standard explanation directory {xpl_root}")
+        file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+        file_root = file_list[0].split('_')[0]
+        num_files=len(file_list)
+        if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
+            xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
+        #merge all xpl
+        else:
+            xpl_all = torch.empty(0, device=device)
+            for i in range(num_files):
+                fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
+                xpl = torch.load(fname, map_location=torch.device(device))
+                xpl.to(device)
+                xpl_all = torch.cat((xpl_all, xpl), 0)
+            torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
+            
+        metric(xpl_all, 0)
+        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
 
 
 if __name__ == "__main__":
