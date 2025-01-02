@@ -137,33 +137,31 @@ class BatchRetraining(RetrainMetric):
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
         self.mode=mode
-        self.loss_array = torch.empty((0, self.batch_nr))
-
+        self.loss_array = torch.empty(self.batch_nr)
 
 
     def __call__(self, xpl, start_index=0):
         xpl.to(self.device)
-        n_test=xpl.shape[0]
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
+        xpl = torch.abs(xpl)
+        xpl = xpl.sum(dim=0)
+        #evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+        #evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
         loss = CrossEntropyLoss()
-        for test_index in range(n_test):
-            new_losses=torch.empty((self.batch_nr,))
-            for i in range(self.batch_nr):
-                indices_sorted = xpl[test_index].argsort(descending=True)
-                if self.mode=="cum":
-                    ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
-                elif self.mode=="neg_cum":
-                    ds = RestrictedDataset(self.train, indices_sorted[(self.batch_nr-(i+1))*self.batchsize:])
-                elif self.mode=="leave_batch_out":
-                    ds = RestrictedDataset(self.train, torch.cat((indices_sorted[:i*self.batchsize], indices_sorted[(i+1)*self.batchsize:])))
-                elif self.mode=="single_batch":
-                    ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
-                else:
-                    raise Exception(f"Unexpected BatchTraining metric mode = {self.mode}")
-                retrained_model = self.retrain(ds)
-                new_losses[i]=loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
-            self.loss_array = torch.cat((self.loss_array,new_losses),dim=0)
+        for i in range(self.batch_nr):
+            indices_sorted = xpl.argsort(descending=True)
+            if self.mode=="cum":
+                ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
+            elif self.mode=="neg_cum":
+                ds = RestrictedDataset(self.train, indices_sorted[(self.batch_nr-(i+1))*self.batchsize:])
+            elif self.mode=="leave_batch_out":
+                ds = RestrictedDataset(self.train, torch.cat((indices_sorted[:i*self.batchsize], indices_sorted[(i+1)*self.batchsize:])))
+            elif self.mode=="single_batch":
+                ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
+            else:
+                raise Exception(f"Unexpected BatchTraining metric mode = {self.mode}")
+            retrained_model = self.retrain(ds)
+            #new_losses[i]=loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
+            self.loss_array[i]=loss(retrained_model(self.test[:][0], self.test[:][1]))
 
     def get_result(self, dir=None, file_name=None):
         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
@@ -181,32 +179,32 @@ class BatchRetraining(RetrainMetric):
                    }
         
         if "cum" in self.mode:
-            resdict["auc_scores"] = self.loss_array.mean(dim=1).to('cpu').detach().numpy()
-            resdict["auc_score_avg"]=self.loss_array.mean().to('cpu').detach().numpy()
+            resdict["auc_scores"]=self.loss_array.mean().to('cpu').detach().numpy()
         else:
             kendall = KendallRankCorrCoef(num_outputs=self.loss_array.shape[0])
             spearman = SpearmanCorrCoef(num_outputs=self.loss_array.shape[0])
-            if self.mode=="single_batch":
-                temp_arr=torch.stack(
-                [
-                    torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
-                ],
-                device=self.device
-                )
-            elif self.mode=="leave_batch_out": 
-                temp_arr=torch.stack(
-                [
-                    self.batch_nr - torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
-                ],
-                device=self.device
-                ) 
+            #if self.mode=="single_batch":
+                #temp_arr=torch.stack(
+                #[
+                #    torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
+                #],
+                #device=self.device
+                #)
+            #elif self.mode=="leave_batch_out": 
+            #    temp_arr=torch.stack(
+            #    [
+            #        self.batch_nr - torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
+            #    ],
+            #    device=self.device
+            #    ) 
+            temp_arr=torch.range(self.batch_nr)
 
-            kendall_scores = kendall(self.loss_array.T, temp_arr.T)
+            kendall_scores = kendall(self.loss_array.T, temp_arr.T) #rank correlation between how highly the batch is scored and whether it leads to smaller loss
             spearman_scores = spearman(self.loss_array.T, temp_arr.T)
             resdict["kendall_scores"]=kendall_scores
             resdict["spearman_scores"]=spearman_scores
-            resdict["spearman_score_avg"]=spearman_scores.mean().to('cpu').numpy()
-            resdict["kendall_scores"]=kendall_scores.mean().to('cpu').numpy()
+            #resdict["spearman_score_avg"]=spearman_scores.mean().to('cpu').numpy()
+            #resdict["kendall_scores_avg"]=kendall_scores.mean().to('cpu').numpy()
 
         if dir is not None:
             self.write_result(resdict, dir, file_name)
