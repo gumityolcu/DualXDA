@@ -72,6 +72,7 @@ class AWA(VisionDataset):
     mean = -np.array([d0_min / (d0_max - d0_min), d1_min / (d1_max - d1_min), d2_min / (d2_max - d2_min)])
     std = 1 / np.array([d0_max - d0_min, d1_max - d1_min, d2_max -d2_min])
     default_transform = transforms.Compose([
+        transforms.ToTensor(),
         transforms.Normalize(tuple(mean), tuple(std))
     ])
     inverse_transform = transforms.Compose([
@@ -172,7 +173,7 @@ class AWA(VisionDataset):
             id = self.test_ids[item]
             data, target = self.load_data(id, "val")
         
-        img = torch.from_numpy(data)
+        img = data #transformaiton to tensor is handled by self.transform
         target = torch.tensor(target, dtype=torch.long)
 
         if self.transform is not None:

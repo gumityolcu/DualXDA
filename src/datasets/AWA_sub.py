@@ -74,6 +74,7 @@ class AWA_sub(VisionDataset):
     mean = -np.array([d0_min / (d0_max - d0_min), d1_min / (d1_max - d1_min), d2_min / (d2_max - d2_min)])
     std = 1 / np.array([d0_max - d0_min, d1_max - d1_min, d2_max -d2_min])
     default_transform = transforms.Compose([
+        transforms.ToTensor(),
         transforms.Normalize(tuple(mean), tuple(std))
     ])
     inverse_transform = transforms.Compose([
