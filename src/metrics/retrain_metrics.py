@@ -1,6 +1,7 @@
 from utils import Metric
 import torch
 from torch.nn import CrossEntropyLoss
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import copy
 from utils.data import RestrictedDataset, FlipLabelDataset
@@ -377,7 +378,7 @@ class LinearDatamodelingScore(RetrainMetric):
         self.alpha = alpha
         self.samples = samples
         self.attribution_array = None
-        self.loss_array = torch.empty(0,self.samples)
+        self.model_output_array = torch.empty(0,self.samples)
         self.attribution_array = torch.empty(0,self.samples)
         self.n_test = None
         self.sample_indices = torch.tensor([
@@ -390,19 +391,19 @@ class LinearDatamodelingScore(RetrainMetric):
         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0).to(self.device)
         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long().to(self.device)
         attribution_array = np.empty((xpl.shape[0], self.samples))
-        loss_array = np.empty((xpl.shape[0], self.samples))
-        loss = CrossEntropyLoss()
+        model_output_array = np.empty((xpl.shape[0], self.samples))
         for i in range(self.samples):
             cur_indices=self.sample_indices[i].cpu()
-            #print(cur_indices)
             attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach().numpy()
-            #print(attribution_array)
             ds = RestrictedDataset(self.train, cur_indices)
-            #print(len(ds))
             retrained_model = self.retrain(ds)
-            loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).cpu().detach().numpy()
+            logits = retrained_model(evalds)
+            probs = F.softmax(logits, dim=1)
+            correct_probs = probs.gather(1, evalds_labels.unqueeze(1)).squeeze()
+            binary_logits = torch.log(correct_probs / (1-correct_probs))
+            model_output_array[:, i] = binary_logits.cpu().detach().numpy()
         self.attribution_array=torch.cat((self.attribution_array,attribution_array), dim=0)
-        self.loss_array=torch.cat((self.loss_array, loss_array), dim=0)
+        self.model_output_array=torch.cat((self.model_output_array, model_output_array), dim=0)
 
     def get_result(self, dir=None, file_name=None):
         spearman = SpearmanCorrCoef(num_outputs=self.n_test)
