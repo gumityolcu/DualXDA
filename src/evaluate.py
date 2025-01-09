@@ -9,7 +9,7 @@ from metrics import *
 
 def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                 epochs, loss, lr, momentum, optimizer, scheduler,
-                weight_decay, augmentation, sample_nr, cache_dir):
+                weight_decay, augmentation, sample_nr, cache_dir, num_classes):
     base_dict={
         "train": train,
         "test": test,
@@ -25,7 +25,8 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
         "optimizer": optimizer,
         "scheduler": scheduler,
         "weight_decay": weight_decay,
-        "augmentation": augmentation
+        "augmentation": augmentation,
+        "num_classes": num_classes
     }
 
     """
@@ -89,7 +90,7 @@ def evaluate(model_name, model_path, device, class_groups,
     model.eval()
     metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, sample_nr, cache_dir)
+                         weight_decay, augmentation, sample_nr, cache_dir, num_classes)
     print(f"Computing metric {metric.name}")
 
     if metric_name == 'switched':
