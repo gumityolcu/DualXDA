@@ -91,5 +91,5 @@ class TRAK(Explainer):
         for (i,(x,y)) in enumerate(iter(ld)):  
             batch=x.to(self.device), y.to(self.device)
             self.traker.score(batch=batch, num_samples=x.shape[0])
-        selfinf = torch.from_numpy(self.traker.finalize_scores(exp_name=f'test_self_influences_{i}')).T.to(self.device)
+        selfinf = torch.from_numpy(self.traker.finalize_scores(exp_name=f'test')).diag().to(self.device)
         return selfinf
