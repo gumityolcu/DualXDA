@@ -6,11 +6,9 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
   ../src /opt
 
 %post
-
-  export "PATH=/opt/conda/bin:$PATH"
+  python3 --version
   pip install --upgrade pip
-  pip install --yes \
-    python==3.10 \
+  pip install
     numpy \
     matplotlib \
     xmltodict \
