@@ -53,7 +53,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     explainer.train()
     if self_influence:
         explainer.self_influences()
-        exit()
+        exit()  
 
     test_ld = DataLoader(test, batch_size=batch_size, shuffle=False)
     explanations = torch.empty((0, len(train)), device=device)
