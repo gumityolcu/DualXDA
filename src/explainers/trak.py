@@ -80,7 +80,8 @@ class TRAK(Explainer):
         return self_inf
 
     def __del__(self):
-        rmtree(os.path.join(self.dir, "trak_results"))
+        if os.path.isdir(os.path.join(self.dir, "trak_results")):
+            rmtree(os.path.join(self.dir, "trak_results"))
 
     def compute_self_influences_brute_force(self):
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
