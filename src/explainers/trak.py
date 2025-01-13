@@ -87,7 +87,7 @@ class TRAK(Explainer):
         self.traker.start_scoring_checkpoint(model_id=0,
                              checkpoint=self.model.state_dict(),
                              exp_name=f'test_self_influences',
-                             num_targets=x.shape[0]) 
+                             num_targets=len(self.dataset)) 
         for (i,(x,y)) in enumerate(iter(ld)):  
             batch=x.to(self.device), y.to(self.device)
             self.traker.score(batch=batch, num_samples=x.shape[0])
