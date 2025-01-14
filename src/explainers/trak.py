@@ -79,6 +79,9 @@ class TRAK(Explainer):
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf
 
+    def __del__(self):
+        rmtree(os.path.join(self.dir, "trak_results"))
+
     def compute_self_influences_brute_force(self):
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
         self.traker.start_scoring_checkpoint(model_id=0,
