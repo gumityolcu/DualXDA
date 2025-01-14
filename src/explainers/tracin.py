@@ -24,8 +24,11 @@ class TracInExplainer(Explainer):
         ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if not os.path.isdir(os.path.join(ckpt_dir,f))]
         best_epoch_seen=False
         for i, ckpt in enumerate(ckpt_files):
+            print(ckpt)
             epoch=ckpt.split("_")[-1]
             checkpoint=torch.load(ckpt, map_location=device)
+            print(checkpoint)
+            print(checkpoint.keys())
             checkpoint = clear_resnet_from_checkpoints(checkpoint) #this MIGHT be lefover from using older checkpoints
             grad_path=os.path.join(dir,epoch)
             print(f"epoch being processed: {epoch}")
