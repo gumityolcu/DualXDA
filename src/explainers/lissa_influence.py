@@ -12,6 +12,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils import data
+from time import time
 
 
 def _set_attr(obj, names, val):
@@ -225,11 +226,25 @@ class BaseInfluenceModule(abc.ABC):
         scores = []
         train_grad_loader = self._loss_grad_loader_wrapper(batch_size=1, subset=None, train=True)
         train_sample_loader = self._loader_wrapper(train=True, batch_size=1, subset=None)
+        i=0
+        avg=0.
         for ((batch, _),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
             (x, targets) = batch
+            i=i+1
+            t0=time()
             stest = self.stest(x,targets)
             s = grad_z @ stest
             scores.append(s)
+            t=time()-t0
+            t0=0.
+            avg=avg+t
+            if i%100==0:
+                print(f"{i}/{len(self.train_loader.dataset)}") 
+                print(torch.any(torch.isnan(s)))
+                print(avg/100.)
+                print("=====")
+                print("=====")
+                avg=0.
         return torch.tensor(scores) / len(self.train_loader.dataset)
 
     # ====================================================
