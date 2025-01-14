@@ -17,7 +17,9 @@ class TRAK(Explainer):
         self.number_of_params=0
         self.dir=dir
         self.base_cache_dir=base_cache_dir
+        self.copied_cache=False
         if os.path.isdir(os.path.join(base_cache_dir, "trak_results")):
+            self.copied_cache=True
             copytree(os.path.join(base_cache_dir, "trak_results"), os.path.join(dir, "trak_results"))
         for p in list(self.model.parameters()):
             nn = 1
@@ -80,7 +82,7 @@ class TRAK(Explainer):
         return self_inf
 
     def __del__(self):
-        if os.path.isdir(os.path.join(self.dir, "trak_results")):
+        if self.copied_cache and os.path.isdir(os.path.join(self.dir, "trak_results")):
             rmtree(os.path.join(self.dir, "trak_results"))
 
     def compute_self_influences_brute_force(self):
