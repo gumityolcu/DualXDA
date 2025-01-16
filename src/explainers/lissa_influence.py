@@ -228,6 +228,7 @@ class BaseInfluenceModule(abc.ABC):
         train_sample_loader = self._loader_wrapper(train=True, batch_size=1, subset=None)
         i=0
         avg=0.
+        print("start")
         for ((batch, _),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
             (x, targets) = batch
             i=i+1
@@ -236,7 +237,6 @@ class BaseInfluenceModule(abc.ABC):
             s = grad_z @ stest
             scores.append(s)
             t=time()-t0
-            t0=0.
             avg=avg+t
             if i%100==0:
                 print(f"{i}/{len(self.train_loader.dataset)}") 

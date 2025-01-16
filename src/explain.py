@@ -108,6 +108,7 @@ def explain_model(model_name, model_path, device, class_groups,
         kwargs["C"] = C_margin
     
     print(f"Generating explanations with {explainer_cls.name}")
+    #train=torch.utils.data.Subset(train, range(0, 10)) # TODO : delete
     xplain(
         model=model,
         train=train,
