@@ -86,6 +86,7 @@ class TRAK(Explainer):
             self_inf=self.compute_self_influences_brute_force()
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         self.clean_cache()
+        print("self influences are computed")
         return self_inf
 
     def __del__(self):
