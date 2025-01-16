@@ -228,9 +228,10 @@ class BaseInfluenceModule(abc.ABC):
         train_sample_loader = self._loader_wrapper(train=True, batch_size=1, subset=None)
         i=0
         avg=0.
-        print("start")
+        print("LOG:starting self influences")
         for ((batch, _),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
             (x, targets) = batch
+            print("LOG: runnign self influence")
             i=i+1
             t0=time()
             stest = self.stest(x,targets)

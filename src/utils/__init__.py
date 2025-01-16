@@ -48,10 +48,11 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     torch.manual_seed(42)
     # the graddot parameter indicates if we are generating graddot attributions
     # if it is true, graddot.explain will be called a second time with normalize_train=True to generate gradcos along the way
-
+    print("LOG: XPLAIN INTRO")
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     explainer.train()
     if self_influence:
+        print("LOG: SELF INFLUENCES")
         explainer.self_influences()
         exit()  
 
