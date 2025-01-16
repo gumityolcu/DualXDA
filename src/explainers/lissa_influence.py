@@ -481,6 +481,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
 
     def __init__(self, model, dataset, device, depth, repeat, scale, dir, train_loss=cross_entropy,
                  train_regularization=(lambda x: torch.tensor(0., device=x[0].device if x is not None else "cpu")), test_loss=cross_entropy):
+        print("LOG: initialization")
         class MyObjective(BaseObjective):
             def train_outputs(self, model, batch):
                 return model(batch[0])
@@ -504,6 +505,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
         self.device = device
         self.dir = dir
         os.makedirs(self.dir,exist_ok=True)
+        print("LOG: initializing influence module")
         self.influence_module = LiSSAInfluenceModule(model, MyObjective(),
                                                      torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False),
                                                      depth=depth, repeat=repeat, scale=scale, damp=0.001, device=device)
@@ -512,6 +514,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
         return 0.
 
     def explain(self, x, xpl_targets):
+        print("LOG: explain")
         x=x.to(self.device)
         xpl=torch.empty((0,len(self.dataset)),device=self.device)
         for i in range(x.shape[0]):
@@ -522,6 +525,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
         return xpl
     
     def self_influences(self):
+        print("LOG: self_influences is called") 
         if os.path.exists(os.path.join(self.dir, "self_influences")):
             self_inf = torch.load(os.path.join(self.dir, "self_influences"), map_location=self.device)
         else:
