@@ -17,6 +17,7 @@ class TRAK(Explainer):
         self.number_of_params=0
 
         self.dir=dir
+        os.makedirs(dir, exist_ok=True)
         self.base_cache_dir=base_cache_dir
         self.copied_cache=False
         if os.path.isdir(os.path.join(base_cache_dir, "trak_results")):
