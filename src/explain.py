@@ -102,7 +102,9 @@ def explain_model(model_name, model_path, device, class_groups,
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
+    print("LOG: LOADED MODEL")
     explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    print("LOG: LOADED EXPLAINER")
     
     if C_margin is not None:
         kwargs["C"] = C_margin
