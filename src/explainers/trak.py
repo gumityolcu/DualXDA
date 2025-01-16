@@ -15,6 +15,7 @@ class TRAK(Explainer):
         self.dataset=dataset
         self.batch_size=batch_size
         self.number_of_params=0
+
         self.dir=dir
         self.base_cache_dir=base_cache_dir
         self.copied_cache=False
@@ -34,6 +35,10 @@ class TRAK(Explainer):
                              projector=projector, proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"),
                              device=device
                              )
+        print("dir is {dir}")
+        for l in os.listdir(dir):
+            print(l)
+        exit()
 
     def train(self):
         t=time()
@@ -79,6 +84,7 @@ class TRAK(Explainer):
         else:
             self_inf=self.compute_self_influences_brute_force()
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
+        self.clean_cache()
         return self_inf
 
     def __del__(self):
