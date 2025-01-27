@@ -20,6 +20,7 @@ class DualView(FeatureKernelExplainer):
         self.dir=dir
         self.features_dir=features_dir
         self.max_iter=max_iter
+        self.name=self.name+f"-{str(C)}"
         os.makedirs(self.dir, exist_ok=True)
         os.makedirs(self.features_dir, exist_ok=True)
 
