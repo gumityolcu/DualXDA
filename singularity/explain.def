@@ -8,9 +8,9 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
   ../captum /captum
 
 %post
-  pip install --upgrade pip
-  pip install \
-    numpy \
+
+  export "PATH=/opt/conda/bin:$PATH"
+  pip install numpy \
     matplotlib \
     xmltodict \
     pyyaml \
