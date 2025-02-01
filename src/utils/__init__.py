@@ -79,7 +79,10 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         i = i + 1
         if i == num_batches_per_file:
             i = 0
-            torch.save(explanations, os.path.join(save_dir, f"{explainer_cls.name}_{j:02d}"))
+            name=explainer_cls.name
+            if "DualView" in name:
+                name=explainer.get_name()
+            torch.save(explanations, os.path.join(save_dir, f"{name}_{j:02d}"))
             explanations = torch.empty((0, len(train)), device=device)
             if graddot:
                 torch.save(gradcos_explanations, os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}"))

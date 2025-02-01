@@ -12,6 +12,10 @@ from tqdm import tqdm
 
 class DualView(FeatureKernelExplainer):
     name = "DualViewExplainer"
+
+    def get_name(self):
+        return f"{self.name}-{str(self.C)}"
+    
     def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, max_iter=1000000, normalize=False):
         super().__init__(model, dataset, device, features_dir, normalize=normalize)
         self.C=C
@@ -20,7 +24,6 @@ class DualView(FeatureKernelExplainer):
         self.dir=dir
         self.features_dir=features_dir
         self.max_iter=max_iter
-        self.name=self.name+f"-{str(C)}"
         os.makedirs(self.dir, exist_ok=True)
         os.makedirs(self.features_dir, exist_ok=True)
 
