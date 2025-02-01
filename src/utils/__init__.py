@@ -56,6 +56,9 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         explainer.self_influences()
         exit()  
 
+    name=explainer_cls.name
+    if "DualView" in name:
+        name=explainer.get_name()
     test_ld = DataLoader(test, batch_size=batch_size, shuffle=False)
     explanations = torch.empty((0, len(train)), device=device)
     if graddot:
@@ -79,9 +82,6 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         i = i + 1
         if i == num_batches_per_file:
             i = 0
-            name=explainer_cls.name
-            if "DualView" in name:
-                name=explainer.get_name()
             torch.save(explanations, os.path.join(save_dir, f"{name}_{j:02d}"))
             explanations = torch.empty((0, len(train)), device=device)
             if graddot:
@@ -91,7 +91,9 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             j = j + 1
 
     if not i == 0:
-        torch.save(explanations, os.path.join(save_dir, f"{explainer_cls.name}_{j:02d}"))
+        torch.save(explanations, os.path.join(save_dir, f"{name}_{j:02d}"))
+        if graddot:
+            torch.save(gradcos_explanations, os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}"))
         print(f"Finished file {j:02d}")
 
     return explanations
