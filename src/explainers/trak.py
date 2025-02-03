@@ -36,10 +36,6 @@ class TRAK(Explainer):
                              projector=projector, proj_dim=proj_dim, projector_seed=42, save_dir=os.path.join(dir,"trak_results"),
                              device=device
                              )
-        print(f"dir is {dir}")
-        for l in os.listdir(dir):
-            print(l)
-        exit()
 
     def train(self):
         t=time()
