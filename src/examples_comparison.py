@@ -2,7 +2,7 @@ import argparse
 import yaml
 from matplotlib.gridspec import GridSpec
 from utils.data import load_datasets
-from utils.models import compute_accuracy, load_model
+from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import logging
 from tqdm import tqdm
 import os
@@ -28,6 +28,7 @@ def evaluate(model_name, model_path, device, class_groups,
     canonizer = None
     model = load_model(model_name, dataset_name, num_classes).to(device)
     checkpoint = torch.load(model_path, map_location=device)
+    checkpoint=clear_resnet_from_checkpoints(checkpoint)
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     page_size = 13

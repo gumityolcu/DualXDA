@@ -32,7 +32,6 @@ class CorruptLabelMetric(Metric):
 
     def add_coef_evaluation(self, resdict, coefs):
         max_score = resdict['max_score']
-        file = file[0]
         score, curve = self.compute_score(coefs)
         resdict['coefs_auc_score'] = score / max_score
         resdict['coefs_label_flipping_curve'] = curve

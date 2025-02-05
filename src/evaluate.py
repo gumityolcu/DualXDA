@@ -1,10 +1,11 @@
 import argparse
-from utils.data import load_datasets_reduced
+from utils.data import load_datasets, ReduceLabelDataset
 from utils.models import load_model
 from explain import load_explainer
 import yaml
 import logging
 from metrics import *
+
 
 
 def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
@@ -38,7 +39,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
     """
 
     ret_dict = {"std": (SameClassMetric,{}), "group": (SameSubclassMetric,{}), 
-                "corrupt": (CorruptLabelMetric,{"coef_root": coef_root}),
+                "corrupt": (CorruptLabelMetric,{}),
                 "mark": (MarkImageMetric, {"model":model}),
                 "stdk": (TopKSameClassMetric,{}), "groupk": (TopKSameSubclassMetric,{}),
                 "switched": (SwitchMetric,{}),
@@ -81,7 +82,7 @@ def evaluate(model_name, model_path, device, class_groups,
         dataset_type="group"
     else:
         dataset_type = "std"
-    train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
+    train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes).to(device)
     #if dataset_type == 'mark': # do we need these lines? not clear yet.
     #    checkpoint = torch.load(model_path, map_location=device)
@@ -142,14 +143,19 @@ def evaluate(model_name, model_path, device, class_groups,
 
     if metric_name == "corrupt":
         explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+        train = ReduceLabelDataset(train)
         explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
+        explainer.train()
         selfinf=explainer.self_influences()
         metric(selfinf)
         if "dualview" in xai_method or "representer" in xai_method:
             selfinf=explainer.self_influences(only_coefs=True)
         else:
             selfinf=None
-        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json", selfinf)
+        splitted=xpl_root.split('/')
+        if splitted[-1]=="":
+            splitted==splitted[:-1]
+        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{splitted[-1]}_eval_results.json", selfinf)
         return
     
     ################

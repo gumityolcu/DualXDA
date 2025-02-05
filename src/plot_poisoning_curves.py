@@ -7,8 +7,8 @@ methods={
     "CIFAR":[('dualview','blue','DV'), ('influence', 'green', 'IF'), ('representer', 'c', 'RP'),('rp_similarity','purple','SIM-rp')],
     "MNIST":[ ('dualview','blue','DV'), ('influence', 'green', 'IF'), ('representer', 'c', 'RP'),('rp_similarity','purple','SIM-rp'),('similarity','black','SIM')]
 }
-CIFAR_dir="/home/fe/yolcu/Documents/Code/THESIS/results/CIFAR/resnet/corrupt/"
-MNIST_dir="/home/fe/yolcu/Documents/Code/THESIS/results/MNIST/basic_conv/corrupt/"
+CIFAR_dir="/home/fe/yolcu/Documents/Code/THESIS/results/CIFAR/corrupt/"
+MNIST_dir="/home/fe/yolcu/Documents/Code/THESIS/results/MNIST/corrupt/"
 
 for p,t in [(CIFAR_dir, "CIFAR"),(MNIST_dir,"MNIST")]:
     plt.figure(figsize=(6,4))

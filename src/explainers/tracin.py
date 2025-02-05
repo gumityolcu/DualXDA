@@ -105,6 +105,7 @@ class TracInExplainer(Explainer):
                 dimensions=self.dimensions,
                 loss=True,
                 device=self.device)
+                graddot.train()
                 self_inf=self_inf+rate*graddot.self_influences()
             self_inf = self_inf/nr_explainers
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
