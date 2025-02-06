@@ -96,7 +96,8 @@ def evaluate(model_name, model_path, device, class_groups,
 
     splitted=xpl_root.split('/')
     if splitted[-1]=="":
-        splitted==splitted[:-1]
+        splitted=splitted[:-1]
+    outfile_name=splitted[-1]
 
     if metric_name == 'switched':
         xpl_root_switched = xpl_root
@@ -157,7 +158,7 @@ def evaluate(model_name, model_path, device, class_groups,
         else:
             selfinf=None
 
-        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{splitted[-1]}_eval_results.json", selfinf)
+        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{outfile_name}_eval_results.json", selfinf)
         return
     
     ################
@@ -183,7 +184,7 @@ def evaluate(model_name, model_path, device, class_groups,
         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
         
     metric(xpl_all, 0)
-    metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{splitted[-1]}_eval_results.json")
+    metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{outfile_name}_eval_results.json")
 
 
 if __name__ == "__main__":
