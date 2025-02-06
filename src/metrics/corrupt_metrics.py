@@ -50,7 +50,7 @@ class CorruptLabelMetric(Metric):
 
         plt.figure()
         plt.plot(curve.to("cpu"))
-        plt.savefig(os.path.join(dir,f"{self.name}_corrupt_plot"))
+        plt.savefig(os.path.join(dir,f"{file_name}_corrupt_plot"))
         if coef_influences is not None:
             self.add_coef_evaluation(resdict, coef_influences)
         if dir is not None:

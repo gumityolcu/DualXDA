@@ -94,6 +94,10 @@ def evaluate(model_name, model_path, device, class_groups,
                          weight_decay, augmentation, sample_nr, cache_dir, num_classes)
     print(f"Computing metric {metric.name}")
 
+    splitted=xpl_root.split('/')
+    if splitted[-1]=="":
+        splitted==splitted[:-1]
+
     if metric_name == 'switched':
         xpl_root_switched = xpl_root
         xpl_root = xpl_root.replace('switched', 'std')
@@ -152,9 +156,7 @@ def evaluate(model_name, model_path, device, class_groups,
             selfinf=explainer.self_influences(only_coefs=True)
         else:
             selfinf=None
-        splitted=xpl_root.split('/')
-        if splitted[-1]=="":
-            splitted==splitted[:-1]
+
         metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{splitted[-1]}_eval_results.json", selfinf)
         return
     
@@ -181,7 +183,7 @@ def evaluate(model_name, model_path, device, class_groups,
         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
         
     metric(xpl_all, 0)
-    metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
+    metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{splitted[-1]}_eval_results.json")
 
 
 if __name__ == "__main__":
