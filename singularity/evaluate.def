@@ -3,13 +3,15 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
 
 %files
 
-  ../src /opt
   ../scikit-learn-dual /sklearn
   ../captum /captum
 
 %post
 
   export "PATH=/opt/conda/bin:$PATH"
+  export SSH_AUTH_SOCK={{ SSH_AUTH_SOCK }}
+  apt-get update -y
+  apt-get install git -y
   pip install numpy \
     matplotlib \
     xmltodict \
@@ -27,9 +29,10 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
 
 %runscript
 
-  cd /opt/src
-  pwd
-  ls
+  cd /opt/
+  git clone git@github.com:gumityolcu/DualView_wip.git 
+  git checkout kronfluence
+  cd DualView_wip/src
   if [ "$1" = "--trak" ]; then
     pip install traker[fast] --user
     shift
