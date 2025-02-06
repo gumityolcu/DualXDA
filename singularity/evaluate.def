@@ -30,10 +30,7 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
 
 %runscript
 
-  cd /opt/
-  git clone git@github.com:gumityolcu/DualView_wip.git 
-  git checkout kronfluence
-  cd DualView_wip/src
+  cd /mnt/src
   if [ "$1" = "--trak" ]; then
     pip install traker[fast] --user
     shift
