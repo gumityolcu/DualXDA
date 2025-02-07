@@ -53,7 +53,7 @@ class CorruptLabelMetric(Metric):
         plt.plot(curve.to("cpu"))
         plt.savefig(os.path.join(dir,f"{file_name.replace('.json', '')}_corrupt_plot.png"))
         if coef_influences is not None:
-            resdict=self.add_coef_evaluation(resdict, min_score, coef_influences)
+            resdict=self.add_coef_evaluation(resdict, coef_influences)
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
