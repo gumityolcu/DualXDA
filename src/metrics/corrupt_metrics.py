@@ -32,10 +32,11 @@ class CorruptLabelMetric(Metric):
 
     def add_coef_evaluation(self, resdict, coefs):
         max_score = resdict['max_score']
+        min_score = resdict['min_score']
+
         score, curve = self.compute_score(coefs)
-        resdict['coefs_auc_score'] = score / max_score
+        resdict['coefs_auc_score'] = (score-min_score) / (max_score-min_score)
         resdict['coefs_label_flipping_curve'] = curve
-        num_of_corrupt_support_vectors = 0
         return resdict
 
     def get_result(self, dir, file_name, coef_influences=None):
@@ -46,13 +47,13 @@ class CorruptLabelMetric(Metric):
         score = (score - min_score) / (max_score - min_score)
         resdict = {'metric': self.name, 'auc_score': score, 'label_flipping_curve': curve,
                    'num_examples': self.num_test_samples, 'num_corrupt_samples': self.corrupt_samples.shape[0],
-                   'max_score': max_score}
+                   'max_score': max_score, "min_score":min_score}
 
         plt.figure()
         plt.plot(curve.to("cpu"))
-        plt.savefig(os.path.join(dir,f"{file_name.split('.')[0]}_corrupt_plot.png"))
+        plt.savefig(os.path.join(dir,f"{file_name.replace('.json', '')}_corrupt_plot.png"))
         if coef_influences is not None:
-            self.add_coef_evaluation(resdict, coef_influences)
+            resdict=self.add_coef_evaluation(resdict, min_score, coef_influences)
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
