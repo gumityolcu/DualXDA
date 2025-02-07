@@ -22,6 +22,8 @@ if [[ "$fname_config" == *"trak"* ]]; then
   run \
         --nv \
         --bind ${HOME}/DualView/config_files:/mnt/config_files \
+        --bind ${HOME}/DualView/src:/mnt/src \
+        --bind ${HOME}/DualView/explanations:/mnt/explanations \
         --bind ${HOME}/DualView/checkpoints:/mnt/checkpoints \
         --bind ${DATAPOOL3}/datasets:/mnt/dataset \
         --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
@@ -33,6 +35,7 @@ else
           --nv \
           --bind ${HOME}/DualView/config_files:/mnt/config_files \
           --bind ${HOME}/DualView/src:/mnt/src \
+          --bind ${HOME}/DualView/explanations:/mnt/explanations \
           --bind ${HOME}/DualView/checkpoints:/mnt/checkpoints \
           --bind ${DATAPOOL3}/datasets:/mnt/dataset \
           --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
