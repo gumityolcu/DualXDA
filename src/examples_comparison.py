@@ -2,7 +2,7 @@ import argparse
 import yaml
 from matplotlib.gridspec import GridSpec
 from utils.data import load_datasets
-from utils.models import compute_accuracy, load_model
+from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import logging
 from tqdm import tqdm
 import os
@@ -18,18 +18,20 @@ def evaluate(model_name, model_path, device, class_groups,
     ds_kwargs = {
         'data_root': data_root,
         'class_groups': class_groups,
-        'image_set': "test",
+        'image_set': testsplit,
         'validation_size': validation_size,
         'only_train': False,
-        'testsplit': testsplit
+        'num_classes':num_classes,
+        'transform': None,
     }
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
     canonizer = None
     model = load_model(model_name, dataset_name, num_classes).to(device)
     checkpoint = torch.load(model_path, map_location=device)
+    checkpoint=clear_resnet_from_checkpoints(checkpoint)
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
-    page_size = 5
+    page_size = 13
     offset = 0
     # if dataset_name == "CIFAR":
     #     offset = 5
@@ -37,8 +39,10 @@ def evaluate(model_name, model_path, device, class_groups,
     fname_roots = [f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}" for xpl_root in xpl_roots]
     acc, all_indices = compute_accuracy(model, test, device=device)
     all_indices = all_indices[:100]
-    if dataset_name == "CIFAR":
-        all_indices = [all_indices[i] for i in [12, 13, 15, 16, 18, 25, 30, 36, 39, 47]]
+    for root in xpl_roots:
+        os.makedirs(root, exist_ok=True)
+    # if dataset_name == "CIFAR":
+    #     all_indices = [all_indices[i] for i in [12, 13, 15, 16, 18, 25, 30, 36, 39, 47]]
     file_lists = [[f for f in os.listdir(xpl_root) if
                    ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("tensor" not in f) and (".shark" not in f)] for xpl_root in
                   xpl_roots]
@@ -46,9 +50,18 @@ def evaluate(model_name, model_path, device, class_groups,
     cumul_xpl = [torch.empty(0, len(train), dtype=torch.float32) for _ in xpl_roots]
     for i in range(len(cumul_xpl)):
         cur_index = 0
-        for j in range(len(file_lists[i])):
-            file_name = os.path.join(xpl_roots[i], f"{file_lists[i][0].split('_')[0]}_{j}")
+        filename_root = file_lists[i][0].split('_')[0]
+        xpls=[]
+        if f"{filename_root}_all" in file_lists[i]:
+            file_name = os.path.join(xpl_roots[i], f"{filename_root}_all")
             xpl = torch.load(file_name, map_location=torch.device("cpu"))
+            xpls.append(xpl)
+        else:
+            for j in range(len(file_lists[i])):
+                file_name = os.path.join(xpl_roots[i], f"{filename_root}_{j:02d}")
+                xpl = torch.load(file_name, map_location=torch.device("cpu"))
+                xpls.append(xpl)
+        for xpl in xpls:
             xpl = (1 / xpl.abs().max(dim=-1)[0][:, None]) * xpl
             len_xpl = xpl.shape[0]
             for k in range(len_xpl):
@@ -65,6 +78,7 @@ def evaluate(model_name, model_path, device, class_groups,
         generate_comparison_explanations_horizontal_with_small_spaces(model, train, test, xpl_tensors, method_names,
                                                                       indices, save_dir, f"H_{fname}", T, device,
                                                                       start_ind=start_ind - offset)
+        
         # generate_comparison_explanations_vertical(model, train, test, xpl_tensors, method_names, indices, save_dir, f"V_{fname}", T, device, start_ind=start_ind-offset)
         # composite='EpsilonPlus', modes=["positive","overlay"])
 
@@ -106,7 +120,7 @@ def generate_comparison_explanations_horizontal(model, train, test, xpl_tensors,
         samples = torch.transpose(samples, 1, 2)
         samples = torch.transpose(samples, 2, 3)
     for i in range(N):
-        fig = plt.figure(figsize=(((T) * len(xpl_tensors) + 1) * 1.7, 3.7))
+        fig = plt.figure(figsize=(((T) * len(xpl_tensors) + 1) * 3.4, 7.4))
         gs = GridSpec(nrows=2, ncols=len(xpl_tensors) * (T) + 1)
         gs.tight_layout(fig)
         influence_sort_ids = [torch.argsort(cumul_xpl[i]) for cumul_xpl in xpl_tensors]
@@ -360,7 +374,7 @@ def generate_comparison_explanations_horizontal_with_spaces(model, train, test, 
 
 def generate_comparison_explanations_horizontal_with_small_spaces(model, train, test, xpl_tensors, method_names,
                                                                   indices, save_dir, base_fname, T, device, start_ind):
-    fontsize = 12
+    fontsize = 25
     buffer = 3
     x, y = test[0]
     samples = torch.empty((0, x.shape[0], x.shape[1], x.shape[2]))
@@ -394,13 +408,13 @@ def generate_comparison_explanations_horizontal_with_small_spaces(model, train, 
         samples = torch.transpose(samples, 1, 2)
         samples = torch.transpose(samples, 2, 3)
     for i in range(N):
-        fig = plt.figure(figsize=(((T + 1) * len(xpl_tensors)) * 1.3, 3.7))
+        fig = plt.figure(figsize=(((T + 1) * len(xpl_tensors)) * 2.6, 7.4))
         gs = GridSpec(nrows=2 * persquare + buffer,
                       ncols=(persquare + len(xpl_tensors) * T * persquare + (len(xpl_tensors) - 1) * space))
         gs.tight_layout(fig)
         influence_sort_ids = [torch.argsort(cumul_xpl[i]) for cumul_xpl in xpl_tensors]
         ax = fig.add_subplot(gs[0:persquare, 0:persquare])
-        ax.set_title(f'Pred.: {train.class_labels[preds[i]]}')
+        ax.set_title(f'Pred.: {train.class_labels[preds[i]]}',fontdict={"size":fontsize})
         ax.tick_params(
             axis='both',  # changes apply to the x-axis
             which='both',  # both major and minor ticks are affected
@@ -419,13 +433,13 @@ def generate_comparison_explanations_horizontal_with_small_spaces(model, train, 
             sample_img = sample_img.transpose(0, 1)
             sample_img = sample_img.transpose(1, 2)
         ax.imshow(sample_img)
-        ax.set_ylabel(f'Label: {train.class_labels[labels[i]]}')
+        ax.set_ylabel(f'Label: {train.class_labels[labels[i]]}',fontdict={"size":fontsize})
         for k in range(len(xpl_tensors)):
             ax = fig.add_subplot(gs[0:2 * persquare + buffer,
                                  persquare + k * (T * persquare + space):T * persquare + k * (
                                              T * persquare + space) + persquare])
             # ax.yaxis.set_label_position("right")
-            ax.set_title(method_names[k])
+            ax.set_title(method_names[k],fontdict={"size":fontsize})
             ax.tick_params(
                 axis='both',  # changes apply to the x-axis
                 which='both',  # both major and minor ticks are affected
@@ -451,7 +465,7 @@ def generate_comparison_explanations_horizontal_with_small_spaces(model, train, 
                                                                                                                          T * persquare + space) * k + j * persquare + 2 * persquare])
                 if j == T - 1:
                     ax.yaxis.set_label_position("right")
-                    ax.set_ylabel('Negative')
+                    ax.set_ylabel('Negative',fontdict={"size":fontsize})
                 ax.tick_params(
                     axis='both',  # changes apply to the x-axis
                     which='both',  # both major and minor ticks are affected
@@ -467,7 +481,7 @@ def generate_comparison_explanations_horizontal_with_small_spaces(model, train, 
                 #    ax.set_ylabel('Negative')
                 x = torch.clip(x, min=0., max=1.)
                 ax.imshow(x)
-                ax.set_xlabel(f"{xpl_tensors[k][i, influence_sort_ids[k][j]]:.2f},  {train.class_labels[y]}")
+                ax.set_xlabel(f"{xpl_tensors[k][i, influence_sort_ids[k][j]]:.2f},  {train.class_labels[y]}",fontdict={"size":fontsize})
                 x, y = train[influence_sort_ids[k][-(j + 1)]]
                 x = train.inverse_transform(x)
                 if x.shape[0] == 1:
@@ -480,7 +494,7 @@ def generate_comparison_explanations_horizontal_with_small_spaces(model, train, 
                                                                                                          T * persquare + space) * k + j * persquare + 2 * persquare])
                 if j == T - 1:
                     ax.yaxis.set_label_position("right")
-                    ax.set_ylabel('Positive')
+                    ax.set_ylabel('Positive',fontdict={"size":fontsize})
                 # if j == T - 1:
                 #    ax.yaxis.set_label_position("right")
                 #    ax.set_ylabel('Positive')
@@ -499,7 +513,7 @@ def generate_comparison_explanations_horizontal_with_small_spaces(model, train, 
                     x = x.transpose(0, 1)
                     x = x.transpose(1, 2)
                 ax.imshow(x)
-                ax.set_xlabel(f"{xpl_tensors[k][i, influence_sort_ids[k][-(j + 1)]]:.2f},  {train.class_labels[y]}")
+                ax.set_xlabel(f"{xpl_tensors[k][i, influence_sort_ids[k][-(j + 1)]]:.2f},  {train.class_labels[y]}",fontdict={"size":fontsize})
         fname = f"{base_fname}-{i}"
 
         fig.savefig(f"{os.path.join(save_dir, fname)}.png")
@@ -655,7 +669,7 @@ if __name__ == "__main__":
     # sys.path.append(current)
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file', type=str)
-    parser.add_argument('--pages', type=int)
+    parser.add_argument('--pages', type=int, default=1)
     args = parser.parse_args()
     config_file = args.config_file
 

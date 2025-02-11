@@ -48,13 +48,17 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     torch.manual_seed(42)
     # the graddot parameter indicates if we are generating graddot attributions
     # if it is true, graddot.explain will be called a second time with normalize_train=True to generate gradcos along the way
-
+    print("LOG: XPLAIN INTRO")
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     explainer.train()
     if self_influence:
+        print("LOG: SELF INFLUENCES")
         explainer.self_influences()
         exit()  
 
+    name=explainer_cls.name
+    if "DualView" in name:
+        name=explainer.get_name()
     test_ld = DataLoader(test, batch_size=batch_size, shuffle=False)
     explanations = torch.empty((0, len(train)), device=device)
     if graddot:
@@ -78,7 +82,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         i = i + 1
         if i == num_batches_per_file:
             i = 0
-            torch.save(explanations, os.path.join(save_dir, f"{explainer_cls.name}_{j:02d}"))
+            torch.save(explanations, os.path.join(save_dir, f"{name}_{j:02d}"))
             explanations = torch.empty((0, len(train)), device=device)
             if graddot:
                 torch.save(gradcos_explanations, os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}"))
@@ -87,7 +91,9 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             j = j + 1
 
     if not i == 0:
-        torch.save(explanations, os.path.join(save_dir, f"{explainer_cls.name}_{j:02d}"))
+        torch.save(explanations, os.path.join(save_dir, f"{name}_{j:02d}"))
+        if graddot:
+            torch.save(gradcos_explanations, os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}"))
         print(f"Finished file {j:02d}")
 
     return explanations
@@ -158,4 +164,6 @@ class Metric(ABC):
         elif isinstance(results, str):
             return results
         else:
+            if isinstance(results, torch.Tensor):
+                results=results.cpu()
             return np.array(results).astype(float).tolist()

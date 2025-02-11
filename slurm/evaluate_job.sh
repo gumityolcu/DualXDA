@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-type=ALL
-#SBATCH --job-name=explain
+#SBATCH --job-name=evaluate
 #SBATCH --output=%x-%j.out
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -23,26 +23,28 @@ if [[ "$fname_config" == *"trak"* ]]; then
         --nv \
         --bind ${HOME}/DualView/config_files:/mnt/config_files \
         --bind ${HOME}/DualView/src:/mnt/src \
+        --bind ${HOME}/DualView/explanations:/mnt/explanations \
         --bind ${HOME}/DualView/checkpoints:/mnt/checkpoints \
         --bind ${DATAPOOL3}/datasets:/mnt/dataset \
         --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
         --bind ${HOME}/DualView/cache:/mnt/cache \
-        ../singularity/explain.sif --trak --config_file /mnt/config_files/cluster/$2/$3/${fname_config}
+        ../singularity/evaluate.sif --trak --config_file /mnt/config_files/cluster/evaluate/$2/${fname_config}
 else
   singularity \
     run \
           --nv \
           --bind ${HOME}/DualView/config_files:/mnt/config_files \
           --bind ${HOME}/DualView/src:/mnt/src \
+          --bind ${HOME}/DualView/explanations:/mnt/explanations \
           --bind ${HOME}/DualView/checkpoints:/mnt/checkpoints \
           --bind ${DATAPOOL3}/datasets:/mnt/dataset \
           --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
           --bind ${HOME}/DualView/cache:/mnt/cache \
-          ../singularity/explain.sif --config_file /mnt/config_files/cluster/$2/$3/${fname_config}
+          ../singularity/evaluate.sif --config_file /mnt/config_files/cluster/evaluate/$2/${fname_config}
 fi
 cd ${LOCAL_JOB_DIR}
-tar -czf $3_$2_${fname_config}-output_data_${SLURM_JOB_ID}.tgz outputs
-cp $3_$2_${fname_config}-output_data_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}
+tar -czf $2_evaluate_${fname_config}-output_data_${SLURM_JOB_ID}.tgz outputs
+cp $2_evaluate_${fname_config}-output_data_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}
 
 end=`date +%s`
 runtime=$((end-start))

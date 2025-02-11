@@ -15,9 +15,13 @@ class TRAK(Explainer):
         self.dataset=dataset
         self.batch_size=batch_size
         self.number_of_params=0
+
         self.dir=dir
+        os.makedirs(dir, exist_ok=True)
         self.base_cache_dir=base_cache_dir
+        self.copied_cache=False
         if os.path.isdir(os.path.join(base_cache_dir, "trak_results")):
+            self.copied_cache=True
             copytree(os.path.join(base_cache_dir, "trak_results"), os.path.join(dir, "trak_results"))
         for p in list(self.model.parameters()):
             nn = 1
@@ -77,19 +81,22 @@ class TRAK(Explainer):
         else:
             self_inf=self.compute_self_influences_brute_force()
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
+        self.clean_cache()
+        print("self influences are computed")
         return self_inf
 
     def __del__(self):
-        rmtree(os.path.join(self.dir, "trak_results"))
+        if self.copied_cache and os.path.isdir(os.path.join(self.dir, "trak_results")):
+            rmtree(os.path.join(self.dir, "trak_results"))
 
     def compute_self_influences_brute_force(self):
         ld=torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size)
         self.traker.start_scoring_checkpoint(model_id=0,
                              checkpoint=self.model.state_dict(),
-                             exp_name=f'test_self_influences',
-                             num_targets=x.shape[0]) 
+                             exp_name=f'test',
+                             num_targets=len(self.dataset)) 
         for (i,(x,y)) in enumerate(iter(ld)):  
             batch=x.to(self.device), y.to(self.device)
             self.traker.score(batch=batch, num_samples=x.shape[0])
-        selfinf = torch.from_numpy(self.traker.finalize_scores(exp_name=f'test_self_influences_{i}')).T.to(self.device)
+        selfinf = torch.from_numpy(self.traker.finalize_scores(exp_name=f'test')).diag().to(self.device)
         return selfinf

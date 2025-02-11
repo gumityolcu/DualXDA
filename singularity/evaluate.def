@@ -21,6 +21,7 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
   pip install zennit
   pip install tensorboard
   pip install /sklearn
+  pip install torchmetrics
   pip install /captum
   pip install kronfluence
 
@@ -33,4 +34,4 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
     pip install traker[fast] --user
     shift
   fi
-  python explain.py "$@"
+  python evaluate.py "$@"

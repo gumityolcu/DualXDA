@@ -1,10 +1,11 @@
 import argparse
-from utils.data import load_datasets_reduced
+from utils.data import load_datasets, ReduceLabelDataset
 from utils.models import load_model
 from explain import load_explainer
 import yaml
 import logging
 from metrics import *
+
 
 
 def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
@@ -38,7 +39,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
     """
 
     ret_dict = {"std": (SameClassMetric,{}), "group": (SameSubclassMetric,{}), 
-                "corrupt": (CorruptLabelMetric,{"coef_root": coef_root}),
+                "corrupt": (CorruptLabelMetric,{}),
                 "mark": (MarkImageMetric, {"model":model}),
                 "stdk": (TopKSameClassMetric,{}), "groupk": (TopKSameSubclassMetric,{}),
                 "switched": (SwitchMetric,{}),
@@ -81,7 +82,7 @@ def evaluate(model_name, model_path, device, class_groups,
         dataset_type="group"
     else:
         dataset_type = "std"
-    train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
+    train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes).to(device)
     #if dataset_type == 'mark': # do we need these lines? not clear yet.
     #    checkpoint = torch.load(model_path, map_location=device)
@@ -92,6 +93,11 @@ def evaluate(model_name, model_path, device, class_groups,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, sample_nr, cache_dir, num_classes)
     print(f"Computing metric {metric.name}")
+
+    splitted=xpl_root.split('/')
+    if splitted[-1]=="":
+        splitted=splitted[:-1]
+    outfile_name=splitted[-1]
 
     if metric_name == 'switched':
         xpl_root_switched = xpl_root
@@ -142,45 +148,49 @@ def evaluate(model_name, model_path, device, class_groups,
 
     if metric_name == "corrupt":
         explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+        train = ReduceLabelDataset(train)
         explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
+        explainer.train()
         selfinf=explainer.self_influences()
         metric(selfinf)
         if "dualview" in xai_method or "representer" in xai_method:
             selfinf=explainer.self_influences(only_coefs=True)
         else:
             selfinf=None
-        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json", selfinf)
+
+        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{outfile_name}_eval_results.json", selfinf)
         return
     
     ################
 
-    if metric_name != 'lds_cache':
-        #check if merged xpl exists
-        if not os.path.isdir(xpl_root):
-            raise Exception(f"Can not find standard explanation directory {xpl_root}")
-        file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-        file_root = file_list[0].split('_')[0]
-        num_files=len(file_list)
-        if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-            xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
-        #merge all xpl
-        else:
-            xpl_all = torch.empty(0, device=device)
-            for i in range(num_files):
-                fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
-                xpl = torch.load(fname, map_location=torch.device(device))
-                xpl.to(device)
-                xpl_all = torch.cat((xpl_all, xpl), 0)
-            torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
-            
-        metric(xpl_all, 0)
-        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
+    if metric_name == 'lds_cache':
+        return
+    #check if merged xpl exists
+    if not os.path.isdir(xpl_root):
+        raise Exception(f"Can not find standard explanation directory {xpl_root}")
+    file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+    file_root = file_list[0].split('_')[0]
+    num_files=len(file_list)
+    if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
+        xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
+    #merge all xpl
+    else:
+        xpl_all = torch.empty(0, device=device)
+        for i in range(num_files):
+            fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
+            xpl = torch.load(fname, map_location=torch.device(device))
+            xpl.to(device)
+            xpl_all = torch.cat((xpl_all, xpl), 0)
+        torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
+        
+    metric(xpl_all, 0)
+    metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{outfile_name}_eval_results.json")
 
 
 if __name__ == "__main__":
     # current = os.path.dirname(os.path.realpath(__file__))
     # parent_directory = os.path.dirname(current)
-    # sys.path.append(current)
+    # sys.path.append(current+)
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file', type=str)
     args = parser.parse_args()
