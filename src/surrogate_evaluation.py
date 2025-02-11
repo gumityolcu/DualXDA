@@ -97,7 +97,7 @@ def load_surrogate(model_name, model_path, device,
                     {"Metric": "Correlation of logits", "Score": score_cos_logits},
                     {"Metric": "Correlation of prediction", "Score": score_matthews_predictions},
                     {"Metric": "Kendall tau-rank correlation of logits", "Score": score_kendall_logits}]
-    with open(os.path.join(save_dir_results ,"results.csv"), "w") as file: 
+    with open(os.path.join(save_dir_results ,f"{dataset_name}_{dataset_type}_surrogate_evaluation.csv"), "w") as file: 
         writer = csv.DictWriter(file, fieldnames = ['Metric', 'Score'])
         writer.writeheader()
         writer.writerows(results_dict)
