@@ -90,7 +90,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             i = 0
             torch.save(explanations, os.path.join(save_dir, f"{name}_{j:02d}"))
             explanations = torch.empty((0, len(train)), device=device)
-            torch.save(torch.tensor(compute_times), os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}.times"))
+            torch.save(torch.tensor(compute_times), os.path.join(save_dir, f"{name}_{j:02d}.times"))
             compute_times=[]
             if graddot:
                 torch.save(gradcos_explanations, os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}"))
