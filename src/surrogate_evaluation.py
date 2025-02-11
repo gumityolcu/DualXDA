@@ -30,11 +30,7 @@ from explain import load_explainer
 def load_surrogate(model_name, model_path, device,
                      class_groups, dataset_name, dataset_type,
                      data_root, cache_dir, grad_dir, features_dir, batch_size, save_dir_explainer, save_dir_results,
-                     validation_size,
-                     # num_batches_per_file, start_file, num_files,
-                     xai_method,
-                     #accuracy,
-                     num_classes, C_margin, testsplit
+                     validation_size, xai_method,num_classes, C_margin, testsplit
                      ):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir_results):
@@ -79,6 +75,8 @@ def load_surrogate(model_name, model_path, device,
     surrogate_weights = explainer.learned_weight
     loader=torch.utils.data.DataLoader(train, len(train), shuffle=False) #concat train and test and check activations on both
     x, y = next(iter(loader)) #tqdm.tqdm(loader)
+    x=x.to(device)
+    y=y.to(device)
     model_logits = model(x).detach()
     model_predictions = torch.argmax(model_logits, dim=1)
 
