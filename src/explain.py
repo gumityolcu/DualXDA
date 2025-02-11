@@ -20,7 +20,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     arnoldi_params={
         "MNIST": {"layers": None, "projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "CIFAR": {"layers": None, "projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
-        "AWA": {"layers": None, "projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 5000},
+        "AWA": {"layers": None, "projection_dim": 1, "arnoldi_dim": 1, "hessian_dataset_size": 5},
     }
     kronfluence_params={}
 
