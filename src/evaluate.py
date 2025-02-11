@@ -27,7 +27,6 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
         "scheduler": scheduler,
         "weight_decay": weight_decay,
         "augmentation": augmentation,
-        "num_classes": num_classes
     }
 
     """
