@@ -33,7 +33,7 @@ class TopKSameClassMetric(Metric):
                 topk_most_influential_labels = self.train[topk_idx[i]][1]
                 test_label = self.test[start_index+i][1].repeat(self.k, 1)
                 is_equal = torch.mean((test_label == topk_most_influential_labels) * 1., axis=0)
-                self.scores = torch.cat((self.scores, torch.tensor(is_equal)), dim=0)
+                self.scores = torch.cat((self.scores, torch.tensor(is_equal).to(self.device)), dim=0)
 
     def get_result(self, dir=None, file_name=None):
         self.scores = self.scores.to('cpu').numpy()
