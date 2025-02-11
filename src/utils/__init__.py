@@ -164,4 +164,6 @@ class Metric(ABC):
         elif isinstance(results, str):
             return results
         else:
-            return np.array(results.cpu()).astype(float).tolist()
+            if isinstance(results, torch.Tensor):
+                results=results.cpu()
+            return np.array(results).astype(float).tolist()
