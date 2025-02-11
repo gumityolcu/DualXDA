@@ -29,7 +29,7 @@ from explain import load_explainer
 
 def load_surrogate(model_name, model_path, device,
                      class_groups, dataset_name, dataset_type,
-                     data_root, batch_size, save_dir_explainer, save_dir_results,
+                     data_root, cache_dir, grad_dir, features_dir, batch_size, save_dir_explainer, save_dir_results,
                      validation_size,
                      # num_batches_per_file, start_file, num_files,
                      xai_method,
@@ -61,7 +61,7 @@ def load_surrogate(model_name, model_path, device,
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
-    explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir_explainer, dataset_name)
+    explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir_explainer, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     if xai_method == "dualview":
         explainer.read_variables()
@@ -160,14 +160,13 @@ if __name__ == "__main__":
                      dataset_name=surrogate_config.get('dataset_name', None),
                      dataset_type=surrogate_config.get('dataset_type', 'std'),
                      data_root=surrogate_config.get('data_root', None),
+                     cache_dir=surrogate_config.get("cache_dir", None),
+                     grad_dir=surrogate_config.get("grad_dir",None),
+                     features_dir=surrogate_config.get("features_dir",None),
                      batch_size=surrogate_config.get('batch_size', None),
                      save_dir_explainer=surrogate_config.get('save_dir_explainer', None),
                      save_dir_results=surrogate_config.get('save_dir_results', None),
                      validation_size=surrogate_config.get('validation_size', 2000),
-                     #accuracy=surrogate_config.get('accuracy', False),
-                     #num_batches_per_file=surrogate_config.get('num_batches_per_file', 10),
-                     #start_file=surrogate_config.get('start_file', 0),
-                     #num_files=surrogate_config.get('num_files', 100),
                      xai_method=surrogate_config.get('xai_method', None),
                      num_classes=surrogate_config.get('num_classes'),
                      C_margin=surrogate_config.get('C',None),
