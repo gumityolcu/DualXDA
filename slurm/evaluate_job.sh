@@ -28,7 +28,7 @@ if [[ "$fname_config" == *"trak"* ]]; then
         --bind ${DATAPOOL3}/datasets:/mnt/dataset \
         --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
         --bind ${HOME}/DualView/cache:/mnt/cache \
-        ../singularity/evaluate.sif --trak --config_file /mnt/config_files/cluster/evaluate/$2/${fname_config}
+        ../singularity/evaluate.sif --trak --config_file /mnt/config_files/cluster/$3/$2/${fname_config}
 else
   singularity \
     run \
@@ -40,7 +40,7 @@ else
           --bind ${DATAPOOL3}/datasets:/mnt/dataset \
           --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
           --bind ${HOME}/DualView/cache:/mnt/cache \
-          ../singularity/evaluate.sif --config_file /mnt/config_files/cluster/evaluate/$2/${fname_config}
+          ../singularity/evaluate.sif --config_file /mnt/config_files/cluster/$3/$2/${fname_config}
 fi
 cd ${LOCAL_JOB_DIR}
 tar -czf $2_evaluate_${fname_config}-output_data_${SLURM_JOB_ID}.tgz outputs
