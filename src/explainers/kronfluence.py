@@ -106,7 +106,7 @@ class KronfluenceExplainer(Explainer):
             query_dataset=eval_dataset,
             train_dataset=self.dataset,
             per_device_query_batch_size=self.batch_size,
-            overwrite_output_dir=False,# this parameter allows loading from cache
+            overwrite_output_dir=True,# this parameter disallows loading from cache
         )
         xpl = self.analyzer.load_pairwise_scores("exp_scores")["all_modules"]
         return xpl
@@ -116,7 +116,7 @@ class KronfluenceExplainer(Explainer):
             return torch.load(os.path.join(self.dir, "self_influences"),map_location=self.device)
         else:
             score_args = ScoreArguments(**self.score_kwargs)
-            self.analyzer.compute_self_scores(scores_name="self", factors_name="exp_factors", score_args=score_args, train_dataset=self.dataset)
+            self.analyzer.compute_self_scores(scores_name="self", factors_name="exp_factors", score_args=score_args, train_dataset=self.dataset,overwrite_output_dir=True)
             scores = self.analyzer.load_self_scores(scores_name="self")["all_modules"]
             torch.save(scores, os.path.join(self.dir, "self_influences"))
             return scores
