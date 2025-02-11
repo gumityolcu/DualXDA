@@ -41,14 +41,19 @@ def load_surrogate(model_name, model_path, device,
         os.makedirs(save_dir_results)
     if not torch.cuda.is_available():
         device="cpu"
+
     ds_kwargs = {
         'data_root': data_root,
         'class_groups': class_groups,
         'image_set': "test",
         'validation_size': validation_size,
         "only_train": False,
-        'testsplit': testsplit
+        'testsplit': testsplit,
+        'transform': None,
+        'num_classes': num_classes
     }
+
+
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes).to(device)
