@@ -84,10 +84,10 @@ def load_surrogate(model_name, model_path, device,
     surrogate_logits = torch.matmul(model_preactivations, surrogate_weights.T)
     surrogate_predictions = torch.argmax(surrogate_logits, dim=1)
 
-    score_cos_weights = surrogate_faithfulness_cosine(model_weights, surrogate_weights)
-    score_cos_logits = surrogate_faithfulness_logits(model_logits, surrogate_logits)
-    score_matthews_predictions = surrogate_faithfulness_prediction(model_predictions, surrogate_predictions)
-    score_kendall_logits = surrogate_faithfulness_logits_kendall(model_logits, surrogate_logits)
+    score_cos_weights = surrogate_faithfulness_cosine(model_weights.to(device), surrogate_weights.to(device))
+    score_cos_logits = surrogate_faithfulness_logits(model_logits.to(device), surrogate_logits.to(device))
+    score_matthews_predictions = surrogate_faithfulness_prediction(model_predictions.to(device), surrogate_predictions.to(device))
+    score_kendall_logits = surrogate_faithfulness_logits_kendall(model_logits.to(device), surrogate_logits.to(device))
 
     print("\n")
     print("Cosine similarity of weight matrices:", score_cos_weights)
@@ -119,7 +119,7 @@ def surrogate_faithfulness_logits(model_logits, surrogate_logits):
     return score
     
 def surrogate_faithfulness_prediction(model_predictions, surrogate_predictions):
-    matthews = MulticlassMatthewsCorrCoef(num_classes = 1 + int(torch.max(model_predictions.max(), surrogate_predictions.max())))
+    matthews = MulticlassMatthewsCorrCoef(num_classes = 1 + int(torch.max(model_predictions.max(), surrogate_predictions.max()))).to(surrogate_predictions.device)
     #old_score = matthews_corrcoef(model_predictions.numpy(), surrogate_predictions.numpy())
     score = matthews(model_predictions, surrogate_predictions).item()
     #print(score, old_score)
@@ -129,7 +129,7 @@ def surrogate_faithfulness_prediction(model_predictions, surrogate_predictions):
 
 # kendall tau-rank used in "Faithful and Efficient Explanations for NNs via Neural Tangent Kernel Surrogate Models"
 def surrogate_faithfulness_logits_kendall(model_logits, surrogate_logits):
-    kendall = KendallRankCorrCoef(num_outputs=model_logits.shape[0])
+    kendall = KendallRankCorrCoef(num_outputs=model_logits.shape[0]).to(model_logits.device)
     #old_score = np.average([kendalltau(model_logits[i,:].argsort(descending=True).numpy(), surrogate_logits[i,:].argsort(descending=True).numpy()).statistic for i in range(len(model_logits))])
     #print(model_logits.shape)
     #print(surrogate_logits.shape)
