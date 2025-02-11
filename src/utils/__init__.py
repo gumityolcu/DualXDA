@@ -164,4 +164,4 @@ class Metric(ABC):
         elif isinstance(results, str):
             return results
         else:
-            return np.array(results).astype(float).tolist()
+            return np.array(results.cpu()).astype(float).tolist()

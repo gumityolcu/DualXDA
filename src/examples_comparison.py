@@ -50,9 +50,18 @@ def evaluate(model_name, model_path, device, class_groups,
     cumul_xpl = [torch.empty(0, len(train), dtype=torch.float32) for _ in xpl_roots]
     for i in range(len(cumul_xpl)):
         cur_index = 0
-        for j in range(len(file_lists[i])):
-            file_name = os.path.join(xpl_roots[i], f"{file_lists[i][0].split('_')[0]}_{j:02d}")
+        filename_root = file_lists[i][0].split('_')[0]
+        xpls=[]
+        if f"{filename_root}_all" in file_lists[i]:
+            file_name = os.path.join(xpl_roots[i], f"{filename_root}_all")
             xpl = torch.load(file_name, map_location=torch.device("cpu"))
+            xpls.append(xpl)
+        else:
+            for j in range(len(file_lists[i])):
+                file_name = os.path.join(xpl_roots[i], f"{filename_root}_{j:02d}")
+                xpl = torch.load(file_name, map_location=torch.device("cpu"))
+                xpls.append(xpl)
+        for xpl in xpls:
             xpl = (1 / xpl.abs().max(dim=-1)[0][:, None]) * xpl
             len_xpl = xpl.shape[0]
             for k in range(len_xpl):
