@@ -61,10 +61,9 @@ def load_surrogate(model_name, model_path, device,
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     if xai_method == "dualview":
         explainer.read_variables()
-        explainer.compute_coefficients()
-        #w1 = explainer.learned_weight
-        #w2 = explainer.coefficients.float().T @ explainer.samples / 2 #for some reason we need to divide by 2 here, check the C code
-        #print(((w1 - w2) / w1).abs().mean().item())
+        w1 = explainer.learned_weight
+        w2 = explainer.coefficients.float().T @ explainer.samples / 2
+        print("SANITY ", ((w1 - w2) / w1).abs().mean().item())
     else:
         explainer.train()
     if C_margin is not None:
