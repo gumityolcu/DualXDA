@@ -94,10 +94,6 @@ def evaluate(model_name, model_path, device, class_groups,
                          weight_decay, augmentation, sample_nr, cache_dir, num_classes)
     print(f"Computing metric {metric.name}")
 
-    splitted=xpl_root.split('/')
-    if splitted[-1]=="":
-        splitted=splitted[:-1]
-    outfile_name=splitted[-1]
 
     if metric_name == 'switched':
         xpl_root_switched = xpl_root
@@ -165,6 +161,12 @@ def evaluate(model_name, model_path, device, class_groups,
 
     if metric_name == 'lds_cache':
         return
+
+    splitted=xpl_root.split('/')
+    if splitted[-1]=="":
+        splitted=splitted[:-1]
+    outfile_name=splitted[-1]
+    
     #check if merged xpl exists
     if not os.path.isdir(xpl_root):
         raise Exception(f"Can not find standard explanation directory {xpl_root}")
