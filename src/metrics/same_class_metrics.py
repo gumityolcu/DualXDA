@@ -32,7 +32,7 @@ class SameClassMetric(Metric):
                 most_influential_label = self.train[most_influential_indices[i]][1]
                 test_label = self.test[start_index+i][1]
                 is_equal = (test_label == most_influential_label) * 1.
-                self.scores = torch.cat((self.scores, torch.tensor([is_equal])), dim=0)
+                self.scores = torch.cat((self.scores, torch.tensor([is_equal]).to(self.device)), dim=0)
 
 
     def get_result(self, dir=None, file_name=None):
