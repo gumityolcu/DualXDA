@@ -75,15 +75,13 @@ def load_surrogate(model_name, model_path, device,
     model_weights = model.classifier.weight.detach() #and bias?
     surrogate_weights = explainer.learned_weight
     loader=torch.utils.data.DataLoader(train, 32, shuffle=False) #concat train and test and check activations on both
-    x,y = train[0]
-    model_logits=torch.empty((0,model(x).shape)).to(device)
+    model_logits=torch.empty((0,num_classes)).to(device)
     for x, y in iter(loader): #tqdm.tqdm(loader)
         x=x.to(device)
         y=y.to(device)
         _model_logits = model(x).detach()
-    
+        model_logits=torch.cat((model_logits, _model_logits), dim=0)    
     model_predictions = torch.argmax(model_logits, dim=1)
-
     model_preactivations = explainer.samples
     surrogate_logits = torch.matmul(model_preactivations, surrogate_weights.T)
     surrogate_predictions = torch.argmax(surrogate_logits, dim=1)
