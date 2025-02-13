@@ -14,7 +14,7 @@ import numpy as np
 import os
 import torch
 from utils.data import load_datasets_reduced
-from utils.models import load_model
+from utils.models import load_model, clear_resnet_from_checkpoints
 import argparse
 import yaml
 import logging
@@ -54,6 +54,8 @@ def load_surrogate(model_name, model_path, device,
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes).to(device)
     checkpoint = torch.load(model_path, map_location=device)
+    checkpoint=clear_resnet_from_checkpoints(checkpoint)
+    
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
@@ -62,8 +64,8 @@ def load_surrogate(model_name, model_path, device,
     if xai_method == "dualview":
         explainer.read_variables()
         w1 = explainer.learned_weight
-        w2 = explainer.coefficients.float().T @ explainer.samples / 2
-        print("SANITY ", ((w1 - w2) / w1).abs().mean().item())
+        w2 = explainer.coefficients.float().T @ explainer.samples
+        print("SANITY ", ((w1 - w2)).abs().mean().item())
     else:
         explainer.train()
     if C_margin is not None:
@@ -72,11 +74,14 @@ def load_surrogate(model_name, model_path, device,
 
     model_weights = model.classifier.weight.detach() #and bias?
     surrogate_weights = explainer.learned_weight
-    loader=torch.utils.data.DataLoader(train, len(train), shuffle=False) #concat train and test and check activations on both
-    x, y = next(iter(loader)) #tqdm.tqdm(loader)
-    x=x.to(device)
-    y=y.to(device)
-    model_logits = model(x).detach()
+    loader=torch.utils.data.DataLoader(train, 32, shuffle=False) #concat train and test and check activations on both
+    x,y = train[0]
+    model_logits=torch.empty((0,model(x).shape)).to(device)
+    for x, y in iter(loader): #tqdm.tqdm(loader)
+        x=x.to(device)
+        y=y.to(device)
+        _model_logits = model(x).detach()
+    
     model_predictions = torch.argmax(model_logits, dim=1)
 
     model_preactivations = explainer.samples
