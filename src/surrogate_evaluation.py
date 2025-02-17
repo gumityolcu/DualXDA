@@ -29,26 +29,27 @@ from explain import load_explainer
 
 def load_surrogate(model_name, model_path, device,
                      class_groups, dataset_name, dataset_type,
-                     data_root, batch_size, save_dir_explainer, save_dir_results,
-                     validation_size,
-                     # num_batches_per_file, start_file, num_files,
-                     xai_method,
-                     #accuracy,
-                     num_classes, C_margin, testsplit
+                     data_root, cache_dir, grad_dir, features_dir, batch_size, save_dir_explainer, save_dir_results,
+                     validation_size, xai_method,num_classes, C_margin, testsplit
                      ):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir_results):
         os.makedirs(save_dir_results)
     if not torch.cuda.is_available():
         device="cpu"
+
     ds_kwargs = {
         'data_root': data_root,
         'class_groups': class_groups,
         'image_set': "test",
         'validation_size': validation_size,
         "only_train": False,
-        'testsplit': testsplit
+        'testsplit': testsplit,
+        'transform': None,
+        'num_classes': num_classes
     }
+
+
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes).to(device)
@@ -56,7 +57,7 @@ def load_surrogate(model_name, model_path, device,
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
-    explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir_explainer, dataset_name)
+    explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir_explainer, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     if xai_method == "dualview":
         explainer.read_variables()
@@ -74,6 +75,8 @@ def load_surrogate(model_name, model_path, device,
     surrogate_weights = explainer.learned_weight
     loader=torch.utils.data.DataLoader(train, len(train), shuffle=False) #concat train and test and check activations on both
     x, y = next(iter(loader)) #tqdm.tqdm(loader)
+    x=x.to(device)
+    y=y.to(device)
     model_logits = model(x).detach()
     model_predictions = torch.argmax(model_logits, dim=1)
 
@@ -81,10 +84,10 @@ def load_surrogate(model_name, model_path, device,
     surrogate_logits = torch.matmul(model_preactivations, surrogate_weights.T)
     surrogate_predictions = torch.argmax(surrogate_logits, dim=1)
 
-    score_cos_weights = surrogate_faithfulness_cosine(model_weights, surrogate_weights)
-    score_cos_logits = surrogate_faithfulness_logits(model_logits, surrogate_logits)
-    score_matthews_predictions = surrogate_faithfulness_prediction(model_predictions, surrogate_predictions)
-    score_kendall_logits = surrogate_faithfulness_logits_kendall(model_logits, surrogate_logits)
+    score_cos_weights = surrogate_faithfulness_cosine(model_weights.to(device), surrogate_weights.to(device))
+    score_cos_logits = surrogate_faithfulness_logits(model_logits.to(device), surrogate_logits.to(device))
+    score_matthews_predictions = surrogate_faithfulness_prediction(model_predictions.to(device), surrogate_predictions.to(device))
+    score_kendall_logits = surrogate_faithfulness_logits_kendall(model_logits.to(device), surrogate_logits.to(device))
 
     print("\n")
     print("Cosine similarity of weight matrices:", score_cos_weights)
@@ -97,7 +100,7 @@ def load_surrogate(model_name, model_path, device,
                     {"Metric": "Correlation of logits", "Score": score_cos_logits},
                     {"Metric": "Correlation of prediction", "Score": score_matthews_predictions},
                     {"Metric": "Kendall tau-rank correlation of logits", "Score": score_kendall_logits}]
-    with open(os.path.join(save_dir_results ,"results.csv"), "w") as file: 
+    with open(os.path.join(save_dir_results ,f"{dataset_name}_{dataset_type}_surrogate_evaluation.csv"), "w") as file: 
         writer = csv.DictWriter(file, fieldnames = ['Metric', 'Score'])
         writer.writeheader()
         writer.writerows(results_dict)
@@ -116,7 +119,7 @@ def surrogate_faithfulness_logits(model_logits, surrogate_logits):
     return score
     
 def surrogate_faithfulness_prediction(model_predictions, surrogate_predictions):
-    matthews = MulticlassMatthewsCorrCoef(num_classes = 1 + int(torch.max(model_predictions.max(), surrogate_predictions.max())))
+    matthews = MulticlassMatthewsCorrCoef(num_classes = 1 + int(torch.max(model_predictions.max(), surrogate_predictions.max()))).to(surrogate_predictions.device)
     #old_score = matthews_corrcoef(model_predictions.numpy(), surrogate_predictions.numpy())
     score = matthews(model_predictions, surrogate_predictions).item()
     #print(score, old_score)
@@ -126,7 +129,7 @@ def surrogate_faithfulness_prediction(model_predictions, surrogate_predictions):
 
 # kendall tau-rank used in "Faithful and Efficient Explanations for NNs via Neural Tangent Kernel Surrogate Models"
 def surrogate_faithfulness_logits_kendall(model_logits, surrogate_logits):
-    kendall = KendallRankCorrCoef(num_outputs=model_logits.shape[0])
+    kendall = KendallRankCorrCoef(num_outputs=model_logits.shape[0]).to(model_logits.device)
     #old_score = np.average([kendalltau(model_logits[i,:].argsort(descending=True).numpy(), surrogate_logits[i,:].argsort(descending=True).numpy()).statistic for i in range(len(model_logits))])
     #print(model_logits.shape)
     #print(surrogate_logits.shape)
@@ -155,14 +158,13 @@ if __name__ == "__main__":
                      dataset_name=surrogate_config.get('dataset_name', None),
                      dataset_type=surrogate_config.get('dataset_type', 'std'),
                      data_root=surrogate_config.get('data_root', None),
+                     cache_dir=surrogate_config.get("cache_dir", None),
+                     grad_dir=surrogate_config.get("grad_dir",None),
+                     features_dir=surrogate_config.get("features_dir",None),
                      batch_size=surrogate_config.get('batch_size', None),
                      save_dir_explainer=surrogate_config.get('save_dir_explainer', None),
                      save_dir_results=surrogate_config.get('save_dir_results', None),
                      validation_size=surrogate_config.get('validation_size', 2000),
-                     #accuracy=surrogate_config.get('accuracy', False),
-                     #num_batches_per_file=surrogate_config.get('num_batches_per_file', 10),
-                     #start_file=surrogate_config.get('start_file', 0),
-                     #num_files=surrogate_config.get('num_files', 100),
                      xai_method=surrogate_config.get('xai_method', None),
                      num_classes=surrogate_config.get('num_classes'),
                      C_margin=surrogate_config.get('C',None),
