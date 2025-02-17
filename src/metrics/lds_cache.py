@@ -8,10 +8,10 @@ class LinearDatamodelingScoreCacher(RetrainMetric):
     name = "LinearDatamodelingScoreCacher"
 
     def __init__(self, dataset_name, train, test, model_name, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, sample_nr, cache_dir, alpha=0.5, device="cuda"):
+                 weight_decay, augmentation, sample_nr, cache_dir, num_classes, alpha=0.5, device="cuda"):
         super().__init__(dataset_name, train, test, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, device)
+                         weight_decay, augmentation, num_classes, device)
         np.random.seed(sample_nr)
         torch.manual_seed(sample_nr)
         self.train = train
