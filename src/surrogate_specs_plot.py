@@ -15,7 +15,7 @@ from scipy.stats import kendalltau
 from matplotlib import pyplot as plt
 import os
 
-dataset_name="CIFAR"
+dataset_name="AWA"
 
 n_cls={"MNIST":10, "CIFAR":10, "AWA":50}
 
@@ -64,7 +64,9 @@ model.to(device)
 model.eval()
 
 ld=torch.utils.data.DataLoader(test, 32, shuffle=False)
-for (x,y) in iter(ld):
+for i,(x,y) in enumerate(iter(ld)):
+    if i>=100:
+        break
     x=x.to(device)
     y=y.to(device)
     _feat=features(x)
@@ -115,7 +117,9 @@ ax1.legend(loc=0, fontsize=12)
 ax2.legend(loc=4, fontsize=12)
 
 fig.tight_layout()
-plt.savefig(os.path.join(outdir, f"{outname}_1.pdf"))
+plt.show(block=True)
+
+#plt.savefig(os.path.join(outdir, f"{outname}_1.pdf"))
 
 # plot 2
 fig, ax1=plt.subplots(figsize=(8,6))
@@ -133,4 +137,5 @@ ax1.legend(loc=0, fontsize=12)
 ax2.legend(loc=4, fontsize=12)
 
 fig.tight_layout()
-plt.savefig(os.path.join(outdir, f"{outname}_2.pdf"))
+plt.show(block=True)
+#plt.savefig(os.path.join(outdir, f"{outname}_2.pdf"))
