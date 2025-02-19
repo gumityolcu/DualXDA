@@ -9,6 +9,23 @@ import yaml
 import logging
 import os
 
+def count_params(checkpoint):
+    total=0
+    for p,v in checkpoint["model_state"].items():
+        num=1
+        for s in v.data.shape:
+            num=num*s
+        total=total+num
+    return total
+
+def count_params_model(model):
+    total=0
+    for v in model.parameters():
+        num=1
+        for s in v.data.shape:
+            num=num*s
+        total=total+num
+    return total
 
 def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
     lissa_params={
@@ -92,13 +109,16 @@ def explain_model(model_name, model_path, device, class_groups,
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes_model)
+
+    #exit()
     checkpoint = torch.load(model_path, map_location=device)
     #get rid of model.resnet
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
-    
+
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
+    
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")

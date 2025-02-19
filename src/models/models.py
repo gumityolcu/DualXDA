@@ -76,6 +76,9 @@ class BasicModel(Module):
     def influence_named_parameters(self):
        return [("classifier.weight", self.classifier.weight), ("classifier.bias", self.classifier.bias)]
 
+    def arnoldi_parameters(self):
+        return None
+
     def sim_parameters(self):
         return self.parameters()
 

@@ -119,7 +119,6 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         dataset,
         dir,
         loss_fn = torch.nn.CrossEntropyLoss(reduction="none"),
-        layers = None,
         batch_size = 1,
         test_loss_fn = None,
         sample_wise_grads_per_batch = False,
@@ -148,8 +147,6 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         loss_fn : Union[torch.nn.Module, Callable], optional
             Loss function which is applied to the model. Required to be a reduction='none' loss.
             Defaults to CrossEntropyLoss with reduction='none'.
-        layers : Optional[List[str]], optional
-            Layers used to compute the gradients. If None, all layers are used. Defaults to None.
         batch_size : int, optional
             Batch size used for iterating over the dataset. Defaults to 1.
         hessian_dataset : Optional[torch.utils.data.Dataset], optional
@@ -216,7 +213,6 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
         explainer_kwargs = {
                 "model": model,
                 "train_dataset": dataset,
-                "layers": layers,
                 "loss_fn": loss_fn,
                 "batch_size": batch_size,
                 "hessian_dataset": hessian_dataset,
@@ -230,6 +226,7 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
                 "hessian_inverse_tol": hessian_inverse_tol,
                 "projection_on_cpu": projection_on_cpu,
                 "show_progress": show_progress,
+                "layers": model.arnoldi_params() 
             }
         
         self.captum_explainer = CustomArnoldiInfluenceFunction(**explainer_kwargs)
