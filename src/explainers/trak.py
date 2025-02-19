@@ -82,7 +82,7 @@ class TRAK(Explainer):
             print(f"CANT FIND SELF INFLUENCES in {self.dir}")
             print(list(os.listdir(self.dir)))
             print("****")
-            print(list(os.path.join(os.listdir(self.dir), "trak_results")))
+            print(list(os.listdir(os.path.join(self.dir, "trak_results"))))
             print("****")
             print(list(os.listdir(os.path.join(self.dir,".."))))
             exit()
