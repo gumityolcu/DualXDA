@@ -81,6 +81,9 @@ class TRAK(Explainer):
         else:
             print("CANT FIND SELF INFLUENCES")
             print(list(os.listdir(self.dir)))
+            print("****")
+            print(list(os.listdir(os.path.join(self.dir,".."))))
+            exit()
             self_inf=self.compute_self_influences_brute_force()
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         self.clean_cache()
