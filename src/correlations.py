@@ -61,7 +61,6 @@ def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" ,
     cbar.ax.tick_params(labelsize=10)
 
     plt.title(f'{corr} Matrix Heatmap', fontsize=14)
-    plt.show(block=True)
     fig.tight_layout()
     plt.savefig(os.path.join(save_dir,f"{corr}.jpg"))  # Save the image
     torch.save(os.path.join(save_dir,f"{corr}_correlations"))
@@ -81,4 +80,5 @@ if __name__ == "__main__":
                    device=args.device,
                    num_test_samples=args.num_test_samples,
                    corr=args.corr,
-                   color_map = "bwr")
+                   color_map = "bwr"
+                   )
