@@ -226,7 +226,7 @@ class ArnoldiInfluenceFunctionExplainer(Explainer):
                 "hessian_inverse_tol": hessian_inverse_tol,
                 "projection_on_cpu": projection_on_cpu,
                 "show_progress": show_progress,
-                "layers": model.arnoldi_params() 
+                "layers": model.arnoldi_parameters() 
             }
         
         self.captum_explainer = CustomArnoldiInfluenceFunction(**explainer_kwargs)
