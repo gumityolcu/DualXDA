@@ -15,7 +15,7 @@ import logging
 
 matplotlib.interactive(False)
 
-def explainer_corr(xpl_src_dir, save_dir = None, device="cpu" , color_map = "viridis"):
+def explainer_corr(xpl_src_dir, save_dir = None, device="cpu" , num_test_samples=None, color_map = "viridis"):
     tensors=dict()
     names=[]
     for dir in os.listdir(xpl_src_dir):
@@ -26,7 +26,8 @@ def explainer_corr(xpl_src_dir, save_dir = None, device="cpu" , color_map = "vir
                 basename=f.split("_")[0]
                 names.append(basename)
                 tensors[basename]=torch.load(os.path.join(xpl_src_dir,dir,f), map_location=device)
-
+                if num_test_samples is not None and num_test_samples<tensors[basename].shape[0]:
+                    tensors[basename]=tensors[basename][:num_test_samples]
     corr_fns=[("spearman",spearman_corrcoef), ("kendall",kendall_rank_corrcoef)]
 
     for corr_name, corr_fn in corr_fns:
@@ -72,9 +73,11 @@ if __name__ == "__main__":
     prsr.add_argument("--xpl_path", type=str, required=True)
     prsr.add_argument("--device", type=str, required=True)
     prsr.add_argument("--output_path", type=str, required=True)
+    prsr.add_argument("--num_test_samples", type=int, default=None, required=False)
     args=prsr.parse_args()
     explainer_corr(
                    xpl_src_dir=args.xpl_path,
                    save_dir=args.output_path,
                    device=args.device,
+                   num_test_samples=args.num_test_samples,
                    color_map = "bwr")
