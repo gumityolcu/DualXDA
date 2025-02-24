@@ -80,7 +80,21 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         # projection_dim = 50, OOO
         # hessian_dataset_size = 5000, OOO
 
-
+def print_model(model):
+    total=0
+    marginals=[]
+    for name, params in model.named_parameters():
+        this=0
+        num=1
+        for s in params.shape:
+            num=num*s
+        marginals.append((name,num))
+        total=total+num
+    cum=0
+    for name, count in marginals:
+        cum=cum+count
+        print(name, "Percentage: ", float(count)/float(total), "Cumulative: ", float(cum)/float(total))
+    print("TOTAL:",total)
 
 def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
@@ -116,6 +130,8 @@ def explain_model(model_name, model_path, device, class_groups,
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
 
     model.load_state_dict(checkpoint["model_state"])
+    # print_model(model)
+    # exit()
     model.to(device)
     model.eval()
     
