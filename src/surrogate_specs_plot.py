@@ -23,7 +23,7 @@ def main(dataset_name, device):
     train_accs=[]
 
     ds_kwargs = {
-        'data_root': "~/Documents/Code/Datasets",
+        'data_root': "/mnt/dataset",
         'image_set': "test",
         'validation_size': 2000,
         "only_train": False,
