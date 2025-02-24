@@ -21,9 +21,10 @@ class TracInExplainer(Explainer):
         self.device=device
         self.explainers_info=[]
         assert os.path.isdir(ckpt_dir), f"Given checkpoint path {ckpt_dir} is not a directory."
-        ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if not os.path.isdir(os.path.join(ckpt_dir,f))]
+        self.ckpt_files=[os.path.join(ckpt_dir,f) for f in os.listdir(ckpt_dir) if not os.path.isdir(os.path.join(ckpt_dir,f))]
         best_epoch_seen=False
-        for i, ckpt in enumerate(ckpt_files):
+
+        for i, ckpt in enumerate(self.ckpt_files):
             print(ckpt)
             epoch=ckpt.split("_")[-1]
             checkpoint=torch.load(ckpt, map_location=device)
@@ -36,7 +37,7 @@ class TracInExplainer(Explainer):
             os.makedirs(grad_path,exist_ok=True)
             self.explainers_info.append(
                 (
-                    checkpoint["optimizer_state"]["param_groups"][0]["lr"], grad_path
+                    checkpoint["optimizer_state"]["param_groups"][0]["lr"], grad_path, ckpt
                 )
             )
         assert best_epoch_seen, "No checkpoint with the _best suffix found in checkpoint directory."
@@ -57,7 +58,10 @@ class TracInExplainer(Explainer):
 
     def train(self):
         time=0.
-        for (_, path) in self.explainers_info:
+        for (_, path, ckpt) in self.explainers_info:
+            checkpoint=torch.load(ckpt, map_location=self.device)
+            checkpoint = clear_resnet_from_checkpoints(checkpoint) #this MIGHT be lefover from using older checkpoints
+            self.model.load_state_dict(checkpoint["model_state"])
             graddot=GradDotExplainer(
                 model=self.model,
                 dataset=self.dataset,
@@ -77,7 +81,10 @@ class TracInExplainer(Explainer):
         attr=torch.zeros((x.shape[0], len(self.dataset)),device=self.device)
         nr_explainers = len(self.explainers_info)
         print("started explanations here!")
-        for i, (rate, path) in enumerate(self.explainers_info):
+        for i, (rate, path, ckpt) in enumerate(self.explainers_info):
+            checkpoint=torch.load(ckpt, map_location=self.device)
+            checkpoint = clear_resnet_from_checkpoints(checkpoint) #this MIGHT be lefover from using older checkpoints
+            self.model.load_state_dict(checkpoint["model_state"])
             graddot=GradDotExplainer(
                 model=self.model,
                 dataset=self.dataset,
@@ -91,8 +98,9 @@ class TracInExplainer(Explainer):
         return attr/nr_explainers
 
     def self_influences(self):
+        
         if os.path.exists(os.path.join(self.dir, "self_influences")):
-            self_inf=torch.load(os.path.join(self.dir, "self_influences"), map_location=self.device)
+           self_inf=torch.load(os.path.join(self.dir, "self_influences"), map_location=self.device)
         else:
             self_inf=torch.zeros((len(self.dataset),), device=self.device)
             nr_explainers = len(self.explainers_info)
@@ -106,7 +114,8 @@ class TracInExplainer(Explainer):
                 loss=True,
                 device=self.device)
                 graddot.train()
-                self_inf=self_inf+rate*graddot.self_influences()
+                new_inf=graddot.self_influences()
+                self_inf=self_inf+rate*new_inf
             self_inf = self_inf/nr_explainers
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf

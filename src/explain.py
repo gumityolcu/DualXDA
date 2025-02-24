@@ -9,6 +9,23 @@ import yaml
 import logging
 import os
 
+def count_params(checkpoint):
+    total=0
+    for p,v in checkpoint["model_state"].items():
+        num=1
+        for s in v.data.shape:
+            num=num*s
+        total=total+num
+    return total
+
+def count_params_model(model):
+    total=0
+    for v in model.parameters():
+        num=1
+        for s in v.data.shape:
+            num=num*s
+        total=total+num
+    return total
 
 def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
     lissa_params={
@@ -18,9 +35,9 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     }
 
     arnoldi_params={
-        "MNIST": {"layers": None, "projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
-        "CIFAR": {"layers": None, "projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
-        "AWA": {"layers": None, "projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 4000},
+        "MNIST": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
+        "CIFAR": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
+        "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
     }
     kronfluence_params={}
 
@@ -63,7 +80,21 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         # projection_dim = 50, OOO
         # hessian_dataset_size = 5000, OOO
 
-
+def print_model(model):
+    total=0
+    marginals=[]
+    for name, params in model.named_parameters():
+        this=0
+        num=1
+        for s in params.shape:
+            num=num*s
+        marginals.append((name,num))
+        total=total+num
+    cum=0
+    for name, count in marginals:
+        cum=cum+count
+        print(name, "Percentage: ", float(count)/float(total), "Cumulative: ", float(cum)/float(total))
+    print("TOTAL:",total)
 
 def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
@@ -92,13 +123,18 @@ def explain_model(model_name, model_path, device, class_groups,
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes_model)
+
+    #exit()
     checkpoint = torch.load(model_path, map_location=device)
     #get rid of model.resnet
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
-    
+
     model.load_state_dict(checkpoint["model_state"])
+    # print_model(model)
+    # exit()
     model.to(device)
     model.eval()
+    
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")

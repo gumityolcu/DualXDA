@@ -231,7 +231,6 @@ class BaseInfluenceModule(abc.ABC):
         print("LOG:starting self influences")
         for ((batch, _),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
             (x, targets) = batch
-            print("LOG: runnign self influence")
             i=i+1
             t0=time()
             stest = self.stest(x,targets)
@@ -239,11 +238,14 @@ class BaseInfluenceModule(abc.ABC):
             scores.append(s)
             t=time()-t0
             avg=avg+t
+            running=[]
             if i%100==0:
-                print(f"{i}/{len(self.train_loader.dataset)}") 
+                print(f"LOG: Iteration {i}/{len(self.train_loader.dataset)}") 
                 print(torch.any(torch.isnan(s)))
-                print(avg/100.)
+                print("LOG: avg: ", avg/100.)
                 print("=====")
+                running.append(avg)
+                print("LOG: Running ", torch.tensor(running).mean())
                 print("=====")
                 avg=0.
         return torch.tensor(scores) / len(self.train_loader.dataset)

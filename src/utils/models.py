@@ -9,11 +9,21 @@ def clear_resnet_from_checkpoints(checkpoint):
          if "resnet" not in key
         }
     return checkpoint
+
 class ResNetWrapper(torch.nn.Module):
-    def __init__(self, module, output_dim):
+    def __init__(self, module, output_dim, arnoldi_param_filter=None):
+        # total=0
+        # for p in module.parameters():
+        #     num=1
+        #     for s in p.data.shape:
+        #         num=num*s
+        #     total=total+num
+        # print(total)
+        # exit()
         super(ResNetWrapper, self).__init__()
         print(module)
         self.classifier=torch.nn.Linear(in_features=module.fc.in_features, out_features=output_dim, bias=True)
+        self.arnoldi_param_filter=arnoldi_param_filter
         seq_array=[
             torch.nn.Conv2d(3, module.bn1.num_features,kernel_size=3,padding=2,stride=1),
             module.bn1,
@@ -32,6 +42,13 @@ class ResNetWrapper(torch.nn.Module):
 
     def influence_named_parameters(self):
        return [("classifier.weight", self.classifier.weight), ("classifier.bias", self.classifier.bias)]
+    
+    def arnoldi_parameters(self):
+        if self.arnoldi_param_filter is None:           
+            return None #None means we use all parameters. This is needed for full model explanation with CIFAR
+        return ["classifier", "features.6", "features.7"]
+
+            
 
     def sim_parameters(self):
         return self.parameters()
@@ -60,13 +77,13 @@ def load_model(model_name, dataset_name, num_classes):
 
     elif model_name=="resnet18":
         if dataset_name=="AWA":
-            return ResNetWrapper(resnet18(weights=ResNet18_Weights.IMAGENET1K_V1), output_dim=num_classes)
+            return ResNetWrapper(resnet18(weights=ResNet18_Weights.IMAGENET1K_V1), output_dim=num_classes, arnoldi_param_filter=True)
         else:
             return ResNetWrapper(resnet18(), output_dim=num_classes)
     
     else:
         if dataset_name=="AWA":
-            return ResNetWrapper(resnet50(weights=ResNet50_Weights.IMAGENET1K_V1), output_dim=num_classes)
+            return ResNetWrapper(resnet50(weights=ResNet50_Weights.IMAGENET1K_V1), output_dim=num_classes, arnoldi_param_filter=True)
         else:
             return ResNetWrapper(resnet50(), output_dim=num_classes)
 
