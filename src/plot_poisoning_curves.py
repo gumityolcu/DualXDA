@@ -3,19 +3,28 @@ import torch
 import matplotlib.pyplot as plt
 import os
 
-methods={
-    "CIFAR":[('dualview','blue','DV'), ('influence', 'green', 'IF'), ('representer', 'c', 'RP'),('rp_similarity','purple','SIM-rp')],
-    "MNIST":[ ('dualview','blue','DV'), ('influence', 'green', 'IF'), ('representer', 'c', 'RP'),('rp_similarity','purple','SIM-rp'),('similarity','black','SIM')]
-}
-CIFAR_dir="/home/fe/yolcu/Documents/Code/THESIS/results/CIFAR/corrupt/"
-MNIST_dir="/home/fe/yolcu/Documents/Code/THESIS/results/MNIST/corrupt/"
+methods=[
+            #('dualview_0.001','black','DV 1e-3'),
+            #('lissa', 'green', 'LiSSA IF'),
+            #('kronfluence', 'orange', 'LiSSA IF'),
+            #('arnoldi', 'red', 'Arnoldi IF'),
+            #('representer', 'cyan', 'RP'),
+            ('graddot','yellow','GradDot'),
+            ('tracin','blue','TracIn'),
+        ]
 
-for p,t in [(CIFAR_dir, "CIFAR"),(MNIST_dir,"MNIST")]:
-    plt.figure(figsize=(6,4))
+plt.rcParams['text.usetex'] = True
+plt.rcParams['mathtext.fontset'] = 'stix'
+plt.rcParams['font.family'] = 'STIXGeneral'
+fontdict={"size": 15}
+
+for dsname in ["CIFAR","MNIST"]:
+    p=f"/home/fe/yolcu/Documents/Code/DualView-wip/test_output/eval/{dsname}/"
+    plt.figure(figsize=(8,6))
     plt.xlabel('Ratio of Controlled Images')
     plt.ylabel('Ratio of Detected Poisoned Samples')
-    for m,c,n in methods[t]:
-        with open(f"{p}{t}_corrupt_{m}_eval_results.json") as file:
+    for m,c,n in methods:
+        with open(os.path.join(p,f"{dsname}_corrupt_{m}_eval_results.json")) as file:
             res = json.load(file)
         arr=res['label_flipping_curve']
         x=torch.range(1,len(arr))/len(arr)
@@ -28,7 +37,9 @@ for p,t in [(CIFAR_dir, "CIFAR"),(MNIST_dir,"MNIST")]:
     plt.xlim((0.,x_lim))
     plt.ylim((0.,y_lim))
     plt.legend(loc="lower right")
-    plt.savefig(f"{p}{t}_label_posioning_curve.pdf")
-    os.system(f"pdfcrop {p}{t}_label_posioning_curve.pdf")
-    os.system(f"rm {p}{t}_label_posioning_curve.pdf")
-    os.system(f"mv {p}{t}_label_posioning_curve-crop.pdf {p}{t}_label_posioning_curve.pdf")
+    plt.show()
+    continue
+    plt.savefig(os.path.join(p,f"{dsname}_label_posioning_curve.pdf"))
+    os.system(f"pdfcrop {os.path.join(p,f'{dsname}_label_posioning_curve.pdf')}")
+    os.system(f"rm {os.path.join(p,f'{dsname}_label_posioning_curve.pdf')}")
+    os.system(f"mv {os.path.join(p,f'{dsname}_label_posioning_curve-crop.pdf')} {os.path.join(p,f'{dsname}_label_posioning_curve.pdf')}")
