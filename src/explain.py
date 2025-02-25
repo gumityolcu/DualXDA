@@ -124,7 +124,6 @@ def explain_model(model_name, model_path, device, class_groups,
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes_model)
 
-    #exit()
     checkpoint = torch.load(model_path, map_location=device)
     #get rid of model.resnet
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
