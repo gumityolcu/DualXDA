@@ -10,7 +10,7 @@ from metrics import *
 
 def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                 epochs, loss, lr, momentum, optimizer, scheduler,
-                weight_decay, augmentation, sample_nr, cache_dir, num_classes):
+                weight_decay, augmentation, sample_nr, cache_dir,lds_cache_dir, num_classes):
     base_dict={
         "train": train,
         "test": test,
@@ -47,7 +47,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
                 "add_batch_in_neg": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
                 "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
                 "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
-                "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': cache_dir}}),
+                "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': lds_cache_dir}}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "labelflip": (LabelFlipMetric, retrain_dict)}
     if metric_name not in ret_dict.keys():
@@ -232,6 +232,7 @@ if __name__ == "__main__":
                 sample_nr=train_config.get('sample_nr', None),
                 xai_method=train_config.get('xai_method', None),
                 cache_dir=train_config.get('cache_dir', None),
+                lds_cache_dir=train_config.get('lds_cache_dir', None),
                 grad_dir=train_config.get('grad_dir', None),
                 features_dir=train_config.get('features_dir', None)
     )
