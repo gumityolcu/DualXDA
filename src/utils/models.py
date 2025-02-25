@@ -46,9 +46,8 @@ class ResNetWrapper(torch.nn.Module):
     def arnoldi_parameters(self):
         if self.arnoldi_param_filter is None:           
             return None #None means we use all parameters. This is needed for full model explanation with CIFAR
-        return ["classifier", "features.6", "features.7"]
-
-            
+        return ["classifier", "features.7.1", "features.7.0.conv3", "features.7.0.bn3", "features.7.0.downsample"]
+         
 
     def sim_parameters(self):
         return self.parameters()
