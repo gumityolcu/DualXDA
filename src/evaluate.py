@@ -1,5 +1,5 @@
 import argparse
-from utils.data import load_datasets, ReduceLabelDataset
+from utils.data import load_datasets, ReduceLabelDataset, PredictionTargetDataset
 from utils.models import load_model
 from explain import load_explainer
 import yaml
@@ -84,11 +84,11 @@ def evaluate(model_name, model_path, device, class_groups,
         dataset_type = "std"
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes).to(device)
-    #if dataset_type == 'mark': # do we need these lines? not clear yet.
-    #    checkpoint = torch.load(model_path, map_location=device)
-    #    model.load_state_dict(checkpoint["model_state"])
+    checkpoint = torch.load(model_path, map_location=device)
+    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
+    test=PredictionTargetDataset(dataset=test, model=model, device=device)
     metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, sample_nr, cache_dir, lds_cache_dir, num_classes)
@@ -104,49 +104,49 @@ def evaluate(model_name, model_path, device, class_groups,
 
 ######################################################################
 
-    if metric_name == 'switched':
-        xpl_root_switched = xpl_root
-        xpl_root = xpl_root.replace('switched', 'std')
+    # if metric_name == 'switched':
+    #     xpl_root_switched = xpl_root
+    #     xpl_root = xpl_root.replace('switched', 'std')
 
-        if not os.path.isdir(xpl_root):
-            raise Exception(f"Can not find standard explanation directory {xpl_root}")
-        file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-        file_root = file_list[0].split('_')[0]
-        num_files=len(file_list)
-        #check if merged xpl exists
-        if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-            xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
-        #merge all xpl
-        else:
-            xpl_all = torch.empty(0, device=device)
-            for i in range(num_files):
-                fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
-                xpl = torch.load(fname, map_location=torch.device(device))
-                xpl.to(device)
-                xpl_all = torch.cat((xpl_all, xpl), 0)
-            torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
+    #     if not os.path.isdir(xpl_root):
+    #         raise Exception(f"Can not find standard explanation directory {xpl_root}")
+    #     file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+    #     file_root = file_list[0].split('_')[0]
+    #     num_files=len(file_list)
+    #     #check if merged xpl exists
+    #     if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
+    #         xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
+    #     #merge all xpl
+    #     else:
+    #         xpl_all = torch.empty(0, device=device)
+    #         for i in range(num_files):
+    #             fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
+    #             xpl = torch.load(fname, map_location=torch.device(device))
+    #             xpl.to(device)
+    #             xpl_all = torch.cat((xpl_all, xpl), 0)
+    #         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
 
-        if not os.path.isdir(xpl_root_switched):
-            raise Exception(f"Can not find switched explanation directory {xpl_root_switched}")
-        file_list_switched = [f for f in os.listdir(xpl_root_switched) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-        file_root_switched = file_list_switched[0].split('_')[0]
-        num_files_switched=len(file_list_switched)        
-        #check if merged switched xpl exists
-        if os.path.isfile(os.path.join(xpl_root_switched, f"{file_root_switched}_all")):
-            xpl_all_switched = torch.load(os.path.join(xpl_root_switched, f"{file_root_switched}_all"))        
-        #merge all switched xpl
-        else:
-            xpl_all_switched = torch.empty(0, device=device)
-            for i in range(num_files_switched):
-                fname_switched = os.path.join(xpl_root_switched, f"{file_root_switched}_{i:02d}")
-                xpl_switched = torch.load(fname_switched, map_location=torch.device(device))
-                xpl_switched.to(device)
-                xpl_all_switched = torch.cat((xpl_all_switched, xpl_switched), 0)
-            torch.save(xpl_all_switched, os.path.join(xpl_root_switched, f"{file_root_switched}_all"))
+    #     if not os.path.isdir(xpl_root_switched):
+    #         raise Exception(f"Can not find switched explanation directory {xpl_root_switched}")
+    #     file_list_switched = [f for f in os.listdir(xpl_root_switched) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+    #     file_root_switched = file_list_switched[0].split('_')[0]
+    #     num_files_switched=len(file_list_switched)        
+    #     #check if merged switched xpl exists
+    #     if os.path.isfile(os.path.join(xpl_root_switched, f"{file_root_switched}_all")):
+    #         xpl_all_switched = torch.load(os.path.join(xpl_root_switched, f"{file_root_switched}_all"))        
+    #     #merge all switched xpl
+    #     else:
+    #         xpl_all_switched = torch.empty(0, device=device)
+    #         for i in range(num_files_switched):
+    #             fname_switched = os.path.join(xpl_root_switched, f"{file_root_switched}_{i:02d}")
+    #             xpl_switched = torch.load(fname_switched, map_location=torch.device(device))
+    #             xpl_switched.to(device)
+    #             xpl_all_switched = torch.cat((xpl_all_switched, xpl_switched), 0)
+    #         torch.save(xpl_all_switched, os.path.join(xpl_root_switched, f"{file_root_switched}_all"))
 
-        metric(xpl_all, xpl_all_switched, 0)
-        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
-        return
+    #     metric(xpl_all, xpl_all_switched, 0)
+    #     metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
+    #     return
     
     ################
 

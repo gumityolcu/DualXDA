@@ -221,16 +221,21 @@ class BaseInfluenceModule(abc.ABC):
         return torch.tensor(scores) / len(self.train_loader.dataset)
     
     def self_influences(
-            self,
+            self, ids
     ) -> torch.Tensor:
         scores = []
+        max_id=torch.tensor(ids).max()
         train_grad_loader = self._loss_grad_loader_wrapper(batch_size=1, subset=None, train=True)
         train_sample_loader = self._loader_wrapper(train=True, batch_size=1, subset=None)
-        for ((batch, _),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
-            (x, targets) = batch
-            stest = self.stest(x,targets)
-            s = grad_z @ stest
-            scores.append(s)
+        for i,((batch, _),(grad_z, _)) in enumerate(zip(train_sample_loader,train_grad_loader)):
+            if i<=max_id:
+                if i in ids:
+                    (x, targets) = batch
+                    stest = self.stest(x,targets)
+                    s = grad_z @ stest
+                    scores.append(s)
+            else:
+                break
         return torch.tensor(scores) / len(self.train_loader.dataset)
 
     # ====================================================
@@ -412,6 +417,7 @@ class LiSSAInfluenceModule(BaseInfluenceModule):
             repeat: int,
             depth: int,
             scale: float,
+            file_size: int,
             gnh: bool = False,
             debug_callback: Optional[Callable[[int, int, torch.Tensor], None]] = None
     ):
@@ -430,6 +436,7 @@ class LiSSAInfluenceModule(BaseInfluenceModule):
         self.depth = depth
         self.scale = scale
         self.debug_callback = debug_callback
+        self.file_size = file_size
 
     def inverse_hvp(self, vec):
 
@@ -465,7 +472,6 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
 
     def __init__(self, model, dataset, device, depth, repeat, scale, dir, train_loss=cross_entropy,
                  train_regularization=(lambda x: torch.tensor(0., device=x[0].device if x is not None else "cpu")), test_loss=cross_entropy):
-        print("LOG: initialization")
         class MyObjective(BaseObjective):
             def train_outputs(self, model, batch):
                 return model(batch[0])
@@ -489,7 +495,6 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
         self.device = device
         self.dir = dir
         os.makedirs(self.dir,exist_ok=True)
-        print("LOG: initializing influence module")
         self.influence_module = LiSSAInfluenceModule(model, MyObjective(),
                                                      torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False),
                                                      depth=depth, repeat=repeat, scale=scale, damp=0.001, device=device)
@@ -509,10 +514,32 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
         return xpl
     
     def self_influences(self):
-        print("LOG: self_influences is called") 
+        files=os.listdir(self.dir)
         if os.path.exists(os.path.join(self.dir, "self_influences")):
             self_inf = torch.load(os.path.join(self.dir, "self_influences"), map_location=self.device)
         else:
             self_inf = self.influence_module.self_influences()
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf
+    
+    def compute_self_influence_batch(self, id, page_size):
+        base_id=id*page_size
+        ids=[i+base_id for i in range(page_size) if i+base_id<len(self.dataset)]
+        torch.save(self.influence_module.self_influences(ids), os.path.join(self.dir, f"self_influence_psize={page_size:4d}_pid={id:4d}"))
+        return
+        # for i, x, _ in enumerate(iter(self.train_loader)):
+        #     batch_size=x.shape[0]
+        #     if i==id:
+        #         ids=[base_id+k for k in range(batch_size)]
+        #         return self.influence_module.self_influences(ids)
+        #     else:
+        #         base_id=base_id+batch_size
+        #         if i>id:
+        #             return
+    def merge_self_influences(self,page_size, output_dir):
+        total_scores=torch.empty((0,))
+        for f in sorted(["psize={page_size}" in dr for dr in os.listdir(self.dir)]):
+            tens=torch.load(os.path.join(self.dir, f""))
+            total_scores=torch.concat(total_scores,os.path.join(self.dir, f"self_influence_psize={page_size:4d}_pid={id:4d}"), dim=0)
+        torch.save(total_scores, os.path.join(self.dir, os.path.join(self.dir, f"self_influences")))
+        return total_scores
