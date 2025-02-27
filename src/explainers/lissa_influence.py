@@ -226,28 +226,11 @@ class BaseInfluenceModule(abc.ABC):
         scores = []
         train_grad_loader = self._loss_grad_loader_wrapper(batch_size=1, subset=None, train=True)
         train_sample_loader = self._loader_wrapper(train=True, batch_size=1, subset=None)
-        i=0
-        avg=0.
-        print("LOG:starting self influences")
         for ((batch, _),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
             (x, targets) = batch
-            i=i+1
-            t0=time()
             stest = self.stest(x,targets)
             s = grad_z @ stest
             scores.append(s)
-            t=time()-t0
-            avg=avg+t
-            running=[]
-            if i%100==0:
-                print(f"LOG: Iteration {i}/{len(self.train_loader.dataset)}") 
-                print(torch.any(torch.isnan(s)))
-                print("LOG: avg: ", avg/100.)
-                print("=====")
-                running.append(avg)
-                print("LOG: Running ", torch.tensor(running).mean())
-                print("=====")
-                avg=0.
         return torch.tensor(scores) / len(self.train_loader.dataset)
 
     # ====================================================
@@ -291,7 +274,6 @@ class BaseInfluenceModule(abc.ABC):
         return tuple(split_tensors)
 
     # Data helpers
-
     def _transfer_to_device(self, batch):
         if isinstance(batch, torch.Tensor):
             return batch.to(self.device)

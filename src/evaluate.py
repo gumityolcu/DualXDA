@@ -91,7 +91,7 @@ def evaluate(model_name, model_path, device, class_groups,
     model.eval()
     metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, sample_nr, cache_dir, num_classes)
+                         weight_decay, augmentation, sample_nr, cache_dir, lds_cache_dir, num_classes)
     print(f"Computing metric {metric.name}")
 
     if metric_name == 'lds_cache':

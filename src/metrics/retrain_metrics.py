@@ -188,7 +188,6 @@ class BatchRetraining(RetrainMetric):
         #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
         #           'num_batches': self.scores.shape[0]}
 
-
         resdict = {'metric': self.name,
                    'all_batch_scores': self.loss_array,
                    'num_batches': self.batch_nr,
