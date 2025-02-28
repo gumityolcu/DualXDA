@@ -2,7 +2,7 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, SimilarityExplainer
+from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
 from utils.data import load_datasets_reduced
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
@@ -71,9 +71,12 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, 'scale':10, **lissa_params[dataset_name]}),
         'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
         'kronfluence': (KronfluenceExplainer, {'dir':cache_dir, **kronfluence_params}),
-        'similarity_dot': (SimilarityExplainer, {"dir": cache_dir, "features_dir": features_dir, "mode": "dot"}),
-        'similarity_cos': (SimilarityExplainer, {"dir": cache_dir, "features_dir": features_dir, "mode": "cos"}),
-        'similarity_l2': (SimilarityExplainer, {"dir": cache_dir, "features_dir": features_dir, "mode": "l2"}),
+        'feature_similarity_dot': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
+        'feature_similarity_cos': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
+        'feature_similarity_l2': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
+        'input_similarity_dot': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
+        'input_similarity_cos': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
+        'input_similarity_l2': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
     }
     return explainers[xai_method]
 
