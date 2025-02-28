@@ -87,7 +87,7 @@ class InputSimilarityExplainer(Explainer):
         x=x.to(self.device)
         x=x.flatten(start_dim=1)
 
-        dataloader = DataLoader(self.train_ds, batch_size=200, shuffle=True)
+        dataloader = DataLoader(self.train_ds, batch_size=200, shuffle=False)
         xpl = torch.empty((x.shape[0], 0), device=self.device)
         for train_x, _ in dataloader:
             train_x=train_x.flatten(start_dim=1)
