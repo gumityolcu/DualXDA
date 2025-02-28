@@ -146,8 +146,8 @@ class AWA(VisionDataset):
                 perm = torch.randperm(len(self.val_indices))
                 self.val_ids = torch.tensor(perm[:validation_size].clone().detach())
                 self.test_ids = torch.tensor(perm[validation_size:].clone().detach())
-                torch.save(self.val_ids, 'AWA_val_ids')
-                torch.save(self.test_ids, 'AWA_test_ids')
+                torch.save(self.val_ids, 'mnt/outpus/AWA_val_ids')
+                torch.save(self.test_ids, 'mnt/outputs/AWA_test_ids')
 
             print("Validation ids:")
             print(self.val_ids)
