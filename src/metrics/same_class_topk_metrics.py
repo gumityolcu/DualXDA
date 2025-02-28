@@ -23,7 +23,7 @@ class TopKSameClassMetric(Metric):
         topk_idx = xpl.topk(self.k)[1]
         for i in range(topk_idx.shape[0]):
             topk_most_influential_labels = torch.Tensor([self.train[topk_idx[i, j]][1] for j in range(self.k)]).to('cpu')
-            test_label = self.test[start_index+i][1].repeat(self.k, 1).to('cpu')
+            test_label = torch.tensor([self.test[start_index+i][1] for _ in range(self.k)]).to('cpu')
             is_equal = torch.mean((test_label == topk_most_influential_labels) * 1., axis=0)
             self.scores = torch.cat((self.scores, torch.tensor(is_equal).to(self.device)), dim=0)
 
