@@ -83,7 +83,11 @@ def evaluate(model_name, model_path, device, class_groups,
     else:
         dataset_type = "std"
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
-    model = load_model(model_name, dataset_name, num_classes).to(device)
+    if dataset_type=="group":
+        num_classes_model=len(class_groups)
+    else: 
+        num_classes_model = num_classes
+    model = load_model(model_name, dataset_name, num_classes_model).to(device)
     checkpoint = torch.load(model_path, map_location=device)
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
