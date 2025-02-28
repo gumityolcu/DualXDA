@@ -358,7 +358,7 @@ class PredictionTargetDataset(Dataset):
     def __init__(self, dataset, model, device):
         super().__init__()
         self.dataset=dataset
-        preds=torch.ones(len(dataset))*-1.
+        self.preds=torch.ones(len(dataset))*-1.
         self.model=model.to(device)
     
     def __getitem__(self, index):
