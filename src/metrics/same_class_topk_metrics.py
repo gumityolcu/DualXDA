@@ -43,5 +43,5 @@ class TopKSameSubclassMetric(TopKSameClassMetric):
 
     def __init__(self, train, test, k=5, device="cuda"):
         assert isinstance(train, GroupLabelDataset)
-        assert isinstance(test, GroupLabelDataset)
-        super().__init__(train.dataset, test.dataset, k, device)
+        assert isinstance(test.dataset, GroupLabelDataset)
+        super().__init__(train.dataset, test.dataset.dataset, k, device)
