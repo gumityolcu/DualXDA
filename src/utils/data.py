@@ -360,10 +360,11 @@ class PredictionTargetDataset(Dataset):
         self.dataset=dataset
         self.preds=torch.ones(len(dataset))*-1.
         self.model=model.to(device)
+        self.device=device
     
     def __getitem__(self, index):
         x,_=self.dataset[index]
         if self.preds[index]==-1.:
             x=x.to(self.device)
-            self.preds[index]=self.model(x[None]).argmax(dim=-1)[0].item()
+            self.preds[index]=self.model(x[None]).argmax(dim=-1)[0]
         return x, self.preds[index]
