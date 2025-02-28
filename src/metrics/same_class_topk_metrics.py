@@ -10,7 +10,6 @@ class TopKSameClassMetric(Metric):
             if isinstance(train.targets,list):
                 train.targets=torch.tensor(train.targets,device=device)
             self.train_labels = train.targets.to(device)
-            self.test_labels = test.test_targets.to(device)
         self.train = train
         self.test = test
         self.scores = torch.empty(0, dtype=torch.float, device=device)
