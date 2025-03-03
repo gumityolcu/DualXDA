@@ -7,15 +7,16 @@ class MarkImageMetric(Metric):
     def __init__(self, train, test, model, device="cuda", filter=True):
         self.marked_cls = torch.tensor(train.cls_to_mark,device=device)
         self.filter=filter
-        self.marked_samples = train.mark_samples.to(device)
+        self.marked_samples = train.mark_samples
         self.train = train
         self.test = test 
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         self.device = device
 
     def __call__(self, xpl, start_index):
-        xpl.to(self.device)
+        xpl=xpl.to(self.device)
         most_influential_ids = xpl.argmax(axis=-1)
+        self.marked_samples=torch.tensor(self.marked_samples).to(device)
         def include_datapoint(i):
             if not self.filter:
                 return True
