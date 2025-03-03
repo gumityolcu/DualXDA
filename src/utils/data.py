@@ -6,6 +6,7 @@ from datasets.MNIST import MNIST, FashionMNIST
 from datasets.CIFAR import CIFAR
 from datasets.AWA import AWA
 from datasets.AWA_sub import AWA_sub
+from datasets.Shapes2x2 import Shapes2x2
 import matplotlib.pyplot as plt
 import os
 
@@ -314,7 +315,7 @@ class FlipLabelDataset(Dataset):
 def load_datasets(dataset_name, dataset_type, **kwparams):
     ds = None
     evalds = None
-    ds_dict = {'MNIST': MNIST, 'CIFAR': CIFAR, 'FashionMNIST': FashionMNIST, 'AWA': AWA, 'AWA_sub': AWA_sub}
+    ds_dict = {'MNIST': MNIST, 'CIFAR': CIFAR, 'FashionMNIST': FashionMNIST, 'AWA': AWA, 'AWA_sub': AWA_sub, 'Shapes2x2': Shapes2x2}
     if "only_train" not in kwparams.keys():
         only_train = False
     else:

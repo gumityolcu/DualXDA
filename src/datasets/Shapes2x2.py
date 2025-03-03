@@ -3,12 +3,11 @@ from torchvision.datasets import VisionDataset
 import torch
 import numpy as np
 from PIL import Image
+import os
 
 class Shapes2x2(VisionDataset):
     default_class_groups = [0, 1]
     name = 'Shapes2x2'
-    mean=torch.load("Shapes2x2/train_mean.pt")
-    std=torch.load("Shapes2x2/train_std.pt")
     default_transform = transforms.Compose([
         transforms.ToTensor(),
     #    transforms.Normalize(mean, std)
@@ -36,11 +35,12 @@ class Shapes2x2(VisionDataset):
     
     def __init__(
         self,
-        root="Shapes2x2",
+        root="Shapes2x2-data/Shapes2x2",
         split="train",
         transform=None,
         inv_transform=None,
         target_transform=None,
+        validation_size=2000
     ):
         if transform is None:
             transform=Shapes2x2.default_transform
@@ -54,19 +54,27 @@ class Shapes2x2(VisionDataset):
         self.split=split
         self.inverse_transform=inv_transform #MUST HAVE THIS FOR MARK DATASET TO WORK
         self.classes=[0,1]
+        self.mean=torch.load(os.path.join(root, "train_mean.pt"))
+        self.std=torch.load(os.path.join(root, "train_std.pt"))
 
-        self.train_data_path = "Shapes2x2/train_data.npy"
-        self.test_data_path = "Shapes2x2/test_data.npy"
-        self.train_labels_path = "Shapes2x2/train_labels.npy"
-        self.test_labels_path = "Shapes2x2/test_labels.npy"
+        self.train_data_path = os.path.join(root, "train_data.npy")
+        self.test_data_path = os.path.join(root, "test_data.npy")
+        self.val_data_path = os.path.join(root, "val_data.npy")
+        self.train_labels_path = os.path.join(root, "train_labels.npy")
+        self.test_labels_path = os.path.join(root, "test_labels.npy")
+        self.val_labels_path = os.path.join(root, "val_labels.npy")
 
         self.train_indices = np.arange(20000)
-        self.val_indices = np.arange(2000)
+        self.val_indices = np.arange(validation_size)
+        self.test_indices = np.arange(2000)
 
     def load_data(self, idx, split):
         if split == "train":
             data = np.load(self.train_data_path, mmap_mode='r')[idx]
             target = np.load(self.train_labels_path, mmap_mode='r')[idx]
+        elif split == "val":
+            data = np.load(self.val_data_path, mmap_mode='r')[idx]
+            target = np.load(self.val_labels_path, mmap_mode='r')[idx]
         else:
             data = np.load(self.test_data_path, mmap_mode='r')[idx]
             target = np.load(self.test_labels_path, mmap_mode='r')[idx]
@@ -89,6 +97,8 @@ class Shapes2x2(VisionDataset):
     
     def __len__(self):
         if self.split=="train":
-            return len(self.train_labels)
+            return len(self.train_indices)
+        elif self.split=='val':
+            return len(self.val_indices)
         else:
-            return len(self.test_labels)
+            return len(self.test_indices)
