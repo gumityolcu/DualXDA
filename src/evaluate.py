@@ -1,6 +1,6 @@
 import argparse
 from utils.data import load_datasets, ReduceLabelDataset, PredictionTargetDataset
-from utils.models import load_model
+from utils.models import clear_resnet_from_checkpoints, load_model
 from explain import load_explainer
 import yaml
 import logging
@@ -89,6 +89,8 @@ def evaluate(model_name, model_path, device, class_groups,
         num_classes_model = num_classes
     model = load_model(model_name, dataset_name, num_classes_model).to(device)
     checkpoint = torch.load(model_path, map_location=device)
+    checkpoint=clear_resnet_from_checkpoints(checkpoint)
+
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
