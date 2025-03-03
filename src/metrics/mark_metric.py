@@ -16,7 +16,7 @@ class MarkImageMetric(Metric):
     def __call__(self, xpl, start_index):
         xpl=xpl.to(self.device)
         most_influential_ids = xpl.argmax(axis=-1)
-        self.marked_samples=torch.tensor(self.marked_samples).to(device)
+        self.marked_samples=torch.tensor(self.marked_samples).to(self.device)
         def include_datapoint(i):
             if not self.filter:
                 return True
