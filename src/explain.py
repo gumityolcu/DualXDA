@@ -129,8 +129,8 @@ def explain_model(model_name, model_path, device, class_groups,
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
 
     model.load_state_dict(checkpoint["model_state"])
-    print_model(model)
-    exit()
+    # print_model(model)
+    # exit()
     model.to(device)
     model.eval()
     
