@@ -141,6 +141,8 @@ class AWA(VisionDataset):
             if (os.path.isfile("AWA_val_ids") and os.path.isfile("AWA_test_ids")):
                 self.val_ids=torch.load("AWA_val_ids")
                 self.test_ids=torch.load("AWA_test_ids")
+                torch.save(self.val_ids, 'mnt/src/datasets/AWA_val_ids')
+                torch.save(self.test_ids, 'mnt/src/datasets/AWA_test_ids')
             else:
                 torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
                 perm = torch.randperm(len(self.val_indices))
