@@ -1,10 +1,13 @@
 from utils import Metric
 import torch
 from torch.nn import CrossEntropyLoss
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import copy
+import os
 from utils.data import RestrictedDataset, FlipLabelDataset
 from train import load_loss, load_optimizer, load_scheduler, load_augmentation
+from evaluate import load_model
 from tqdm import tqdm
 import numpy as np
 from torchmetrics.regression import SpearmanCorrCoef
@@ -13,14 +16,13 @@ from torchmetrics.regression import KendallRankCorrCoef
 class RetrainMetric(Metric):
     name = "RetrainMetric"
     
-    def __init__(self, dataset_name, train, test, model,
+    def __init__(self, dataset_name, train, test, model_name,
                  epochs, loss, lr, momentum, optimizer, scheduler,
-             weight_decay, augmentation, device):
+             weight_decay, augmentation, num_classes, device):
         self.dataset_name = dataset_name
         self.train = train
         self.test = test
-        self.num_classes = 10
-        self.model = model #load model WITHOUT checkpoint in evaluate script for this metric!
+        self.model_name = model_name #load model WITHOUT checkpoint in evaluate script for this metric!
         self.device = device
         self.batch_size = 64
         self.epochs = epochs
@@ -31,6 +33,7 @@ class RetrainMetric(Metric):
         self.loss = loss
         self.weight_decay = weight_decay
         self.momentum = momentum
+        self.num_classes = num_classes
         if dataset_name == "AWA":
             self.num_classes = 50
         else:
@@ -40,27 +43,27 @@ class RetrainMetric(Metric):
         learning_rates=[]
         train_losses = []
 
-        model = copy.deepcopy(self.model).to(self.device)
+        model = load_model(self.model_name, self.dataset_name, self.num_classes).to(self.device)
+        model.train()
         loss = load_loss(self.loss)
         optimizer = load_optimizer(self.optimizer, model, self.lr, self.weight_decay, self.momentum)
-        scheduler = load_scheduler(self.scheduler, optimizer)
-        augmentation = load_augmentation(self.augmentation, self.dataset_name)
+        scheduler = load_scheduler(self.scheduler, optimizer, self.epochs)
         train_acc = []
-        loader = DataLoader(ds, batch_size=32, shuffle=True)
+        loader = DataLoader(ds, batch_size=self.batch_size, shuffle=True)
 
-        model.train()
+        #print(optimizer.param_groups)
+        #for param_group in optimizer.param_groups:
+        #    print(param_group['lr'])
+        #print("Loop done.")
 
         for e in range(self.epochs):
             y_true = torch.empty(0, device=self.device)
             y_out = torch.empty((0, self.num_classes), device=self.device)
             cum_loss = 0
             cnt = 0
-            for inputs, targets in tqdm(iter(loader)):
+            for i, (inputs, targets) in enumerate(tqdm(iter(loader))):
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
-            
-                if self.augmentation is not None:
-                    inputs=augmentation(inputs)
 
                 y_true = torch.cat((y_true, targets), 0)
 
@@ -69,10 +72,27 @@ class RetrainMetric(Metric):
                 l = loss(logits, targets)
                 y_out = torch.cat((y_out, logits.detach().clone()), 0)
                 l.backward()
+                #print(model.classifier.bias)
                 optimizer.step()
+                #print(model.classifier.bias)
                 cum_loss = cum_loss + l
                 cnt = cnt + inputs.shape[0]
+                #print(y_out)
+                #print(f"Batch {i + 1}: Loss = {l.item()}")
+
+                #for name, param in model.named_parameters():
+                #    if param.grad is not None:
+                #        print(f"Layer: {name} | Gradients: {param.grad.abs().mean()}")
+                #    else:
+                #        print(f"Layer: {name} has no gradients!")
+
+                #print(y_true)
+                #print(y_out)
+                #print(l.item())
+                #print(optimizer)
             y_pred = torch.argmax(y_out, dim=1)
+            #print(y_true)
+            #print(y_pred)
             train_loss = cum_loss.detach().cpu()
             acc = (y_true == y_pred).sum() / y_out.shape[0]
             train_acc.append(acc)
@@ -84,6 +104,8 @@ class RetrainMetric(Metric):
             print(f"Epoch {e + 1}/{self.epochs} loss: {cum_loss}")  # / cnt}")
             print("\n==============\n")
             learning_rates.append(scheduler.get_lr())
+            current_lr = scheduler.get_last_lr() if hasattr(scheduler, 'get_last_lr') else [group['lr'] for group in optimizer.param_groups]
+            print(f"Current learning rate: {current_lr}")
             scheduler.step()
         return model
     
@@ -108,43 +130,55 @@ class RetrainMetric(Metric):
 class BatchRetraining(RetrainMetric):
     name = "BatchRetraining"
 
-    def __init__(self, dataset_name, train, test, model, 
+    @staticmethod
+    def calculate_ce_loss(model, dataset, num_classes):
+        model.eval()
+        num_samples = len(dataset)
+        total_loss = 0.
+        loss_fct = CrossEntropyLoss(reduction='sum')
+        data_loader = DataLoader(dataset, batch_size=32, shuffle=False)
+        with torch.no_grad():
+            for x, y in data_loader:
+                output = model(x)
+                loss = loss_fct(output, y)
+                total_loss += loss.item()
+        avg_loss = total_loss / num_samples
+        return avg_loss
+
+    def __init__(self, dataset_name, train, test, model_name, 
                  epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, batch_nr=10, device="cuda", mode="cum"):
+                 weight_decay, augmentation, num_classes, batch_nr=10, device="cuda", mode="cum"):
         # mode should be one of "cum", "neg_cum", "leave_batch_out", "single_batch"
-        super().__init__(dataset_name, train, test, model,
+        super().__init__(dataset_name, train, test, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, device)
+                         weight_decay, augmentation, num_classes, device)
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
         self.mode=mode
-        self.loss_array = torch.empty((0, self.batch_nr))
-
+        self.loss_array = torch.empty(self.batch_nr)
 
 
     def __call__(self, xpl, start_index=0):
         xpl.to(self.device)
-        n_test=xpl.shape[0]
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
-        evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
-        loss = CrossEntropyLoss()
-        for test_index in range(n_test):
-            new_losses=torch.empty((self.batch_nr,))
-            for i in range(self.batch_nr):
-                indices_sorted = xpl[test_index].argsort(descending=True)
-                if self.mode=="cum":
-                    ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
-                elif self.mode=="neg_cum":
-                    ds = RestrictedDataset(self.train, indices_sorted[(self.batch_nr-(i+1))*self.batchsize:])
-                elif self.mode=="leave_batch_out":
-                    ds = RestrictedDataset(self.train, torch.cat((indices_sorted[:i*self.batchsize], indices_sorted[(i+1)*self.batchsize:])))
-                elif self.mode=="single_batch":
-                    ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
-                else:
-                    raise Exception(f"Unexpected BatchTraining metric mode = {self.mode}")
-                retrained_model = self.retrain(ds)
-                new_losses[i]=loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
-            self.loss_array = torch.cat((self.loss_array,new_losses),dim=0)
+        xpl = torch.abs(xpl)
+        xpl = xpl.sum(dim=0)
+        #evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + n_test)], dim=0).to(self.device)
+        #evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + n_test)]).long().to(self.device)
+        for i in range(self.batch_nr):
+            indices_sorted = xpl.argsort(descending=True)
+            if self.mode=="cum":
+                ds = RestrictedDataset(self.train, indices_sorted[:(i+1)*self.batchsize])
+            elif self.mode=="neg_cum":
+                ds = RestrictedDataset(self.train, indices_sorted[(self.batch_nr-(i+1))*self.batchsize:])
+            elif self.mode=="leave_batch_out":
+                ds = RestrictedDataset(self.train, torch.cat((indices_sorted[:i*self.batchsize], indices_sorted[(i+1)*self.batchsize:])))
+            elif self.mode=="single_batch":
+                ds = RestrictedDataset(self.train, indices_sorted[i*self.batchsize:(i+1)*self.batchsize])
+            else:
+                raise Exception(f"Unexpected BatchTraining metric mode = {self.mode}")
+            retrained_model = self.retrain(ds)
+            #new_losses[i]=loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
+            self.loss_array[i]=self.calculate_ce_loss(retrained_model, self.test, self.num_classes)
 
     def get_result(self, dir=None, file_name=None):
         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
@@ -162,32 +196,34 @@ class BatchRetraining(RetrainMetric):
                    }
         
         if "cum" in self.mode:
-            resdict["auc_scores"] = self.loss_array.mean(dim=1).to('cpu').detach().numpy()
-            resdict["auc_score_avg"]=self.loss_array.mean().to('cpu').detach().numpy()
+            resdict["auc_scores"]=self.loss_array.mean().to('cpu').detach().numpy()
         else:
-            kendall = KendallRankCorrCoef(num_outputs=self.loss_array.shape[0])
-            spearman = SpearmanCorrCoef(num_outputs=self.loss_array.shape[0])
-            if self.mode=="single_batch":
-                temp_arr=torch.stack(
-                [
-                    torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
-                ],
-                device=self.device
-                )
-            elif self.mode=="leave_batch_out": 
-                temp_arr=torch.stack(
-                [
-                    self.batch_nr - torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
-                ],
-                device=self.device
-                ) 
+            kendall = KendallRankCorrCoef(num_outputs=1)
+            spearman = SpearmanCorrCoef(num_outputs=1)
+            #if self.mode=="single_batch":
+                #temp_arr=torch.stack(
+                #[
+                #    torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
+                #],
+                #device=self.device
+                #)
+            #elif self.mode=="leave_batch_out": 
+            #    temp_arr=torch.stack(
+            #    [
+            #        self.batch_nr - torch.arange(self.batch_nr) for _ in range(self.loss_array.shape[0])
+            #    ],
+            #    device=self.device
+            #    ) 
+            temp_arr=torch.range(start=1, end=self.batch_nr)
+            print(self.loss_array)
+            print(temp_arr)
 
-            kendall_scores = kendall(self.loss_array.T, temp_arr.T)
-            spearman_scores = spearman(self.loss_array.T, temp_arr.T)
+            kendall_scores = kendall(self.loss_array, temp_arr) #rank correlation between how highly the batch is scored and whether it leads to smaller loss
+            spearman_scores = spearman(self.loss_array, temp_arr)
             resdict["kendall_scores"]=kendall_scores
             resdict["spearman_scores"]=spearman_scores
-            resdict["spearman_score_avg"]=spearman_scores.mean().to('cpu').numpy()
-            resdict["kendall_scores"]=kendall_scores.mean().to('cpu').numpy()
+            #resdict["spearman_score_avg"]=spearman_scores.mean().to('cpu').numpy()
+            #resdict["kendall_scores_avg"]=kendall_scores.mean().to('cpu').numpy()
 
         if dir is not None:
             self.write_result(resdict, dir, file_name)
@@ -352,44 +388,49 @@ class LinearDatamodelingScore(RetrainMetric):
 class LinearDatamodelingScore(RetrainMetric):
     name = "LinearDatamodelingScore"
 
-    def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, alpha=0.05, samples=10, device="cuda"):
-        super().__init__(dataset_name, train, test, model,
+    def __init__(self, dataset_name, train, test, model_name, epochs, loss, lr, momentum, optimizer, scheduler,
+                 weight_decay, augmentation, cache_dir, num_classes, alpha=0.5, samples=3, device="cpu"):
+        super().__init__(dataset_name, train, test, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, device)
+                         weight_decay, augmentation, num_classes, device)
         self.alpha = alpha
         self.samples = samples
-        self.attribution_array = None
-        self.loss_array = torch.empty(0,self.samples)
+        self.cache_dir = cache_dir
+        self.model_output_array = torch.empty(0,self.samples)
         self.attribution_array = torch.empty(0,self.samples)
         self.n_test = None
         self.sample_indices = torch.tensor([
             np.random.choice(len(train), size= int(self.alpha * len(train)), replace=False) for _ in range(samples)
         ],device=device)
-
+        self.device = device
 
     def __call__(self, xpl, start_index=0):
         xpl.to(self.device)
         self.n_test = xpl.shape[0]
         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0).to(self.device)
         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long().to(self.device)
-        attribution_array = np.empty((xpl.shape[0], self.samples))
-        loss_array = np.empty((xpl.shape[0], self.samples))
-        loss = CrossEntropyLoss()
+        attribution_array = torch.empty((xpl.shape[0], self.samples))
+        model_output_array = torch.empty((xpl.shape[0], self.samples))
         for i in range(self.samples):
+            model_path = os.path.join(self.cache_dir, f'lds{self.alpha}_{i:02d}')
+            retrained_model = load_model(self.model_name, self.dataset_name, self.num_classes).to(self.device)
+            retrained_model.load_state_dict(torch.load(model_path, map_location=torch.device(self.device))['model_state'])
+            retrained_model.eval()
             cur_indices=self.sample_indices[i].cpu()
-            attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach().numpy()
-            ds = RestrictedDataset(self.train, cur_indices)
-            retrained_model = self.retrain(ds)
-            loss_array[:, i] = loss(retrained_model(evalds), evalds_labels).cpu().detach().numpy()
-        self.attribution_array=torch.cat((self.attribution_array,attribution_array), dim=0)
-        self.loss_array=torch.cat((self.loss_array, loss_array), dim=0)
+            attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach()
+            logits = retrained_model(evalds)
+            probs = F.softmax(logits, dim=1)
+            correct_probs = probs.gather(1, evalds_labels.unsqueeze(1)).squeeze()
+            binary_logits = torch.log(correct_probs / (1-correct_probs))
+            model_output_array[:, i] = binary_logits.cpu().detach()
+        self.attribution_array=torch.cat((self.attribution_array, attribution_array), dim=0)
+        self.model_output_array=torch.cat((self.model_output_array, model_output_array), dim=0)
 
     def get_result(self, dir=None, file_name=None):
         spearman = SpearmanCorrCoef(num_outputs=self.n_test)
-        correlation_scores = spearman(torch.from_numpy(self.attribution_array.T), torch.from_numpy(self.loss_array.T))
+        correlation_scores = spearman(self.attribution_array.T, self.model_output_array.T)
         resdict = {'metric': self.name, 'correlation_scores': correlation_scores, 'avg_score': correlation_scores.mean(),
-                   'sample_attributions': self.attribution_array, 'sample_losses': self.loss_array, "subset_indices": self.sample_indices}
+                   'sample_attributions': self.attribution_array, 'sample_model_outputs': self.model_output_array, "subset_indices": self.sample_indices}
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
@@ -398,10 +439,10 @@ class LabelFlipMetric(RetrainMetric):
     name = "LabelFlipMetric"
 
     def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, batch_nr=10, device="cuda"):
+                 weight_decay, augmentation, num_classes, batch_nr=10, device="cuda"):
         super().__init__(dataset_name, train, test, model,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, device)
+                         weight_decay, augmentation, num_classes, device)
         self.flip_most_relevant=torch.empty(batch_nr+1, dtype=torch.float, device=self.device)
         self.flip_least_relevant=torch.empty(batch_nr+1, dtype=torch.float, device=self.device)
         self.batch_nr = batch_nr

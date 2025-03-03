@@ -2,31 +2,105 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, InfluenceFunctionExplainer, TracInExplainer
+from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
 from utils.data import load_datasets_reduced
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
 import logging
 import os
 
+def count_params(checkpoint):
+    total=0
+    for p,v in checkpoint["model_state"].items():
+        num=1
+        for s in v.data.shape:
+            num=num*s
+        total=total+num
+    return total
 
-def load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
-    if_params={
-        "MNIST": {'depth': 50, 'repeat': 1200},
-        "CIFAR": {'depth': 50, 'repeat': 1000},
-        "AWA": {'depth': 50, 'repeat': 500}
+def count_params_model(model):
+    total=0
+    for v in model.parameters():
+        num=1
+        for s in v.data.shape:
+            num=num*s
+        total=total+num
+    return total
+
+def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
+    lissa_params={
+        "MNIST": {'depth': 6000, 'repeat': 10},
+        "CIFAR": {'depth': 5000, 'repeat': 10},
+        "AWA": {'depth': 3700, 'repeat': 10}
     }
+
+    arnoldi_params={
+        "MNIST": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
+        "CIFAR": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
+        "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
+    }
+    kronfluence_params={}
+
+    # if we want seperate kwargs for each dataset, below is a dictionary with default values
+    # kronfluence_params={
+    #     "covariance_max_examples": 100000,
+    #     "covariance_data_partitions": 1,
+    #     "lambda_max_examples": 100000,
+    #     "lambda_data_partitions": 1,
+    #     "use_iterative_lambda_aggregation": False,
+    #     "score_data_partitions":1
+    #     }
+
+    trak_params={}
+
+    dualview_params={}
+
+    graddot_params={}
+
+    tracin_params={}
+
+    representer_params={}
+
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
-        'trak': (TRAK, {'proj_dim': 512, "dir":cache_dir}),
+        'trak': (TRAK, {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir}),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
         'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
-        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128, "ds_name": dataset_name, "ds_type": dataset_type}),
-        'influence': (InfluenceFunctionExplainer, if_params[dataset_name])
+        'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128}),
+        #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128,  "ds_type": dataset_type}),
+        'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128}),
+        'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, 'scale':10, **lissa_params[dataset_name]}),
+        'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
+        'kronfluence': (KronfluenceExplainer, {'dir':cache_dir, **kronfluence_params}),
+        'feature_similarity_dot': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
+        'feature_similarity_cos': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
+        'feature_similarity_l2': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
+        'input_similarity_dot': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
+        'input_similarity_cos': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
+        'input_similarity_l2': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
     }
     return explainers[xai_method]
 
+
+        # arnoldi constructor
+        # layers = None, OOO
+        # projection_dim = 50, OOO
+        # hessian_dataset_size = 5000, OOO
+
+def print_model(model):
+    total=0
+    marginals=[]
+    for name, params in model.named_parameters():
+        this=0
+        num=1
+        for s in params.shape:
+            num=num*s
+        marginals.append((name,num))
+        total=total+num
+    cum=0
+    for name, count in marginals:
+        cum=cum+count
+        print(name, "Percentage: ", float(count)/float(total), "Cumulative: ", float(cum)/float(total))
+    print("TOTAL:",total)
 
 def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
@@ -55,20 +129,30 @@ def explain_model(model_name, model_path, device, class_groups,
 
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes_model)
+
+    #exit()
     checkpoint = torch.load(model_path, map_location=device)
     #get rid of model.resnet
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
-    
+
     model.load_state_dict(checkpoint["model_state"])
+    # print_model(model)
+    # exit()
     model.to(device)
     model.eval()
+    
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
-    explainer_cls, kwargs = load_explainer(xai_method, model_path, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    print("LOG: LOADED MODEL")
+    explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    print("LOG: LOADED EXPLAINER")
+    
     if C_margin is not None:
         kwargs["C"] = C_margin
+    
     print(f"Generating explanations with {explainer_cls.name}")
+    #train=torch.utils.data.Subset(train, range(0, 10)) # TODO : delete
     xplain(
         model=model,
         train=train,
@@ -80,7 +164,9 @@ def explain_model(model_name, model_path, device, class_groups,
         num_batches_per_file=num_batches_per_file,
         save_dir=save_dir,
         start_file=start_file,
-        num_files=num_files
+        num_files=num_files,
+        graddot=True if xai_method == "graddot" else False,
+        self_influence=(dataset_type=="corrupt")
     )
 
 
@@ -121,5 +207,4 @@ if __name__ == "__main__":
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
                   testsplit=train_config.get('testsplit', "test"),
-                  
                   )

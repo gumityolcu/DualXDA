@@ -91,6 +91,8 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=features_dir, normalize=False)
         self.dir=dir
         self.features_dir=features_dir
+        os.makedirs(self.dir, exist_ok=True)
+        os.makedirs(self.features_dir, exist_ok=True)
 
     def train(self):
         if not os.path.isfile(os.path.join(self.features_dir, "samples")):
@@ -98,7 +100,7 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         if not os.path.isfile(os.path.join(self.features_dir, "labels")):
             torch.save(self.labels,os.path.join(self.features_dir, "labels"))
         
-        if os.path.isfile(os.path.isdir(os.path.join(self.dir,'coefficients'))):
+        if os.path.isfile(os.path.join(self.dir,'coefficients')):
             self.coefficients=torch.load(os.path.join(self.dir,'coefficients'), map_location=self.device)
             self.learned_weight=torch.load(os.path.join(self.dir,'weights'), map_location=self.device)
             self.train_time=torch.load(os.path.join(self.dir,'train_time'), map_location=self.device)
@@ -180,3 +182,10 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         torch.save(self.coefficients,os.path.join(self.dir,'coefficients'))
         #return weight_matrix
         return elapsed_time
+
+    def self_influences(self, only_coefs=False):
+        self_coefs=super().self_influences()
+        if only_coefs:
+            return self_coefs
+        else:
+            return self.normalized_samples.norm(dim=-1)*self_coefs

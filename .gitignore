@@ -1,6 +1,9 @@
 # generators
 config_files/*.ipynb
 
+# config files
+config_files/*.yaml
+
 # files created form the repo
 explanations/
 surrogate_check/

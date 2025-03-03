@@ -72,6 +72,7 @@ class AWA(VisionDataset):
     mean = -np.array([d0_min / (d0_max - d0_min), d1_min / (d1_max - d1_min), d2_min / (d2_max - d2_min)])
     std = 1 / np.array([d0_max - d0_min, d1_max - d1_min, d2_max -d2_min])
     default_transform = transforms.Compose([
+        transforms.ToTensor(),
         transforms.Normalize(tuple(mean), tuple(std))
     ])
     inverse_transform = transforms.Compose([
@@ -81,7 +82,7 @@ class AWA(VisionDataset):
     class_labels = list(class_names.values())
 
     @staticmethod
-    def to_0_1(data, d0_max=d0_max, d0_min=d0_min, d1_max=d1_max, d1_min=d1_min, d2_max=d2_max, d2_min=d2_min):
+    def to_uint8(data, d0_max=d0_max, d0_min=d0_min, d1_max=d1_max, d1_min=d1_min, d2_max=d2_max, d2_min=d2_min):
         # function to unnormalize and turn into uint8
         data[0,:,:] -= d0_min
         data[1,:,:] -= d1_min
@@ -89,6 +90,9 @@ class AWA(VisionDataset):
         data[0,:,:] /= (d0_max - d0_min)
         data[1,:,:] /= (d1_max - d1_min)
         data[2,:,:] /= (d2_max - d2_min)
+        data= np.clip(data, 0 , 1)
+        data = data * 255.
+        data = data.astype(np.uint8)
         return data
     
     def __init__(
@@ -142,8 +146,8 @@ class AWA(VisionDataset):
                 perm = torch.randperm(len(self.val_indices))
                 self.val_ids = torch.tensor(perm[:validation_size].clone().detach())
                 self.test_ids = torch.tensor(perm[validation_size:].clone().detach())
-                #torch.save(self.val_ids, 'AWA_val_ids')
-                #torch.save(self.test_ids, 'AWA_test_ids')
+                torch.save(self.val_ids, 'AWA_val_ids')
+                torch.save(self.test_ids, 'AWA_test_ids')
 
             print("Validation ids:")
             print(self.val_ids)
@@ -157,8 +161,8 @@ class AWA(VisionDataset):
         else:
             data = np.load(self.val_data_path, mmap_mode='r')[idx]
             target = np.load(self.val_labels_path, mmap_mode='r')[idx]
-        data = data.astype(np.float32)
-        data = self.to_0_1(data)
+        data = np.copy(data)
+        data = self.to_uint8(data)
         return data, target
     
     def __getitem__(self, item):
@@ -171,8 +175,7 @@ class AWA(VisionDataset):
         else:
             id = self.test_ids[item]
             data, target = self.load_data(id, "val")
-        
-        img = torch.from_numpy(data)
+        img = Image.fromarray(data.transpose(1,2,0))
         target = torch.tensor(target, dtype=torch.long)
 
         if self.transform is not None:

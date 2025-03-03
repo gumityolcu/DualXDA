@@ -1,3 +1,5 @@
+import os
+
 import torch.utils.data
 from utils.explainers import Explainer
 from torch.utils.data import DataLoader
@@ -10,6 +12,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils import data
+from time import time
 
 
 def _set_attr(obj, names, val):
@@ -223,10 +226,28 @@ class BaseInfluenceModule(abc.ABC):
         scores = []
         train_grad_loader = self._loss_grad_loader_wrapper(batch_size=1, subset=None, train=True)
         train_sample_loader = self._loader_wrapper(train=True, batch_size=1, subset=None)
-        for ((x, targets),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
+        i=0
+        avg=0.
+        print("LOG:starting self influences")
+        for ((batch, _),(grad_z, _)) in zip(train_sample_loader,train_grad_loader):
+            (x, targets) = batch
+            i=i+1
+            t0=time()
             stest = self.stest(x,targets)
             s = grad_z @ stest
             scores.append(s)
+            t=time()-t0
+            avg=avg+t
+            running=[]
+            if i%100==0:
+                print(f"LOG: Iteration {i}/{len(self.train_loader.dataset)}") 
+                print(torch.any(torch.isnan(s)))
+                print("LOG: avg: ", avg/100.)
+                print("=====")
+                running.append(avg)
+                print("LOG: Running ", torch.tensor(running).mean())
+                print("=====")
+                avg=0.
         return torch.tensor(scores) / len(self.train_loader.dataset)
 
     # ====================================================
@@ -321,13 +342,34 @@ class BaseInfluenceModule(abc.ABC):
     # Loss and autograd helpers
 
     def _loss_grad_loader_wrapper(self, train, **kwargs):
-        params = self._model_params(with_names=False)
+        params = self._model_params(with_names=False)        
         flat_params = self._flatten_params_like(params)
 
         for batch, batch_size in self._loader_wrapper(train=train, **kwargs):
-            loss_fn = self.objective.train_loss if train else self.objective.test_loss
-            loss = loss_fn(model=self.model, params=flat_params, batch=batch)
-            yield self._flatten_params_like(torch.autograd.grad(loss, params)), batch_size
+            # loss_fn = self.objective.train_loss if train else self.objective.test_loss
+            # loss = loss_fn(model=self.model, params=flat_params, batch=batch)
+            # yield self._flatten_params_like(torch.autograd.grad(loss, params)), batch_size
+
+            #=========================            
+            #v2
+            outputs = self.objective.train_outputs(self.model, batch)
+            if train:
+                loss=self.objective.train_loss_on_outputs(outputs, batch) + self.objective.train_regularization(params)
+            else:
+                loss=self.objective.test_loss(self.model, params, batch)
+            loss.backward()
+            param_grads = tuple(p.grad for p in self._model_params(with_names=False))
+            assert all([p is not None for p in param_grads])
+            assert all([not torch.isclose(p, torch.zeros_like(p)).all() for p in param_grads]) or torch.isclose(loss,torch.tensor(0.))
+            yield self._flatten_params_like(param_grads), batch_size
+            #=========================
+            #v3
+            # loss=cross_entropy(self.model(batch[0]),batch[1])
+            # loss.backward()
+            # param_grads = tuple(p.grad for _, p in self.model.influence_named_parameters())
+            # assert all([p is not None for p in param_grads])
+            # assert all([not torch.isclose(p, torch.zeros_like(p)).all() for p in param_grads]) or torch.isclose(loss,torch.tensor(0.))
+            # yield self._flatten_params_like(param_grads), batch_size
 
 
     def _sample_loss_grad_loader_wrapper(self, x,targets,train):
@@ -436,11 +478,12 @@ class LiSSAInfluenceModule(BaseInfluenceModule):
 
         return ihvp / self.repeat
 
-class InfluenceFunctionExplainer(Explainer):
-    name = "InfluenceFunctionExplainer"
+class LiSSAInfluenceFunctionExplainer(Explainer):
+    name = "LiSSAInfluenceFunctionExplainer"
 
-    def __init__(self, model, dataset, device, depth, repeat, train_loss=cross_entropy,
-                 train_regularization=(lambda x: 0), test_loss=cross_entropy):
+    def __init__(self, model, dataset, device, depth, repeat, scale, dir, train_loss=cross_entropy,
+                 train_regularization=(lambda x: torch.tensor(0., device=x[0].device if x is not None else "cpu")), test_loss=cross_entropy):
+        print("LOG: initialization")
         class MyObjective(BaseObjective):
             def train_outputs(self, model, batch):
                 return model(batch[0])
@@ -457,19 +500,23 @@ class InfluenceFunctionExplainer(Explainer):
             def test_loss(self, model, params, batch):
                 return test_loss(model(batch[0]), batch[1])
 
-        super(InfluenceFunctionExplainer, self).__init__(model, dataset, device)
+        super(LiSSAInfluenceFunctionExplainer, self).__init__(model, dataset, device)
         self.dataset = dataset
         self.depth = depth
         self.repeat = repeat
         self.device = device
+        self.dir = dir
+        os.makedirs(self.dir,exist_ok=True)
+        print("LOG: initializing influence module")
         self.influence_module = LiSSAInfluenceModule(model, MyObjective(),
                                                      torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False),
-                                                     depth=depth, repeat=repeat, scale=1.0, damp=0.001, device=device)
+                                                     depth=depth, repeat=repeat, scale=scale, damp=0.001, device=device)
 
     def train(self):
         return 0.
 
     def explain(self, x, xpl_targets):
+        print("LOG: explain")
         x=x.to(self.device)
         xpl=torch.empty((0,len(self.dataset)),device=self.device)
         for i in range(x.shape[0]):
@@ -479,5 +526,11 @@ class InfluenceFunctionExplainer(Explainer):
             xpl=torch.concatenate((xpl,scores[None].to(self.device)),dim=0)
         return xpl
     
-    def self_explain(self):
-        return self.influence_module.self_influences()
+    def self_influences(self):
+        print("LOG: self_influences is called") 
+        if os.path.exists(os.path.join(self.dir, "self_influences")):
+            self_inf = torch.load(os.path.join(self.dir, "self_influences"), map_location=self.device)
+        else:
+            self_inf = self.influence_module.self_influences()
+            torch.save(self_inf, os.path.join(self.dir, "self_influences"))
+        return self_inf

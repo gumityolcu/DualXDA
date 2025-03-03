@@ -74,6 +74,7 @@ class AWA_sub(VisionDataset):
     mean = -np.array([d0_min / (d0_max - d0_min), d1_min / (d1_max - d1_min), d2_min / (d2_max - d2_min)])
     std = 1 / np.array([d0_max - d0_min, d1_max - d1_min, d2_max -d2_min])
     default_transform = transforms.Compose([
+        transforms.ToTensor(),
         transforms.Normalize(tuple(mean), tuple(std))
     ])
     inverse_transform = transforms.Compose([
@@ -82,7 +83,7 @@ class AWA_sub(VisionDataset):
     ])
 
     @staticmethod
-    def to_0_1(data, d0_max=d0_max, d0_min=d0_min, d1_max=d1_max, d1_min=d1_min, d2_max=d2_max, d2_min=d2_min):
+    def to_uint8(data, d0_max=d0_max, d0_min=d0_min, d1_max=d1_max, d1_min=d1_min, d2_max=d2_max, d2_min=d2_min):
         # function to unnormalize and turn into uint8
         data[0,:,:] -= d0_min
         data[1,:,:] -= d1_min
@@ -90,6 +91,9 @@ class AWA_sub(VisionDataset):
         data[0,:,:] /= (d0_max - d0_min)
         data[1,:,:] /= (d1_max - d1_min)
         data[2,:,:] /= (d2_max - d2_min)
+        data= np.clip(data, 0 , 1)
+        data = data * 255.
+        data = data.astype(np.uint8)
         return data
     
     def __init__(
@@ -160,7 +164,7 @@ class AWA_sub(VisionDataset):
             target = np.load(self.val_labels_path, mmap_mode='r')[idx]
         #data = np.expand_dims(data, axis=0).astype(np.float32)
         data = data.astype(np.float32)
-        data = self.to_0_1(data)
+        data = self.to_uint8(data.transpose(1,2,0))
         return data, target
     
     def __getitem__(self, item):
@@ -174,7 +178,7 @@ class AWA_sub(VisionDataset):
             id = self.test_ids[item]
             data, target = self.load_data(id, "val")
         
-        img = torch.from_numpy(data)
+        img = Image.fromarray(data.transpose(1,2,0))
         target = torch.tensor(target, dtype=torch.long)
         
         if self.transform is not None:
