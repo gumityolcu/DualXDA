@@ -54,15 +54,15 @@ class Shapes2x2(VisionDataset):
         self.split=split
         self.inverse_transform=inv_transform #MUST HAVE THIS FOR MARK DATASET TO WORK
         self.classes=[0,1]
-        self.mean=torch.load(os.path.join(root, "train_mean.pt"))
-        self.std=torch.load(os.path.join(root, "train_std.pt"))
+        self.mean=torch.load(os.path.join(root, "Shapes2x2-data/train_mean.pt"))
+        self.std=torch.load(os.path.join(root, "Shapes2x2-data/train_std.pt"))
 
-        self.train_data_path = os.path.join(root, "train_data.npy")
-        self.test_data_path = os.path.join(root, "test_data.npy")
-        self.val_data_path = os.path.join(root, "val_data.npy")
-        self.train_labels_path = os.path.join(root, "train_labels.npy")
-        self.test_labels_path = os.path.join(root, "test_labels.npy")
-        self.val_labels_path = os.path.join(root, "val_labels.npy")
+        self.train_data_path = os.path.join(root, "Shapes2x2-data/train_data.npy")
+        self.test_data_path = os.path.join(root, "Shapes2x2-data/test_data.npy")
+        self.val_data_path = os.path.join(root, "Shapes2x2-data/val_data.npy")
+        self.train_labels_path = os.path.join(root, "Shapes2x2-data/train_labels.npy")
+        self.test_labels_path = os.path.join(root, "Shapes2x2-data/test_labels.npy")
+        self.val_labels_path = os.path.join(root, "Shapes2x2-data/val_labels.npy")
 
         self.train_indices = np.arange(20000)
         self.val_indices = np.arange(validation_size)
