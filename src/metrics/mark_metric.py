@@ -19,7 +19,7 @@ class MarkImageMetric(Metric):
         def include_datapoint(i):
             if not self.filter:
                 return True
-            return (self.test[i][1].to(self.device)==self.marked_cls) and (self.test.dataset[i][1].to(self.device)!=self.marked_cls)
+            return (torch.tensor(self.test[i][1],device=self.device)==self.marked_cls) and (torch.tensor(self.test.dataset[i][1],device=self.device)!=self.marked_cls)
         passed = [1. if most_influential_ids[i] in self.marked_samples else 0.
             for i in range(xpl.shape[0]) if include_datapoint(i)]
         passed = torch.tensor(passed, device=self.device)
