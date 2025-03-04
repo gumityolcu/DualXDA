@@ -5,3 +5,4 @@ from .arnoldi_influence import *
 from .trak import *
 from .tracin import *
 from .kronfluence import * 
+from .similarity import *
