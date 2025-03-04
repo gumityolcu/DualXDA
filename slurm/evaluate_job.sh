@@ -46,7 +46,7 @@ else
 fi
 cd ${LOCAL_JOB_DIR}
 tar -czf $2_evaluate_${fname_config}-output_data_${SLURM_JOB_ID}.tgz outputs
-cp $2_evaluate_${fname_config}-output_data_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}
+cp $2_evaluate_${fname_config}-output_data_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}/eval_results
 
 end=`date +%s`
 runtime=$((end-start))
