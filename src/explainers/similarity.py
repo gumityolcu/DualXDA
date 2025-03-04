@@ -33,7 +33,7 @@ class FeatureSimilarityExplainer(Explainer):
         M = torch.where(comparison, torch.tensor(1), torch.tensor(-1))
 
         x=x.to(self.device)
-        f=self.model.features(x)
+        f=self.model.features(x).to(self.device)
         if self.mode == 'dot':
             xpl = f @ self.features.T
             return torch.squeeze(xpl * M)
@@ -90,7 +90,7 @@ class InputSimilarityExplainer(Explainer):
         dataloader = DataLoader(self.train_ds, batch_size=200, shuffle=False)
         xpl = torch.empty((x.shape[0], 0), device=self.device)
         for train_x, _ in dataloader:
-            train_x=train_x.flatten(start_dim=1)
+            train_x=train_x.flatten(start_dim=1).to(self.device)
             if self.mode == 'dot':
                 xpl_curr = x @ train_x.T
             elif self.mode == 'cos':
