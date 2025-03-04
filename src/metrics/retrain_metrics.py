@@ -426,7 +426,7 @@ class LinearDatamodelingScore(RetrainMetric):
         spearman = SpearmanCorrCoef(num_outputs=self.n_test)
         correlation_scores = spearman(self.attribution_array.T, self.model_output_array.T)
         resdict = {'metric': self.name, 'correlation_scores': correlation_scores, 'avg_score': correlation_scores.mean(),
-                   'sample_attributions': self.attribution_array, 'sample_model_outputs': self.model_output_array, "subset_indices": self.sample_indices}
+                   'sample_attributions': self.attribution_array, 'sample_model_outputs': self.model_output_array}
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
