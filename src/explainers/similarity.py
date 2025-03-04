@@ -34,25 +34,26 @@ class FeatureSimilarityExplainer(Explainer):
 
         x=x.to(self.device)
         f=self.model.features(x).to(self.device)
-        if self.mode == 'dot':
-            xpl = f @ self.features.T
-            return torch.squeeze(xpl * M)
-        elif self.mode == 'cos':
-            f_norm = f / torch.norm(f, dim=1)[:, None]
-            features_norm = self.features / self.features.norm(dim=1)[:, None]
-            xpl = f_norm @ features_norm.T
-            return torch.squeeze(xpl * M)
-        elif self.mode == 'l2':
-            # using pythagoras: |a-b|^2 = |a|^2 + |b|^2 - 2ab
-            features_norm_squared = torch.sum(self.features ** 2, dim=1, keepdim=True).T
-            f_norm_squared = torch.sum(f ** 2, dim=1, keepdim=True)
-            dot_product = 2 * torch.mm(self.features, f.t()).T
-            distance_matrix_squared = features_norm_squared + f_norm_squared - dot_product
-            distance_matrix_squared = torch.clamp(distance_matrix_squared, min=0.0)
-            xpl = torch.sqrt(distance_matrix_squared)
-            return torch.squeeze(xpl * M)
-        else:
-            raise Exception("mode not implemented")
+
+        dataloader = DataLoader(self.features, batch_size=200, shuffle=False)
+        xpl = torch.empty((x.shape[0], 0), device=self.device)
+        for features in dataloader:
+            if self.mode == 'dot':
+                xpl_curr = f @ features.T
+            elif self.mode == 'cos':
+                f_norm = f / torch.norm(f, dim=1)[:, None]
+                features_norm = features / features.norm(dim=1)[:, None]
+                xpl_curr = f_norm @ features_norm.T
+            elif self.mode == 'l2':
+                # using pythagoras: |a-b|^2 = |a|^2 + |b|^2 - 2ab
+                features_norm_squared = torch.sum(features ** 2, dim=1, keepdim=True).T
+                f_norm_squared = torch.sum(f ** 2, dim=1, keepdim=True)
+                dot_product = 2 * torch.mm(features, f.t()).T
+                distance_matrix_squared = features_norm_squared + f_norm_squared - dot_product
+                distance_matrix_squared = torch.clamp(distance_matrix_squared, min=0.0)
+                xpl_curr = torch.sqrt(distance_matrix_squared)
+            xpl = torch.cat((xpl, xpl_curr), dim=1)
+        return torch.squeeze(xpl * M)
 
     def self_influences(self):
         if self.mode == 'dot':
