@@ -17,6 +17,8 @@ mkdir -p ${LOCAL_JOB_DIR}/outputs
 fname_config=$(basename "$1")
 config_name=${fname_config::-5}
 
+echo "Running $config_name"
+
 if [[ "$fname_config" == *"trak"* ]]; then
   singularity \
   run \
