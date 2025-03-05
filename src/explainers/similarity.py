@@ -60,7 +60,7 @@ class FeatureSimilarityExplainer(Explainer):
 
     def self_influences(self):
         if self.mode == 'dot':
-            self_inf = torch.power(self.features, 2).sum(dim=1)
+            self_inf = torch.pow(self.features, 2).sum(dim=1)
         else: 
             raise Exception("self influences are constant for all other modes")
         print("self influences are computed")
@@ -116,7 +116,7 @@ class InputSimilarityExplainer(Explainer):
 
     def self_influences(self):
         if self.mode == 'dot':
-            self_inf = torch.power(self.features, 2).sum(dim=1)
+            self_inf = torch.pow(self.features, 2).sum(dim=1)
         else: 
             raise Exception("self influences are constant for all other modes")
         print("self influences are computed")
