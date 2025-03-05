@@ -41,7 +41,7 @@ class FeatureSimilarityExplainer(Explainer):
         x=x.to(self.device)
         f=self.model.features(x).to(self.device)
 
-        dataloader = DataLoader(self.features, batch_size=200, shuffle=False)
+        dataloader = DataLoader(self.features, batch_size=20, shuffle=False)
         xpl = torch.empty((x.shape[0], 0), device=self.device)
         for features in dataloader:
             if self.mode == 'dot':
@@ -134,7 +134,7 @@ class InputSimilarityExplainer(Explainer):
             dataloader = DataLoader(self.train_ds, batch_size=200, shuffle=False)
             self_inf = torch.empty((0), device=self.device)
             for train_x, _ in dataloader:
-                train_x=train_x.flatten(start_dim=1)
+                train_x=train_x.flatten(start_dim=1).to(self.device)
                 self_inf_curr = torch.pow(train_x, 2).sum(dim=1)
                 self_inf = torch.cat((self_inf, self_inf_curr), dim=0)
         else: 
