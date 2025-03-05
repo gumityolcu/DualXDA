@@ -67,7 +67,7 @@ class FeatureSimilarityExplainer(Explainer):
             print(len(self.train_ds))
             self_inf = torch.empty((0), device=self.device)
             for i, (train_x, _) in enumerate(dataloader):
-                features=self.model(train_x)
+                features=self.model(train_x.to(self.device))
                 self_inf_curr = torch.pow(features, 2).sum(dim=1)
                 self_inf = torch.cat((self_inf, self_inf_curr), dim=0)
                 if i % 100 ==0:
