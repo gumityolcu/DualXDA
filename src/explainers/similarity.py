@@ -10,15 +10,18 @@ from time import time
 from utils.data import FeatureDataset
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import DataLoader
+import gc
 
 class FeatureSimilarityExplainer(Explainer):
     name = "FeatureSimilarityExplainer"
     def __init__(self, model, dataset, dir, features_dir, device, mode='dot'):
         super(FeatureSimilarityExplainer, self).__init__(model, dataset, device)
         os.makedirs(dir, exist_ok=True)
+        self.dir=dir
         self.features_dir = os.path.join(features_dir, "samples")
         self.labels_dir = os.path.join(features_dir, "labels")
         self.mode=mode
+        self.train_ds=dataset
         #feature_ds = FeatureDataset(self.model, dataset, device, dir)
         #self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
 
@@ -60,10 +63,21 @@ class FeatureSimilarityExplainer(Explainer):
 
     def self_influences(self):
         if self.mode == 'dot':
-            self_inf = torch.pow(self.features, 2).sum(dim=1)
+            dataloader = DataLoader(self.train_ds, batch_size=10, shuffle=False)
+            print(len(self.train_ds))
+            self_inf = torch.empty((0), device=self.device)
+            for i, (train_x, _) in enumerate(dataloader):
+                features=self.model(train_x)
+                self_inf_curr = torch.pow(features, 2).sum(dim=1)
+                self_inf = torch.cat((self_inf, self_inf_curr), dim=0)
+                if i % 100 ==0:
+                    print(f"self influences computed for {i*10} samples")
+                    gc.collect()     
         else: 
             raise Exception("self influences are constant for all other modes")
         print("self influences are computed")
+        print(self_inf.shape)
+        torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf
     
 class InputSimilarityExplainer(Explainer):
@@ -71,6 +85,7 @@ class InputSimilarityExplainer(Explainer):
     def __init__(self, model, dataset, dir, features_dir, device, mode='dot'):
         super(InputSimilarityExplainer, self).__init__(model, dataset, device)
         os.makedirs(dir, exist_ok=True)
+        self.dir=dir
         self.mode=mode
         self.train_ds=dataset
         self.labels_dir = os.path.join(features_dir, "labels")
@@ -116,8 +131,15 @@ class InputSimilarityExplainer(Explainer):
 
     def self_influences(self):
         if self.mode == 'dot':
-            self_inf = torch.pow(self.features, 2).sum(dim=1)
+            dataloader = DataLoader(self.train_ds, batch_size=200, shuffle=False)
+            self_inf = torch.empty((0), device=self.device)
+            for train_x, _ in dataloader:
+                train_x=train_x.flatten(start_dim=1)
+                self_inf_curr = torch.pow(train_x, 2).sum(dim=1)
+                self_inf = torch.cat((self_inf, self_inf_curr), dim=0)
         else: 
             raise Exception("self influences are constant for all other modes")
         print("self influences are computed")
+        print(self_inf.shape)
+        torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf
