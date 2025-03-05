@@ -70,9 +70,10 @@ class FeatureSimilarityExplainer(Explainer):
                 features=self.model(train_x.to(self.device))
                 self_inf_curr = torch.pow(features, 2).sum(dim=1)
                 self_inf = torch.cat((self_inf, self_inf_curr), dim=0)
-                if i % 100 ==0:
+                if i % 10 ==0:
                     print(f"self influences computed for {i*10} samples")
-                    gc.collect()     
+                    gc.collect()   
+                    torch.cuda.empty_cache()  
         else: 
             raise Exception("self influences are constant for all other modes")
         print("self influences are computed")
@@ -131,7 +132,7 @@ class InputSimilarityExplainer(Explainer):
 
     def self_influences(self):
         if self.mode == 'dot':
-            dataloader = DataLoader(self.train_ds, batch_size=200, shuffle=False)
+            dataloader = DataLoader(self.train_ds, batch_size=20, shuffle=False)
             self_inf = torch.empty((0), device=self.device)
             for train_x, _ in dataloader:
                 train_x=train_x.flatten(start_dim=1).to(self.device)
