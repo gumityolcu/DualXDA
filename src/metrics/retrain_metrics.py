@@ -389,7 +389,7 @@ class LinearDatamodelingScore(RetrainMetric):
     name = "LinearDatamodelingScore"
 
     def __init__(self, dataset_name, train, test, model_name, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, cache_dir, num_classes, alpha=0.5, samples=3, device="cpu"):
+                 weight_decay, augmentation, cache_dir, num_classes, alpha=0.5, samples=100, device="cpu"):
         super().__init__(dataset_name, train, test, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, num_classes, device)
@@ -399,9 +399,6 @@ class LinearDatamodelingScore(RetrainMetric):
         self.model_output_array = torch.empty(0,self.samples)
         self.attribution_array = torch.empty(0,self.samples)
         self.n_test = None
-        self.sample_indices = torch.tensor([
-            np.random.choice(len(train), size= int(self.alpha * len(train)), replace=False) for _ in range(samples)
-        ],device=device)
         self.device = device
 
     def __call__(self, xpl, start_index=0):
@@ -416,7 +413,7 @@ class LinearDatamodelingScore(RetrainMetric):
             retrained_model = load_model(self.model_name, self.dataset_name, self.num_classes).to(self.device)
             retrained_model.load_state_dict(torch.load(model_path, map_location=torch.device(self.device))['model_state'])
             retrained_model.eval()
-            cur_indices=self.sample_indices[i].cpu()
+            cur_indices=torch.load(model_path, map_location=torch.device(self.device))['sample_indices']
             attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach()
             logits = retrained_model(evalds)
             probs = F.softmax(logits, dim=1)

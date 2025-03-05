@@ -17,14 +17,17 @@ class FeatureSimilarityExplainer(Explainer):
         super(FeatureSimilarityExplainer, self).__init__(model, dataset, device)
         os.makedirs(dir, exist_ok=True)
         self.features_dir = os.path.join(features_dir, "samples")
+        self.labels_dir = os.path.join(features_dir, "labels")
         self.mode=mode
-        feature_ds = FeatureDataset(self.model, dataset, device, dir)
-        self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
+        #feature_ds = FeatureDataset(self.model, dataset, device, dir)
+        #self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
 
     def train(self):
         if os.path.isfile(self.features_dir):
             print("Features found.")
             self.features=torch.load(self.features_dir, map_location=self.device)
+            print("Labels found.")
+            self.labels=torch.load(self.labels_dir, map_location=self.device)
 
     def explain(self, x, xpl_targets):
         labels_expanded = self.labels.view(1, -1)
