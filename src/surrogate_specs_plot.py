@@ -56,15 +56,6 @@ def main(dataset_name, device):
     test_labels=torch.empty((0,)).to(device)
 
     ld=torch.utils.data.DataLoader(test, 32, shuffle=False)
-    for i,(x,y) in enumerate(iter(ld)):
-        if i>=100:
-            break
-        x=x.to(device)
-        y=y.to(device)
-        _feat=model.features(x)
-        test_feat=torch.cat((test_feat, _feat), dim=0)
-        test_labels=torch.cat((test_labels, y), dim=0)
-
     sv_counts=[]
 
     for c in C_values:
@@ -81,8 +72,16 @@ def main(dataset_name, device):
         weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
-        pred=torch.matmul(test_feat, weight.T).argmax(dim=1)
-        test_accs.append((pred==test_labels).float().mean().item())
+        # for i,(x,y) in enumerate(iter(ld)):
+        #     if i>=100:
+        #         break
+        #     x=x.to(device)
+        #     y=y.to(device)
+        #     _feat=model.features(x)
+        #     test_feat=torch.cat((test_feat, _feat), dim=0)
+        #     test_labels=torch.cat((test_labels, y), dim=0)
+        # pred=torch.matmul(test_feat, weight.T).argmax(dim=1)
+        # test_accs.append((pred==test_labels).float().mean().item())
         train_time=torch.load(f"{root}/{dirname}/train_time", map_location=device)
         train_times.append(train_time.item())
 
