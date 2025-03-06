@@ -23,7 +23,7 @@ def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" ,
             continue
         for f in os.listdir(os.path.join(xpl_src_dir,dir)):
             if "_all" in f:
-                basename=f.split("_")[0]
+                basename=dir
                 names.append(basename)
                 tensors[basename]=torch.load(os.path.join(xpl_src_dir,dir,f), map_location=device)
                 if num_test_samples is not None and num_test_samples<tensors[basename].shape[0]:
