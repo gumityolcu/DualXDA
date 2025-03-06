@@ -41,7 +41,6 @@ def main(dataset_name, device):
     model = load_model(model_name, dataset_name, ds_kwargs["num_classes"]).to(device)
     checkpoint = torch.load(model_path, map_location=device)
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
-    features=model.features
 
     x, _ = train[0]
 
@@ -52,10 +51,10 @@ def main(dataset_name, device):
     model.to(device)
     model.eval()
 
-    test_feat=torch.empty((0,features(x[None]).shape[1])).to(device)
+    test_feat=torch.empty((0,model.features(x[None]).shape[1])).to(device)
     test_labels=torch.empty((0,)).to(device)
 
-    
+
     ld=torch.utils.data.DataLoader(test, 32, shuffle=False)
     for i,(x,y) in enumerate(iter(ld)):
         if i>=100:
