@@ -18,8 +18,8 @@ class LinearDatamodelingScoreCacher(RetrainMetric):
         self.alpha = alpha
         self.sample_nr = sample_nr
         self.sample_indices = torch.tensor(np.random.choice(len(self.train), size= int(alpha * len(self.train)), replace=False),device=device).cpu()
-        self.save_path = os.path.join(cache_dir, f'lds{alpha}', f'lds{alpha}_{int(sample_nr):02d}')
-        os.makedirs(os.path.join(cache_dir, f'lds{alpha}'), exist_ok=True)
+        self.save_path = os.path.join(cache_dir, f'lds{alpha}_{int(sample_nr):02d}')
+        os.makedirs(cache_dir, exist_ok=True)
         self.cache()
     
     def cache(self):

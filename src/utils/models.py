@@ -87,14 +87,14 @@ def load_model(model_name, dataset_name, num_classes):
             return ResNetWrapper(resnet50(), output_dim=num_classes)
 
 
-def compute_accuracy(model, test, device):
+def compute_accuracy(model, test, device, progress=True):
     loader=torch.utils.data.DataLoader(test, 64, shuffle=False)
     acc = 0.
     model.eval()
     index = 0
     fault_list = []
 
-    for x, y in tqdm.tqdm(loader):
+    for x, y in tqdm.tqdm(loader, disable=not progress):
         x=x.to(device)
         if isinstance(y,list):
             y=y[1]
