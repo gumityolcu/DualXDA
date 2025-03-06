@@ -45,13 +45,17 @@ def main(dataset_name, device):
 
     x, _ = train[0]
 
-    test_feat=torch.empty((0,features(x[None]).shape[1])).to(device)
-    test_labels=torch.empty((0,)).to(device)
+    x=x.to(device)
+
 
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
 
+    test_feat=torch.empty((0,features(x[None]).shape[1])).to(device)
+    test_labels=torch.empty((0,)).to(device)
+
+    
     ld=torch.utils.data.DataLoader(test, 32, shuffle=False)
     for i,(x,y) in enumerate(iter(ld)):
         if i>=100:

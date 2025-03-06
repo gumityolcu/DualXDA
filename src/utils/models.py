@@ -21,7 +21,6 @@ class ResNetWrapper(torch.nn.Module):
         # print(total)
         # exit()
         super(ResNetWrapper, self).__init__()
-        print(module)
         self.classifier=torch.nn.Linear(in_features=module.fc.in_features, out_features=output_dim, bias=True)
         self.arnoldi_param_filter=arnoldi_param_filter
         seq_array=[
