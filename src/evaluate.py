@@ -37,10 +37,15 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
                  
                  
     """
+    dataset_sizes={
+        "MNIST": 60000,
+        "CIFAR": 50000,
+        "AWA": 30000
+    }
 
     ret_dict = {"std": (SameClassMetric,{}), "group": (SameSubclassMetric,{}), 
                 "corrupt": (CorruptLabelMetric,{}),
-                "mark": (MarkImageMetric, {"model":model}),
+                "mark": (MarkImageMetric, {"model":model, "topk": int(0.01*dataset_sizes[dataset_name])}),
                 "stdk": (TopKSameClassMetric,{}), "groupk": (TopKSameSubclassMetric,{}),
                 "switched": (SwitchMetric,{}),
                 "add_batch_in": (BatchRetraining,{ **retrain_dict,**{"mode":"cum"}}),
