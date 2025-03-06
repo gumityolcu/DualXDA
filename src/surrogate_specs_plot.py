@@ -67,7 +67,7 @@ def main(dataset_name, device):
                     if coefs[i, j]!=0.:
                         svs[j]+=1
         sv_counts.append(svs)
-        print("dirname")
+        print(f"{dirname}")
         weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
