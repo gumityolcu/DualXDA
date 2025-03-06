@@ -71,7 +71,10 @@ def main(dataset_name, device):
         sv_counts.append(svs)
         weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
         print(f"exists : {os.path.isfile('{root}/{dirname}/weights')}")
-        print(f"{root}/{dirname}/weights is none : {weight is None}")
+        print("\n\n\n")
+        print(os.getcwd())
+        print("\n\n\n")
+        print(os.listdir(os.path.isfile('{root}/{dirname}/weights')))
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
         # for i,(x,y) in enumerate(iter(ld)):
