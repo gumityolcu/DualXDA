@@ -42,18 +42,18 @@ def main(dataset_name, device):
     checkpoint = torch.load(model_path, map_location=device)
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
 
-    x, _ = train[0]
 
-    x=x.to(device)
 
 
     model.load_state_dict(checkpoint["model_state"])
-    model.to(device)
     model.eval()
+    model.to(device)
+
+    x, _ = train[0]
+    x=x.to(device)
 
     test_feat=torch.empty((0,model.features(x[None]).shape[1])).to(device)
     test_labels=torch.empty((0,)).to(device)
-
 
     ld=torch.utils.data.DataLoader(test, 32, shuffle=False)
     for i,(x,y) in enumerate(iter(ld)):
@@ -61,7 +61,7 @@ def main(dataset_name, device):
             break
         x=x.to(device)
         y=y.to(device)
-        _feat=features(x)
+        _feat=model.features(x)
         test_feat=torch.cat((test_feat, _feat), dim=0)
         test_labels=torch.cat((test_labels, y), dim=0)
 

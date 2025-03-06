@@ -18,7 +18,7 @@ plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
 fontdict={"size": 15}
 
-for dsname in ["CIFAR","MNIST"]:
+for dsname in ["AWA"]:
     p=f"/home/fe/yolcu/Documents/Code/DualView-wip/test_output/eval/{dsname}/"
     plt.figure(figsize=(8,6))
     plt.xlabel('Ratio of Controlled Images')
