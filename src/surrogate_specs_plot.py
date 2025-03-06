@@ -74,7 +74,7 @@ def main(dataset_name, device):
         print("\n\n\n")
         print(os.getcwd())
         print("\n\n\n")
-        print(os.listdir(os.path.isfile('{root}/{dirname}/weights')))
+        print(os.listdir(os.path.isfile('{root}')))
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
         # for i,(x,y) in enumerate(iter(ld)):
