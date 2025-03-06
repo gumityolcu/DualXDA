@@ -15,7 +15,7 @@ def main(dataset_name, device):
     outdir="/mnt/outputs"
 
     cumul=""
-    for i, elem in enumerate(["/mnt/", "cache/", "AWA/", "dualview_0.1/", "std"]):
+    for i, elem in enumerate(["/mnt/", "cache/", "AWA/", "std/", "dualview_0.1"]):
         print(f"{i}==================")
         cumul=cumul+elem
         if os.path.exists(cumul):
@@ -24,12 +24,6 @@ def main(dataset_name, device):
             print(f"{cumul} doesnt exist")
 
     exit()
-
-    print(list(os.listdir("/mnt/cache")))
-    print(list(os.listdir("/mnt/cache/AWA")))
-    print(list(os.listdir("/mnt/cache/AWA/dualview_0.1")))
-    print(list(os.listdir("/mnt/cache/AWA/dualview_0.1/std")))
-
 
     outname=f"{dataset_name}_K_plot"
     preactivations=torch.load(f"{root}/features/samples",map_location=device)
