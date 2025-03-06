@@ -32,6 +32,12 @@ def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" ,
 
     corr_fn=corr_fns[corr]
     corr_matrix=torch.zeros((len(tensors.keys()),len(tensors.keys())))
+
+    # ????
+    print(names)
+    print(tensors.keys())
+    exit()
+
     # Use two for loops to create correlations between the explainers
     for i, (name1) in enumerate(names):
         tensor1=tensors[name1]
