@@ -15,15 +15,6 @@ def main(dataset_name, device):
     outdir="/mnt/outputs"
 
     cumul=""
-    for i, elem in enumerate(["/mnt/", "cache/", "AWA/", "std/", "dualview_0.1"]):
-        print(f"{i}==================")
-        cumul=cumul+elem
-        if os.path.exists(cumul):
-            print(os.listdir(cumul))
-        else:
-            print(f"{cumul} doesnt exist")
-
-    exit()
 
     outname=f"{dataset_name}_K_plot"
     preactivations=torch.load(f"{root}/features/samples",map_location=device)
@@ -54,9 +45,6 @@ def main(dataset_name, device):
     checkpoint = torch.load(model_path, map_location=device)
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
 
-
-
-
     model.load_state_dict(checkpoint["model_state"])
     model.eval()
     model.to(device)
@@ -81,6 +69,16 @@ def main(dataset_name, device):
                     if coefs[i, j]!=0.:
                         svs[j]+=1
         sv_counts.append(svs)
+        for i, elem in enumerate(["/mnt/", "cache/", "AWA/", "std/", dirname]):
+            print(f"{i}==================")
+            cumul=cumul+elem
+            if os.path.isdir(cumul):
+                print(os.listdir(cumul))
+            else:
+                if os.path.isfile(cumul):
+                    print(f"{cumul} exists")
+                print(f"{cumul} doesnt exist")
+
         weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
