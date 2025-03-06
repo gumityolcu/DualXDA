@@ -74,7 +74,7 @@ def main(dataset_name, device):
         print("\n\n\n")
         print(os.getcwd())
         print("\n\n\n")
-        print(os.listdir(os.path.isfile('{root}')))
+        print(os.listdir(os.path.isfile(f'{root}')))
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
         # for i,(x,y) in enumerate(iter(ld)):
