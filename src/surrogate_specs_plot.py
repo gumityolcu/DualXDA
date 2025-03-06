@@ -13,6 +13,24 @@ def main(dataset_name, device):
     num_classes=n_cls[dataset_name]
     root=f"/mnt/cache/{dataset_name}/std"
     outdir="/mnt/outputs"
+
+    cumul=""
+    for i, elem in enumerate(["/mnt/", "cache/", "AWA/", "dualview_0.1/", "std"])
+        print(f"{i}==================")
+        cumul=cumul+elem
+        if os.path.exists(cumul):
+            print(os.listdir(cumul))
+        else:
+            print(f"{cumul} doesnt exist")
+
+    exit()
+    
+    print(list(os.listdir("/mnt/cache")))
+    print(list(os.listdir("/mnt/cache/AWA")))
+    print(list(os.listdir("/mnt/cache/AWA/dualview_0.1")))
+    print(list(os.listdir("/mnt/cache/AWA/dualview_0.1/std")))
+
+
     outname=f"{dataset_name}_K_plot"
     preactivations=torch.load(f"{root}/features/samples",map_location=device)
     labels=torch.load(f"{root}/features/labels",map_location=device)
@@ -70,11 +88,6 @@ def main(dataset_name, device):
                         svs[j]+=1
         sv_counts.append(svs)
         weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
-        print(f"exists : {os.path.isfile('{root}/{dirname}/weights')}")
-        print("\n\n\n")
-        print(os.getcwd())
-        print("\n\n\n")
-        print(os.listdir(os.path.isfile(f'{root}')))
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
         # for i,(x,y) in enumerate(iter(ld)):
