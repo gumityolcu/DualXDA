@@ -79,7 +79,7 @@ def main(dataset_name, device):
             test_labels=torch.cat((test_labels, y), dim=0)
             pred=torch.matmul(feat, weight.T).argmax(dim=1)
             _test_accs.append((pred==test_labels).float().mean().item())
-        test_accs.append(torch.tensor(_test_accs, device=device))
+        test_accs.append(torch.tensor(_test_accs, device=device).mean().item())
         train_time=torch.load(f"{root}/{dirname}/train_time", map_location=device)
         train_times.append(train_time.item())
 
