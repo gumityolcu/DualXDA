@@ -1,0 +1,28 @@
+Bootstrap: docker
+From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
+
+%files
+
+  ../scikit-learn-dual /sklearn
+  ../captum /captum
+
+%post
+
+  export "PATH=/opt/conda/bin:$PATH"
+  pip install numpy \
+    matplotlib \
+    xmltodict \
+    pyyaml \
+    tqdm \
+    scikit-image \
+    scipy \
+    seaborn \
+    termcolor
+  pip install torchmetrics
+
+%runscript
+
+  cd /mnt/src
+  pwd
+  ls
+  python ../results/sparsity.py
