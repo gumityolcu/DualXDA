@@ -8,7 +8,7 @@ features_dir: /mnt/cache/MNIST/corrupt/features
 grad_dir: /mnt/cache/MNIST/corrupt/tracin/best
 metric: corrupt
 model_name: basic_conv
-model_path: /mnt/checkpoints/MNIST/corrupt/basic_conv_corrupt/MNIST_basic_conv
+model_path: /mnt/checkpoints/MNIST/corrupt/MNIST_basic_conv_best
 num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000

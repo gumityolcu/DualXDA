@@ -9,7 +9,7 @@ features_dir: /mnt/cache/CIFAR/corrupt/features
 grad_dir: /mnt/cache/CIFAR/corrupt/tracin/best
 metric: corrupt
 model_name: resnet18
-model_path: /mnt/checkpoints/CIFAR/corrupt/resnet18_corrupt/CIFAR_resnet18
+model_path: /mnt/checkpoints/CIFAR/corrupt/CIFAR_resnet18_best
 num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000

@@ -13,7 +13,7 @@ loss: cross_entropy
 lr: 0.0016666666666666668
 metric: leave_out
 model_name: basic_conv
-model_path: /mnt/checkpoints/MNIST/std/basic_conv_leave_out/MNIST_basic_conv
+model_path: /mnt/checkpoints/MNIST/std/MNIST_basic_conv_best
 momentum: 0.9
 num_classes: 10
 optimizer: sgd

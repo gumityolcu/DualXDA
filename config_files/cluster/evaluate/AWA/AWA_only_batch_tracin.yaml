@@ -12,7 +12,7 @@ loss: cross_entropy
 lr: 0.0033333333333333335
 metric: only_batch
 model_name: resnet50
-model_path: /mnt/checkpoints/AWA/std/resnet50_only_batch/AWA_resnet50
+model_path: /mnt/checkpoints/AWA/std/AWA_resnet50_best
 momentum: 0.9
 num_classes: 50
 optimizer: sgd
