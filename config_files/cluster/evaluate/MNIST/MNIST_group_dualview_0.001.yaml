@@ -15,15 +15,13 @@ class_groups:
 data_root: /mnt/dataset
 dataset_name: MNIST
 dataset_type: group
-device: cpu
+device: cuda
 features_dir: /mnt/cache/MNIST/group/features
 grad_dir: /mnt/cache/MNIST/group/tracin/best
-lds_cache_dir: /mnt/cache/MNIST/lds
 metric: group
 model_name: basic_conv
-model_path: /mnt/checkpoints/MNIST/group/MNIST_basic_conv_best
 num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: dualview
-xpl_root: /mnt/explanations/MNIST/group/dualview_0.001/
+xpl_root: /mnt/explanations/MNIST/group/dualview/
