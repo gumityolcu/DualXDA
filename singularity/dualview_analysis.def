@@ -18,7 +18,11 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
     scipy \
     seaborn \
     termcolor
-  pip install torchmetrics
+  pip install zennit
+  pip install tensorboard
+  pip install /sklearn
+  pip install /captum
+  pip install kronfluence
   apt update
   ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
   apt install texlive texlive-latex-extra texlive-fonts-recommended dvipng -y
