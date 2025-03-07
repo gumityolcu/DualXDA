@@ -71,7 +71,6 @@ def main(dataset_name, device):
         for i,(x,y) in enumerate(iter(ld)):
             if i>=100:
                 break
-            c
             x=x.to(device)
             y=y.to(device)
             feat=model.features(x)
