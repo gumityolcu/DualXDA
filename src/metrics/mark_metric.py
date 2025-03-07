@@ -32,6 +32,7 @@ class MarkImageMetric(Metric):
                 return True
             return (torch.tensor(self.test[i][1],device=self.device)==self.marked_cls) and (torch.tensor(self.test.dataset[i][1],device=self.device)!=self.marked_cls)
         filter_indices=[include_datapoint(i) for i in range(xpl.shape[0])]   
+        xpl=xpl[filter_indices]
         expanded_binary_indices=self.binary_shortcut_indices.expand((xpl.shape[0], len(self.train)))     
         self.scores = torch.cat((self.scores,  binary_auprc(xpl, expanded_binary_indices, num_tasks=xpl.shape[0])), dim=0)
 
