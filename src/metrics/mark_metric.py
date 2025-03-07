@@ -30,7 +30,7 @@ class MarkImageMetric(Metric):
         def include_datapoint(i):
             if not self.filter:
                 return True
-            return (torch.tensor(self.test[i][1],device=self.device)==self.marked_cls) and (torch.tensor(self.test.dataset[i][1],device=self.device)!=self.marked_cls)
+            return (torch.tensor(self.test[i][1],device=self.device)==self.marked_cls) and (torch.tensor(self.test.dataset[i][1],device=self.device)!=self.marked_cls) #first condition means "prediction is the marked class"
         filter_indices=[include_datapoint(i) for i in range(xpl.shape[0])]   
         xpl=xpl[filter_indices]
         expanded_binary_indices=self.binary_shortcut_indices.expand((xpl.shape[0], len(self.train)))     
