@@ -67,7 +67,7 @@ def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" ,
     plt.title(f'{corr} Matrix Heatmap', fontsize=14)
     fig.tight_layout()
     plt.savefig(os.path.join(save_dir,f"{corr}.jpg"))  # Save the image
-    torch.save(os.path.join(save_dir,f"{corr}_correlations"))
+    torch.save(corr_matrix, os.path.join(save_dir,f"{corr}_correlations"))
 
 
 if __name__ == "__main__":

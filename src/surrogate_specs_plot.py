@@ -47,16 +47,14 @@ def main(dataset_name, device):
     model.eval()
     model.to(device)
 
-    x, _ = train[0]
-    x=x.to(device)
 
-    test_feat=torch.empty((0,model.features(x[None]).shape[1])).to(device)
-    test_labels=torch.empty((0,)).to(device)
 
     ld=torch.utils.data.DataLoader(test, 32, shuffle=False)
     sv_counts=[]
 
     for c in C_values:
+        test_labels=torch.empty((0,)).to(device)
+
         svs=[0. for _ in range(num_classes)]
         C=str(c)
         dirname=f"dualview_{C}"
@@ -71,16 +69,17 @@ def main(dataset_name, device):
         weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
-        # for i,(x,y) in enumerate(iter(ld)):
-        #     if i>=100:
-        #         break
-        #     x=x.to(device)
-        #     y=y.to(device)
-        #     _feat=model.features(x)
-        #     test_feat=torch.cat((test_feat, _feat), dim=0)
-        #     test_labels=torch.cat((test_labels, y), dim=0)
-        # pred=torch.matmul(test_feat, weight.T).argmax(dim=1)
-        # test_accs.append((pred==test_labels).float().mean().item())
+        _test_accs=[]
+        for i,(x,y) in enumerate(iter(ld)):
+            if i>=100:
+                break
+            x=x.to(device)
+            y=y.to(device)
+            feat=model.features(x)
+            test_labels=torch.cat((test_labels, y), dim=0)
+            pred=torch.matmul(feat, weight.T).argmax(dim=1)
+            _test_accs.append((pred==test_labels).float().mean().item())
+        test_accs.append(torch.tensor(_test_accs, device=device))
         train_time=torch.load(f"{root}/{dirname}/train_time", map_location=device)
         train_times.append(train_time.item())
 
@@ -95,7 +94,7 @@ def main(dataset_name, device):
     # plot 1
     fig, ax1=plt.subplots(figsize=(8,6))
     ax1.plot(x_axis, train_accs, label="Train accuracy", color="red")
-    ax1.plot(x_axis, test_accs, label="Test accuracy", color="blue")
+    #ax1.plot(x_axis, test_accs, label="Test accuracy", color="blue")
     ax1.set_xlabel("$log_{10}K$", fontdict=fontdict)
     ax1.set_xticks(x_axis)
     ax1.set_ylabel("Accuracy", fontdict=fontdict)
