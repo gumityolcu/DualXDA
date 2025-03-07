@@ -53,8 +53,6 @@ def main(dataset_name, device):
     sv_counts=[]
 
     for c in C_values:
-        test_labels=torch.empty((0,)).to(device)
-
         svs=[0. for _ in range(num_classes)]
         C=str(c)
         dirname=f"dualview_{C}"
@@ -76,9 +74,8 @@ def main(dataset_name, device):
             x=x.to(device)
             y=y.to(device)
             feat=model.features(x)
-            test_labels=torch.cat((test_labels, y), dim=0)
             pred=torch.matmul(feat, weight.T).argmax(dim=1)
-            _test_accs.append((pred==test_labels).float().mean().item())
+            _test_accs.append((pred==y).float().mean().item())
         test_accs.append(torch.tensor(_test_accs, device=device).mean().item())
         train_time=torch.load(f"{root}/{dirname}/train_time", map_location=device)
         train_times.append(train_time.item())
