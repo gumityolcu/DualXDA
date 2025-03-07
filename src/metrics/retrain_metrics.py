@@ -24,7 +24,7 @@ class RetrainMetric(Metric):
         self.test = test
         self.model_name = model_name #load model WITHOUT checkpoint in evaluate script for this metric!
         self.device = device
-        self.batch_size = 64
+        self.batch_size = 32
         self.epochs = epochs
         self.lr = lr
         self.augmentation = augmentation
@@ -50,6 +50,9 @@ class RetrainMetric(Metric):
         scheduler = load_scheduler(self.scheduler, optimizer, self.epochs)
         train_acc = []
         loader = DataLoader(ds, batch_size=self.batch_size, shuffle=True)
+        
+        print("Scheduler", scheduler)
+        print("Loss", loss)
 
         #print(optimizer.param_groups)
         #for param_group in optimizer.param_groups:
@@ -104,7 +107,7 @@ class RetrainMetric(Metric):
             print(f"Epoch {e + 1}/{self.epochs} loss: {cum_loss}")  # / cnt}")
             print("\n==============\n")
             learning_rates.append(scheduler.get_lr())
-            current_lr = scheduler.get_last_lr() if hasattr(scheduler, 'get_last_lr') else [group['lr'] for group in optimizer.param_groups]
+            current_lr = scheduler.get_lr() if hasattr(scheduler, 'get_lr') else [group['lr'] for group in optimizer.param_groups]
             print(f"Current learning rate: {current_lr}")
             scheduler.step()
         return model
