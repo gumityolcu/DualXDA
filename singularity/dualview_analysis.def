@@ -1,0 +1,50 @@
+Bootstrap: docker
+From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
+
+%files
+
+  ../scikit-learn-dual /sklearn
+  ../captum /captum
+
+%post
+
+  export "PATH=/opt/conda/bin:$PATH"
+  pip install numpy \
+    matplotlib \
+    xmltodict \
+    pyyaml \
+    tqdm \
+    scikit-image \
+    scipy \
+    seaborn \
+    termcolor
+  pip install zennit
+  pip install tensorboard
+  pip install /sklearn
+  pip install torchmetrics
+  pip install /captum
+  pip install kronfluence
+
+# Install TeX Live, see https://www.tug.org/texlive/quickinstall.html
+#
+# wget may failed due to TLS error. use curl instead.
+#
+# CTAN_MIRROR=https://ctan.math.ca/tex-archive
+  apt update
+  apt install curl
+  CTAN_MIRROR=https://mirror.ctan.org
+  curl -s -L --output install-tl-unx.tar.gz ${CTAN_MIRROR}/systems/texlive/tlnet/install-tl-unx.tar.gz || exit 2
+  mkdir install-tl
+  tar --strip-components 1 -zvxf install-tl-unx.tar.gz -C "$PWD/install-tl" || exit 3
+  rm install-tl-unx.tar.gz
+  cd install-tl
+  ./install-tl --profile=/texlive/texlive.profile || exit 5
+  cd ..
+  rm -fr install-tl
+
+%runscript
+
+  cd /mnt/src
+  pwd
+  ls
+  python surrogate_specs_plot.py "$@"

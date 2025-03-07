@@ -3,6 +3,7 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
 
 %files
 
+  ../src /opt
   ../scikit-learn-dual /sklearn
   ../captum /captum
 
@@ -18,21 +19,10 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
     scipy \
     seaborn \
     termcolor
-  pip install torcheval
   pip install zennit
   pip install tensorboard
-  pip install /sklearn
   pip install torchmetrics
+  pip install /sklearn
   pip install /captum
   pip install kronfluence
 
-%runscript
-
-  cd /mnt/src
-  pwd
-  ls
-  if [ "$1" = "--trak" ]; then
-    pip install traker[fast] --user
-    shift
-  fi
-  python evaluate.py "$@"

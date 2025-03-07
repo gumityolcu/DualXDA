@@ -18,7 +18,6 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
     scipy \
     seaborn \
     termcolor
-  pip install torcheval
   pip install zennit
   pip install tensorboard
   pip install /sklearn
@@ -31,8 +30,4 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
   cd /mnt/src
   pwd
   ls
-  if [ "$1" = "--trak" ]; then
-    pip install traker[fast] --user
-    shift
-  fi
-  python evaluate.py "$@"
+  python ../results/correlations.py "$@"
