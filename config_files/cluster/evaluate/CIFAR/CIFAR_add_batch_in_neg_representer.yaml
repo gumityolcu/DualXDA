@@ -1,5 +1,5 @@
 augmentation: crop_flip
-batch_size: 128
+batch_size: 8
 cache_dir: /mnt/cache/CIFAR/std/representer
 data_root: /mnt/dataset
 dataset_name: CIFAR
@@ -12,6 +12,7 @@ loss: cross_entropy
 lr: 0.0003333333333333333
 metric: add_batch_in_neg
 model_name: resnet18
+model_path: /mnt/checkpoints/CIFAR/std/resnet18_add_batch_in_neg/CIFAR_resnet18
 momentum: 0.9
 num_classes: 10
 optimizer: sgd

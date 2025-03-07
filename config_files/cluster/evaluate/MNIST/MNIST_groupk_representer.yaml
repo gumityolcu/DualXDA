@@ -19,6 +19,7 @@ features_dir: /mnt/cache/MNIST/group/features
 grad_dir: /mnt/cache/MNIST/group/tracin/best
 metric: groupk
 model_name: basic_conv
+model_path: /mnt/checkpoints/MNIST/group/basic_conv_groupk/MNIST_basic_conv
 num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000

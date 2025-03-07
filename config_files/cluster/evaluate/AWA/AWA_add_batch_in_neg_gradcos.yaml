@@ -1,5 +1,5 @@
 augmentation: flip
-batch_size: 16
+batch_size: 8
 cache_dir: /mnt/cache/AWA/std/gradcos
 data_root: /mnt/dataset
 dataset_name: AWA
@@ -12,6 +12,7 @@ loss: cross_entropy
 lr: 0.0033333333333333335
 metric: add_batch_in_neg
 model_name: resnet50
+model_path: /mnt/checkpoints/AWA/std/resnet50_add_batch_in_neg/AWA_resnet50
 momentum: 0.9
 num_classes: 50
 optimizer: sgd

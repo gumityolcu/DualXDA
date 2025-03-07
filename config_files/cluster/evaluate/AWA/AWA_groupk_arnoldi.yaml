@@ -59,6 +59,7 @@ features_dir: /mnt/cache/AWA/group/features
 grad_dir: /mnt/cache/AWA/group/tracin/best
 metric: groupk
 model_name: resnet50
+model_path: /mnt/checkpoints/AWA/group/resnet50_groupk/AWA_resnet50
 num_classes: 50
 save_dir: /mnt/outputs/
 validation_size: 2000
