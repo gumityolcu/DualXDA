@@ -29,9 +29,9 @@ def count_params_model(model):
 
 def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
     lissa_params={
-        "MNIST": {'depth': 6000, 'repeat': 10},
-        "CIFAR": {'depth': 5000, 'repeat': 10},
-        "AWA": {'depth': 3700, 'repeat': 10}
+        "MNIST": {'depth': 6000, 'repeat': 10, "file_size": 20},
+        "CIFAR": {'depth': 5000, 'repeat': 10, "file_size":20},
+        "AWA": {'depth': 3700, 'repeat': 10, "file_size":20}
     }
 
     arnoldi_params={
