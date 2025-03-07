@@ -26,12 +26,3 @@ run \
       --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
       --bind ${HOME}/DualView/cache:/mnt/cache \
       ../singularity/sparsity.sif
-
-cd ${LOCAL_JOB_DIR}
-tar -czf $1_$2_correlations_${SLURM_JOB_ID}.tgz outputs
-cp $1_$2_correlations_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}
-
-end=`date +%s`
-runtime=$((end-start))
-echo "Runtime: $runtime"
-echo "In minutes: $(($runtime / 60))"
