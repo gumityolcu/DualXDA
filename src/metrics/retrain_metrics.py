@@ -18,13 +18,13 @@ class RetrainMetric(Metric):
     
     def __init__(self, dataset_name, train, test, model_name,
                  epochs, loss, lr, momentum, optimizer, scheduler,
-             weight_decay, augmentation, num_classes, device):
+             weight_decay, augmentation, num_classes, batch_size, device):
         self.dataset_name = dataset_name
         self.train = train
         self.test = test
         self.model_name = model_name #load model WITHOUT checkpoint in evaluate script for this metric!
         self.device = device
-        self.batch_size = 32
+        self.batch_size = batch_size
         self.epochs = epochs
         self.lr = lr
         self.augmentation = augmentation
@@ -50,9 +50,6 @@ class RetrainMetric(Metric):
         scheduler = load_scheduler(self.scheduler, optimizer, self.epochs)
         train_acc = []
         loader = DataLoader(ds, batch_size=self.batch_size, shuffle=True)
-        
-        print("Scheduler", scheduler)
-        print("Loss", loss)
 
         #print(optimizer.param_groups)
         #for param_group in optimizer.param_groups:
@@ -150,11 +147,11 @@ class BatchRetraining(RetrainMetric):
 
     def __init__(self, dataset_name, train, test, model_name, 
                  epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, num_classes, batch_nr=10, device="cuda", mode="cum"):
+                 weight_decay, augmentation, num_classes, batch_size, batch_nr=10, device="cuda", mode="cum"):
         # mode should be one of "cum", "neg_cum", "leave_batch_out", "single_batch"
         super().__init__(dataset_name, train, test, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, num_classes, device)
+                         weight_decay, augmentation, num_classes, batch_size, device)
         self.batch_nr = batch_nr
         self.batchsize = len(self.train) // batch_nr
         self.mode=mode
@@ -392,10 +389,10 @@ class LinearDatamodelingScore(RetrainMetric):
     name = "LinearDatamodelingScore"
 
     def __init__(self, dataset_name, train, test, model_name, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, cache_dir, num_classes, alpha=0.5, samples=100, device="cpu"):
+                 weight_decay, augmentation, cache_dir, num_classes, batch_size, alpha=0.5, samples=100, device="cpu"):
         super().__init__(dataset_name, train, test, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, num_classes, device)
+                         weight_decay, augmentation, num_classes, batch_size, device)
         self.alpha = alpha
         self.samples = samples
         self.cache_dir = cache_dir
@@ -439,10 +436,10 @@ class LabelFlipMetric(RetrainMetric):
     name = "LabelFlipMetric"
 
     def __init__(self, dataset_name, train, test, model, epochs, loss, lr, momentum, optimizer, scheduler,
-                 weight_decay, augmentation, num_classes, batch_nr=10, device="cuda"):
+                 weight_decay, augmentation, num_classes, batch_size, batch_nr=10, device="cuda"):
         super().__init__(dataset_name, train, test, model,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, num_classes, device)
+                         weight_decay, augmentation, num_classes, batch_size, device)
         self.flip_most_relevant=torch.empty(batch_nr+1, dtype=torch.float, device=self.device)
         self.flip_least_relevant=torch.empty(batch_nr+1, dtype=torch.float, device=self.device)
         self.batch_nr = batch_nr
