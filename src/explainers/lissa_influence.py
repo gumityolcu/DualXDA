@@ -471,7 +471,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
     name = "LiSSAInfluenceFunctionExplainer"
 
     def __init__(self, model, dataset, device, depth, repeat, scale, dir, train_loss=cross_entropy,
-                 train_regularization=(lambda x: torch.tensor(0., device=x[0].device if x is not None else "cpu")), test_loss=cross_entropy):
+                 train_regularization=(lambda x: torch.tensor(0., device=x[0].device if x is not None else "cpu")), test_loss=cross_entropy, file_size=20):
         class MyObjective(BaseObjective):
             def train_outputs(self, model, batch):
                 return model(batch[0])
@@ -497,7 +497,7 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
         os.makedirs(self.dir,exist_ok=True)
         self.influence_module = LiSSAInfluenceModule(model, MyObjective(),
                                                      torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False),
-                                                     depth=depth, repeat=repeat, scale=scale, damp=0.001, device=device)
+                                                     depth=depth, repeat=repeat, scale=scale, damp=0.001, device=device, file_size=file_size)
 
     def train(self):
         return 0.
@@ -522,7 +522,8 @@ class LiSSAInfluenceFunctionExplainer(Explainer):
             torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf
     
-    def compute_self_influence_batch(self, id, page_size):
+    def compute_self_influence_batch(self, id):
+        page_size=self.influence_module.file_size
         base_id=id*page_size
         ids=[i+base_id for i in range(page_size) if i+base_id<len(self.dataset)]
         torch.save(self.influence_module.self_influences(ids), os.path.join(self.dir, f"self_influence_psize={page_size:4d}_pid={id:4d}"))
