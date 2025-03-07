@@ -10,7 +10,7 @@ from metrics import *
 
 def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                 epochs, loss, lr, momentum, optimizer, scheduler,
-                weight_decay, augmentation, sample_nr, cache_dir,lds_cache_dir, num_classes):
+                weight_decay, augmentation, sample_nr, cache_dir,lds_cache_dir, num_classes, batch_size):
     base_dict={
         "train": train,
         "test": test,
@@ -27,7 +27,8 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
         "scheduler": scheduler,
         "weight_decay": weight_decay,
         "augmentation": augmentation,
-        "num_classes": num_classes
+        "num_classes": num_classes,
+        "batch_size": batch_size
     }
 
     """
@@ -67,7 +68,7 @@ def evaluate(model_name, model_path, device, class_groups,
              data_root, xpl_root, coef_root,
              save_dir, validation_size, num_classes,
              epochs, loss, lr, momentum, optimizer, scheduler,
-             weight_decay, augmentation, sample_nr, xai_method, cache_dir, lds_cache_dir, grad_dir, features_dir):
+             weight_decay, augmentation, sample_nr, xai_method, cache_dir, lds_cache_dir, grad_dir, features_dir, batch_size):
     if not torch.cuda.is_available():
         device="cpu"
     if augmentation not in [None, '']:
@@ -102,7 +103,7 @@ def evaluate(model_name, model_path, device, class_groups,
     test=PredictionTargetDataset(dataset=test, model=model, device=device)
     metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, sample_nr, cache_dir, lds_cache_dir, num_classes)
+                         weight_decay, augmentation, sample_nr, cache_dir, lds_cache_dir, num_classes, batch_size)
     print(f"Computing metric {metric.name}")
 
     if metric_name == 'lds_cache':
@@ -245,5 +246,6 @@ if __name__ == "__main__":
                 cache_dir=train_config.get('cache_dir', None),
                 lds_cache_dir=train_config.get('lds_cache_dir', None),
                 grad_dir=train_config.get('grad_dir', None),
-                features_dir=train_config.get('features_dir', None)
+                features_dir=train_config.get('features_dir', None),
+                batch_size=train_config.get('batch_size', 64)
     )

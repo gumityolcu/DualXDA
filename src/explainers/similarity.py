@@ -10,21 +10,27 @@ from time import time
 from utils.data import FeatureDataset
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import DataLoader
+import gc
 
 class FeatureSimilarityExplainer(Explainer):
     name = "FeatureSimilarityExplainer"
     def __init__(self, model, dataset, dir, features_dir, device, mode='dot'):
         super(FeatureSimilarityExplainer, self).__init__(model, dataset, device)
         os.makedirs(dir, exist_ok=True)
+        self.dir=dir
         self.features_dir = os.path.join(features_dir, "samples")
+        self.labels_dir = os.path.join(features_dir, "labels")
         self.mode=mode
-        feature_ds = FeatureDataset(self.model, dataset, device, dir)
-        self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
+        self.train_ds=dataset
+        #feature_ds = FeatureDataset(self.model, dataset, device, dir)
+        #self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
 
     def train(self):
         if os.path.isfile(self.features_dir):
             print("Features found.")
             self.features=torch.load(self.features_dir, map_location=self.device)
+            print("Labels found.")
+            self.labels=torch.load(self.labels_dir, map_location=self.device)
 
     def explain(self, x, xpl_targets):
         labels_expanded = self.labels.view(1, -1)
@@ -35,7 +41,7 @@ class FeatureSimilarityExplainer(Explainer):
         x=x.to(self.device)
         f=self.model.features(x).to(self.device)
 
-        dataloader = DataLoader(self.features, batch_size=200, shuffle=False)
+        dataloader = DataLoader(self.features, batch_size=20, shuffle=False)
         xpl = torch.empty((x.shape[0], 0), device=self.device)
         for features in dataloader:
             if self.mode == 'dot':
@@ -57,10 +63,22 @@ class FeatureSimilarityExplainer(Explainer):
 
     def self_influences(self):
         if self.mode == 'dot':
-            self_inf = torch.power(self.features, 2).sum(dim=1)
+            dataloader = DataLoader(self.train_ds, batch_size=10, shuffle=False)
+            print(len(self.train_ds))
+            self_inf = torch.empty((0), device=self.device)
+            for i, (train_x, _) in enumerate(dataloader):
+                features=self.model(train_x.to(self.device))
+                self_inf_curr = torch.pow(features, 2).sum(dim=1)
+                self_inf = torch.cat((self_inf, self_inf_curr), dim=0)
+                if i % 10 ==0:
+                    print(f"self influences computed for {i*10} samples")
+                    gc.collect()   
+                    torch.cuda.empty_cache()  
         else: 
             raise Exception("self influences are constant for all other modes")
         print("self influences are computed")
+        print(self_inf.shape)
+        torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf
     
 class InputSimilarityExplainer(Explainer):
@@ -68,6 +86,7 @@ class InputSimilarityExplainer(Explainer):
     def __init__(self, model, dataset, dir, features_dir, device, mode='dot'):
         super(InputSimilarityExplainer, self).__init__(model, dataset, device)
         os.makedirs(dir, exist_ok=True)
+        self.dir=dir
         self.mode=mode
         self.train_ds=dataset
         self.labels_dir = os.path.join(features_dir, "labels")
@@ -113,8 +132,15 @@ class InputSimilarityExplainer(Explainer):
 
     def self_influences(self):
         if self.mode == 'dot':
-            self_inf = torch.power(self.features, 2).sum(dim=1)
+            dataloader = DataLoader(self.train_ds, batch_size=20, shuffle=False)
+            self_inf = torch.empty((0), device=self.device)
+            for train_x, _ in dataloader:
+                train_x=train_x.flatten(start_dim=1).to(self.device)
+                self_inf_curr = torch.pow(train_x, 2).sum(dim=1)
+                self_inf = torch.cat((self_inf, self_inf_curr), dim=0)
         else: 
             raise Exception("self influences are constant for all other modes")
         print("self influences are computed")
+        print(self_inf.shape)
+        torch.save(self_inf, os.path.join(self.dir, "self_influences"))
         return self_inf

@@ -125,13 +125,15 @@ def get_validation_loss(model, ds, loss, num_classes, device):
     return l
 
 def load_scheduler(name, optimizer, epochs): #include warmup?
-    scheduler_dict = {
-        "constant": ConstantLR(optimizer=optimizer, last_epoch=-1),
-        #"step": StepLR(optimizer=optimizer, step_size=epochs // 20, gamma=0.1, last_epoch=epochs),
-        "annealing": CosineAnnealingLR(optimizer=optimizer, T_max = epochs, last_epoch=epochs) #make it so that t_max updates to len(train_data) // batch_size (check that this is correct again)
-    }
-    scheduler = scheduler_dict.get(name, ConstantLR(optimizer=optimizer, last_epoch=-1 ))
-    return scheduler
+    if name == "constant":
+        scheduler = ConstantLR(optimizer=optimizer, factor=1.0, last_epoch=-1)
+    elif name == "annealing":
+        scheduler = CosineAnnealingLR(optimizer=optimizer, T_max = epochs, last_epoch=epochs)
+    elif name == "step":
+        scheduler = StepLR(optimizer=optimizer, step_size=epochs // 20, gamma=0.1, last_epoch=epochs)
+    else:
+        scheduler = ConstantLR(optimizer=optimizer, factor=1.0, last_epoch=-1)
+    return scheduler        
 
 def load_optimizer(name, model, lr, weight_decay, momentum): #could add momentum as a variable
     optimizer_dict = {
@@ -198,7 +200,13 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     train_acc = []
     loss=load_loss(loss)
     optimizer = load_optimizer(optimizer, model, lr, weight_decay, momentum)
+
+    initial_lr = optimizer.param_groups[0]['lr']
+    print(f"Before scheduler: {initial_lr}")
     scheduler = load_scheduler(scheduler, optimizer, epochs)
+    after_scheduler_lr = optimizer.param_groups[0]['lr']
+    print(f"After scheduler creation: {after_scheduler_lr}")
+
     if augmentation not in [None, '']:
         augmentation = load_augmentation(augmentation, dataset_name)
 
@@ -314,6 +322,8 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         print(f"Epoch {e + 1}/{epochs} loss: {cum_loss}")  # / cnt}")
         print("\n==============\n")
         learning_rates.append(scheduler.get_lr())
+        current_lr = scheduler.get_lr() if hasattr(scheduler, 'get_lr') else [group['lr'] for group in optimizer.param_groups]
+        print(f"Current learning rate: {current_lr}")
         scheduler.step()
         if (e + 1) % save_each == 0:
             validation_loss = get_validation_loss(model, valds, loss, num_classes_model, device)
