@@ -55,8 +55,10 @@ def hoyer_measure(xpl):
 def find_xpl_tensor(xpl_root):
     device= "cuda" if torch.cuda.is_available() else "cpu"
     if not os.path.isdir(xpl_root):
-        raise Exception(f"Can not find standard explanation directory {xpl_root}")
+        return None
     file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and (".times" not in f)]
+    if len(file_list)==0:
+        return None
     file_root = file_list[0].split('_')[0]
     num_files=len(file_list)
     xpl_all_path=os.path.join(xpl_root, f"{file_root}_all")
