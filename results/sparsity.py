@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-path="/mnt/explanations"
+path="/mnt/"
 
 def l0_eps(xpl, eps=1e-6):
     # returns ratio of points whose influence (relative to the maximum influence) is smaller than eps
