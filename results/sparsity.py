@@ -52,13 +52,25 @@ def hoyer_measure(xpl):
     
     return hoyer.mean().item()
 
-def find_xpl_tensor(dir):
-    if os.path.isdir(dir):
-        for file in os.listdir(dir):
-            if file.endswith("_all"):
-                path = os.path.join(dir, file)
-                return path
-    return None
+def find_xpl_tensor(xpl_root):
+    device= "cuda" if torch.cuda.is_available() else "cpu"
+    if not os.path.isdir(xpl_root):
+        raise Exception(f"Can not find standard explanation directory {xpl_root}")
+    file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and (".times" not in f)]
+    file_root = file_list[0].split('_')[0]
+    num_files=len(file_list)
+    xpl_all_path=os.path.join(xpl_root, f"{file_root}_all")
+    if os.path.isfile(xpl_all_path):
+        return xpl_all_path
+    else:
+        xpl_all = torch.empty(0, device=device)
+        for i in range(num_files):
+            fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
+            xpl = torch.load(fname, map_location=torch.device(device))
+            xpl.to(device)
+            xpl_all = torch.cat((xpl_all, xpl), 0)
+        torch.save(xpl_all, xpl_all_path)
+    return xpl_all_path
 
 xai_methods = ["input_similarity_dot", "input_similarity_cos", "input_similarity_l2",
                "feature_similarity_dot", "feature_similarity_cos", "feature_similarity_l2",
