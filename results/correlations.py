@@ -18,24 +18,36 @@ matplotlib.interactive(False)
 def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" , num_test_samples=None, color_map = "viridis"):
     tensors=dict()
     names=[]
+
     for dir in os.listdir(xpl_src_dir):
-        if not os.path.isdir(os.path.join(xpl_src_dir,dir)):
+        xpl_root=os.path.join(xpl_src_dir,dir)
+
+        if not os.path.isdir(xpl_root):
             continue
-        for f in os.listdir(os.path.join(xpl_src_dir,dir)):
-            if "_all" in f:
-                basename=dir
-                names.append(basename)
-                tensors[basename]=torch.load(os.path.join(xpl_src_dir,dir,f), map_location=device)
-                if num_test_samples is not None and num_test_samples<tensors[basename].shape[0]:
-                    tensors[basename]=tensors[basename][:num_test_samples]
+        file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and (".times" not in f)]
+        file_root = file_list[0].split('_')[0]
+        num_files=len(file_list)
+        if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
+            xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
+        #merge all xpl
+        else:
+            xpl_all = torch.empty(0, device=device)
+            for i in range(num_files):
+                fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
+                xpl = torch.load(fname, map_location=torch.device(device))
+                xpl.to(device)
+                xpl_all = torch.cat((xpl_all, xpl), 0)
+            torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
+        basename=dir
+        names.append(basename)
+        tensors[basename]=xpl_all
+        if num_test_samples is not None and num_test_samples<tensors[basename].shape[0]:
+            tensors[basename]=tensors[basename][:num_test_samples]
+
     corr_fns={"spearman":spearman_corrcoef, "kendall":kendall_rank_corrcoef}
 
     corr_fn=corr_fns[corr]
     corr_matrix=torch.zeros((len(tensors.keys()),len(tensors.keys())))
-
-    print("LOGGGGGG\n")
-    print(corr_matrix.shape)
-    print(names)
     # Use two for loops to create correlations between the explainers
     for i, (name1) in enumerate(names):
         tensor1=tensors[name1]
@@ -52,7 +64,7 @@ def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" ,
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
             rotation_mode="anchor")
 
-    ax.set_xticks(np.arange(len([n.replace("InfluenceFunction","").replace("Explainer","") for n in names])), labels=names)
+    ax.set_xticks(np.arange(len(names)), labels=names)
     ax.set_yticks(np.arange(len(names)), labels=names)
 
     # Loop over data dimensions and create text annotations.
@@ -68,7 +80,12 @@ def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" ,
     fig.tight_layout()
     plt.savefig(os.path.join(save_dir,f"{corr}.jpg"))  # Save the image
     torch.save(corr_matrix, os.path.join(save_dir,f"{corr}_correlations"))
-
+    with open(os.path.join(save_dir,"order_of_explainers"), "w") as f:
+        for i,n in enumerate(names):
+            f.write(f"{n}")
+            if i<len(names)-1:
+                f.write("\n")
+    
 
 if __name__ == "__main__":
     prsr=argparse.ArgumentParser()
