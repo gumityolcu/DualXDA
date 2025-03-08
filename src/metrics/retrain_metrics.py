@@ -130,8 +130,7 @@ class RetrainMetric(Metric):
 class BatchRetraining(RetrainMetric):
     name = "BatchRetraining"
 
-    @staticmethod
-    def calculate_ce_loss(model, dataset, num_classes):
+    def calculate_ce_loss(self, model, dataset, num_classes):
         model.eval()
         num_samples = len(dataset)
         total_loss = 0.
@@ -139,6 +138,8 @@ class BatchRetraining(RetrainMetric):
         data_loader = DataLoader(dataset, batch_size=32, shuffle=False)
         with torch.no_grad():
             for x, y in data_loader:
+                x=x.to(self.device)
+                y=y.to(self.device)
                 output = model(x)
                 loss = loss_fct(output, y)
                 total_loss += loss.item()

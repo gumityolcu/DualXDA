@@ -6,13 +6,15 @@ from matplotlib import pyplot as plt
 import os
 import argparse
 
-def main(dataset_name, device):
+def main():
+    dataset_name="MNIST"
+    device="cuda" if torch.cuda.is_available() else "cpu"
     n_cls={"MNIST":10, "CIFAR":10, "AWA":50}
 
     C_values=[1e-6,1e-5,0.0001,0.001,0.01,0.1,1.,10.,100.]
     num_classes=n_cls[dataset_name]
-    root=f"/mnt/cache/{dataset_name}/std"
-    outdir="/mnt/outputs"
+    root=f"/home/fe/yolcu/Documents/Code/DualView-wip/cache/{dataset_name}/std"
+    outdir="/home/fe/yolcu/Documents/Code/DualView-wip/test_output"
 
     outname=f"{dataset_name}_K_plot"
     preactivations=torch.load(f"{root}/features/samples",map_location=device)
@@ -24,7 +26,7 @@ def main(dataset_name, device):
     train_accs=[]
 
     ds_kwargs = {
-        'data_root': "/mnt/dataset",
+        'data_root': "/home/fe/yolcu/Documents/Datasets",
         'image_set': "test",
         'validation_size': 2000,
         "only_train": False,
@@ -124,9 +126,5 @@ def main(dataset_name, device):
     plt.savefig(os.path.join(outdir, f"{outname}_2.pdf"))
 
 if __name__=="__main__":
-    parser=argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="AWA")
-    parser.add_argument("--device", type=str, default="cpu")
-    args=parser.parse_args()
-    main(dataset_name=args.dataset, device=args.device)
+    main()
     

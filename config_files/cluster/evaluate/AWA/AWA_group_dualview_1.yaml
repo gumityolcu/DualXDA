@@ -65,4 +65,4 @@ num_classes: 50
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: dualview
-xpl_root: /mnt/explanations/AWA/group/dualview/
+xpl_root: /mnt/explanations/AWA/group/dualview_1/

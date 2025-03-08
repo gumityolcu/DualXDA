@@ -22,4 +22,4 @@ scheduler: constant
 validation_size: 2000
 weight_decay: 0
 xai_method: dualview
-xpl_root: /mnt/explanations/MNIST/std/dualview/
+xpl_root: /mnt/explanations/MNIST/std/dualview_0.1/
