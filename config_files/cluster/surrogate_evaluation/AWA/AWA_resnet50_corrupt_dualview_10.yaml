@@ -1,0 +1,31 @@
+C: 10.0
+accuracy: true
+batch_size: 32
+cache_dir: /mnt/cache/AWA/corrupt/dualview_10.0
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: /mnt/dataset
+dataset_name: AWA
+dataset_type: corrupt
+device: cuda
+features_dir: /mnt/cache/AWA/corrupt/features
+grad_dir: /mnt/cache/AWA/corrupt/tracin/best
+model_name: resnet50
+model_path: /mnt/checkpoints/AWA/corrupt/AWA_resnet50_best
+num_batches_per_file: 100
+num_classes: 50
+num_files: 500
+save_dir_explainer: /mnt/outputs/AWA/corrupt/dualview_10.0
+save_dir_results: /mnt/outputs/AWA/corrupt/dualview_10.0
+start_file: 0
+validation_size: 2000
+xai_method: dualview
