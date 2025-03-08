@@ -367,7 +367,7 @@ class PredictionTargetDataset(Dataset):
         if self.preds[index]==-1.:
             x=x.to(self.device)
             self.preds[index]=self.model(x[None]).argmax(dim=-1)[0]
-        return x, self.preds[index]
+        return x, int(self.preds[index])
     
     def __len__(self):
         return len(self.dataset)
