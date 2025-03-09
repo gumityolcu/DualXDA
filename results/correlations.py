@@ -28,7 +28,7 @@ def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" ,
         file_root = file_list[0].split('_')[0]
         num_files=len(file_list)
         if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-            xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
+            xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"), map_location=device)
         #merge all xpl
         else:
             xpl_all = torch.empty(0, device=device)
@@ -56,7 +56,7 @@ def explainer_corr(xpl_src_dir, save_dir = None, corr="spearman", device="cpu" ,
                 corr_matrix[i,j]=1.0
             else:
                 tensor2=tensors[name2]
-                corr_matrix[i,j]=corr_fn(tensor1.T, tensor2.T).mean()
+                corr_matrix[i,j]=corr_fn(tensor1.T.to(device), tensor2.T.to(device)).mean()
     fig, ax = plt.subplots(figsize = (8,6))
     im = ax.imshow(corr_matrix, cmap = color_map)
 
