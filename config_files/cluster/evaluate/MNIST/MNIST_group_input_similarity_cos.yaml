@@ -1,5 +1,5 @@
 batch_size: 16
-cache_dir: /mnt/cache/MNIST/group/input_similarity_cos
+cache_dir: /mnt/cache/MNIST/lds
 class_groups:
 - - 0
   - 1

@@ -1,5 +1,5 @@
 batch_size: 128
-cache_dir: /mnt/cache/AWA/mark/representer
+cache_dir: /mnt/cache/AWA/lds
 data_root: /mnt/dataset
 dataset_name: AWA
 dataset_type: mark

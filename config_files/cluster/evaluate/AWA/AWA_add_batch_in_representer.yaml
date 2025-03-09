@@ -1,6 +1,6 @@
 augmentation: flip
 batch_size: 8
-cache_dir: /mnt/cache/AWA/std/representer
+cache_dir: /mnt/cache/AWA/lds
 data_root: /mnt/dataset
 dataset_name: AWA
 dataset_type: std

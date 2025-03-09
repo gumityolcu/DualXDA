@@ -1,6 +1,6 @@
 augmentation: crop_flip
 batch_size: 8
-cache_dir: /mnt/cache/CIFAR/std/feature_similarity_l2
+cache_dir: /mnt/cache/CIFAR/lds
 data_root: /mnt/dataset
 dataset_name: CIFAR
 dataset_type: std

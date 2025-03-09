@@ -1,7 +1,7 @@
 C: 1.0e-05
 augmentation: flip
 batch_size: 8
-cache_dir: /mnt/cache/AWA/std/dualview_1e-05
+cache_dir: /mnt/cache/AWA/lds
 data_root: /mnt/dataset
 dataset_name: AWA
 dataset_type: std

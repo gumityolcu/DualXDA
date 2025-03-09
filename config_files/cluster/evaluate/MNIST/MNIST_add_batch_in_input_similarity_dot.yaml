@@ -1,6 +1,6 @@
 augmentation: crop
 batch_size: 8
-cache_dir: /mnt/cache/MNIST/std/input_similarity_dot
+cache_dir: /mnt/cache/MNIST/lds
 data_root: /mnt/dataset
 dataset_name: MNIST
 dataset_type: std

@@ -1,5 +1,5 @@
 batch_size: 128
-cache_dir: /mnt/cache/MNIST/corrupt/representer
+cache_dir: /mnt/cache/MNIST/lds
 data_root: /mnt/dataset
 dataset_name: MNIST
 dataset_type: corrupt

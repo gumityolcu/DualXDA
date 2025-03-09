@@ -1,7 +1,7 @@
 C: 0.1
 augmentation: crop
 batch_size: 8
-cache_dir: /mnt/cache/MNIST/std/dualview_0.1
+cache_dir: /mnt/cache/MNIST/lds
 data_root: /mnt/dataset
 dataset_name: MNIST
 dataset_type: std
@@ -9,6 +9,7 @@ device: cuda
 epochs: 200
 features_dir: /mnt/cache/MNIST/std/features
 grad_dir: /mnt/cache/MNIST/std/tracin/best
+lds_cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/lds
 loss: cross_entropy
 lr: 0.0016666666666666668
 metric: add_batch_in

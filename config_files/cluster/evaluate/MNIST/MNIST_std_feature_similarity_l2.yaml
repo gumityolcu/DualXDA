@@ -1,5 +1,5 @@
 batch_size: 16
-cache_dir: /mnt/cache/MNIST/std/feature_similarity_l2
+cache_dir: /mnt/cache/MNIST/lds
 data_root: /mnt/dataset
 dataset_name: MNIST
 dataset_type: std

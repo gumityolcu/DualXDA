@@ -1,5 +1,5 @@
 batch_size: 128
-cache_dir: /mnt/cache/CIFAR/group/representer
+cache_dir: /mnt/cache/CIFAR/lds
 class_groups:
 - - 0
   - 1

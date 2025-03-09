@@ -1,5 +1,5 @@
 batch_size: 16
-cache_dir: /mnt/cache/CIFAR/corrupt/arnoldi
+cache_dir: /mnt/cache/CIFAR/lds
 data_root: /mnt/dataset
 dataset_name: CIFAR
 dataset_type: corrupt

@@ -1,6 +1,6 @@
 C: 1.0e-05
 batch_size: 16
-cache_dir: /mnt/cache/MNIST/std/dualview_1e-05
+cache_dir: /mnt/cache/MNIST/lds
 data_root: /mnt/dataset
 dataset_name: MNIST
 dataset_type: std

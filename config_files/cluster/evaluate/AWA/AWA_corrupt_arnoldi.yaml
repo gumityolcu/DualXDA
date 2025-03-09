@@ -1,5 +1,5 @@
 batch_size: 16
-cache_dir: /mnt/cache/AWA/corrupt/arnoldi
+cache_dir: /mnt/cache/AWA/lds
 data_root: /mnt/dataset
 dataset_name: AWA
 dataset_type: corrupt
