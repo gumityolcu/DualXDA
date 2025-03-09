@@ -85,9 +85,9 @@ def main():
     sv_counts=torch.tensor(sv_counts, device=device)
 
     x_axis=[i-6 for i in range(len(C_values))]
-    plt.rcParams['text.usetex'] = True
-    plt.rcParams['mathtext.fontset'] = 'stix'
-    plt.rcParams['font.family'] = 'STIXGeneral'
+    # plt.rcParams['text.usetex'] = True
+    # plt.rcParams['mathtext.fontset'] = 'stix'
+    # plt.rcParams['font.family'] = 'STIXGeneral'
     fontdict={"size": 15}
 
     # plot 1
