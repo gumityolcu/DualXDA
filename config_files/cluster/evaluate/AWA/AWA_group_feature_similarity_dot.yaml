@@ -1,5 +1,5 @@
 batch_size: 16
-cache_dir: /mnt/cache/AWA/lds
+cache_dir: /mnt/cache/AWA/group/feature_similarity_dot
 class_groups:
 - - 0
   - 1
@@ -57,6 +57,7 @@ dataset_type: group
 device: cuda
 features_dir: /mnt/cache/AWA/group/features
 grad_dir: /mnt/cache/AWA/group/tracin/best
+lds_cache_dir: /mnt/cache/AWA/lds
 metric: group
 model_name: resnet50
 model_path: /mnt/checkpoints/AWA/group/AWA_resnet50_best

@@ -1,11 +1,12 @@
 batch_size: 16
-cache_dir: /mnt/cache/MNIST/lds
+cache_dir: /mnt/cache/MNIST/corrupt/tracin
 data_root: /mnt/dataset
 dataset_name: MNIST
 dataset_type: corrupt
 device: cuda
 features_dir: /mnt/cache/MNIST/corrupt/features
 grad_dir: /mnt/cache/MNIST/corrupt/tracin/best
+lds_cache_dir: /mnt/cache/MNIST/lds
 metric: corrupt
 model_name: basic_conv
 model_path: /mnt/checkpoints/MNIST/corrupt/MNIST_basic_conv_best

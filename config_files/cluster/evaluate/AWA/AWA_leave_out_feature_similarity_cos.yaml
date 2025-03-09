@@ -1,6 +1,6 @@
 augmentation: flip
 batch_size: 8
-cache_dir: /mnt/cache/AWA/lds
+cache_dir: /mnt/cache/AWA/std/feature_similarity_cos
 data_root: /mnt/dataset
 dataset_name: AWA
 dataset_type: std
@@ -8,6 +8,7 @@ device: cuda
 epochs: 30
 features_dir: /mnt/cache/AWA/std/features
 grad_dir: /mnt/cache/AWA/std/tracin/best
+lds_cache_dir: /mnt/cache/AWA/lds
 loss: cross_entropy
 lr: 0.0033333333333333335
 metric: leave_out
