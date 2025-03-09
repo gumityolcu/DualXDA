@@ -6,9 +6,7 @@ from matplotlib import pyplot as plt
 import os
 import argparse
 
-def main():
-    dataset_name="MNIST"
-    device="cuda" if torch.cuda.is_available() else "cpu"
+def main(dataset_name, device):
     n_cls={"MNIST":10, "CIFAR":10, "AWA":50}
 
     C_values=[1e-6,1e-5,0.0001,0.001,0.01,0.1,1.,10.,100.]
@@ -93,7 +91,7 @@ def main():
     # plot 1
     fig, ax1=plt.subplots(figsize=(8,6))
     ax1.plot(x_axis, train_accs, label="Train accuracy", color="red")
-    #ax1.plot(x_axis, test_accs, label="Test accuracy", color="blue")
+    ax1.plot(x_axis, test_accs, label="Test accuracy", color="blue")
     ax1.set_xlabel("$log_{10}K$", fontdict=fontdict)
     ax1.set_xticks(x_axis)
     ax1.set_ylabel("Accuracy", fontdict=fontdict)
@@ -126,5 +124,9 @@ def main():
     plt.savefig(os.path.join(outdir, f"{outname}_2.pdf"))
 
 if __name__=="__main__":
-    main()
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--dataset", required=True)
+    parser.add_argument("--device", default="cpu")
+    args=parser.parse_args()
+    main(args.dataset, args.device)
     
