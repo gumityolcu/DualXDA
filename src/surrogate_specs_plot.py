@@ -13,8 +13,8 @@ def main():
 
     C_values=[1e-6,1e-5,0.0001,0.001,0.01,0.1,1.,10.,100.]
     num_classes=n_cls[dataset_name]
-    root=f"/home/fe/yolcu/Documents/Code/DualView-wip/cache/{dataset_name}/std"
-    outdir="/home/fe/yolcu/Documents/Code/DualView-wip/test_output"
+    root=f"/mnt/cache/{dataset_name}/std"
+    outdir="/mnt/outputs"
 
     outname=f"{dataset_name}_K_plot"
     preactivations=torch.load(f"{root}/features/samples",map_location=device)
@@ -26,7 +26,7 @@ def main():
     train_accs=[]
 
     ds_kwargs = {
-        'data_root': "/home/fe/yolcu/Documents/Datasets",
+        'data_root': "/mnt/dataset",
         'image_set': "test",
         'validation_size': 2000,
         "only_train": False,
