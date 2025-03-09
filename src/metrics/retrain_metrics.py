@@ -402,7 +402,7 @@ class LinearDatamodelingScore(RetrainMetric):
         self.device = device
 
     def __call__(self, xpl, start_index=0):
-        xpl.to(self.device)
+        xpl=xpl.to(self.device)
         self.n_test = xpl.shape[0]
         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0).to(self.device)
         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long().to(self.device)
