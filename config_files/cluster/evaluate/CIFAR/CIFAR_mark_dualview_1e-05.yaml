@@ -1,6 +1,6 @@
 C: 1.0e-05
 batch_size: 16
-cache_dir: /mnt/cache/CIFAR/mark/dualview_1e-05
+cache_dir: /mnt/cache/CIFAR/mark/dualview_1e_05
 data_root: /mnt/dataset
 dataset_name: CIFAR
 dataset_type: mark
@@ -15,4 +15,4 @@ num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: dualview
-xpl_root: /mnt/explanations/CIFAR/mark/dualview_1e-05/
+xpl_root: /mnt/explanations/CIFAR/mark/dualview_1e_05/
