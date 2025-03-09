@@ -29,7 +29,7 @@ singularity run \
 
 cd ${LOCAL_JOB_DIR}
 tar -czf $1_surrogate_analyses_${SLURM_JOB_ID}.tgz outputs
-cp $1_surrogate_analyses_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}
+cp $1_surrogate_analyses_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}/surr_analyses
 
 end=`date +%s`
 runtime=$((end-start))
