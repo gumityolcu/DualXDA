@@ -49,7 +49,7 @@ def main(dataset_name, device):
 
 
 
-    ld=torch.utils.data.DataLoader(test, 32, shuffle=False)
+    ld=torch.utils.data.DataLoader(test, 8 if dataset_name=="AWA" else 32, shuffle=False)
     sv_counts=[]
 
     for c in C_values:
@@ -69,7 +69,7 @@ def main(dataset_name, device):
         train_accs.append((pred==labels).float().mean().item())
         _test_accs=[]
         for i,(x,y) in enumerate(iter(ld)):
-            if i>=100:
+            if i>= 100:
                 break
             x=x.to(device)
             y=y.to(device)
@@ -115,7 +115,7 @@ def main(dataset_name, device):
     ax1.set_ylabel("Accuracy", fontdict=fontdict)
     ax2=ax1.twinx()
     ax2.set_ylabel("Train time (s)", fontdict=fontdict)
-    ax2.plot(x_axis, train_times.to("cpu"), label="Train time", color="black")
+    ax2.plot(x_axis, train_times, label="Train time", color="black")
 
     ax1.legend(loc=0, fontsize=12)
     ax2.legend(loc=4, fontsize=12)
