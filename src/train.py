@@ -261,6 +261,8 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     best_model_yet = model_path
     best_loss_yet = None
 
+    print("Device:", device)
+
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir,exist_ok=True)
     for e in range(epochs):

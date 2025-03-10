@@ -418,7 +418,7 @@ class LinearDatamodelingScore(RetrainMetric):
             logits = retrained_model(evalds)
             probs = F.softmax(logits, dim=1)
             correct_probs = probs.gather(1, evalds_labels.unsqueeze(1)).squeeze()
-            binary_logits = torch.log(correct_probs / (1-correct_probs))
+            binary_logits = torch.log(correct_probs / (1-correct_probs+1e-10)) #added for numerical stability
             model_output_array[:, i] = binary_logits.cpu().detach()
         self.attribution_array=torch.cat((self.attribution_array, attribution_array), dim=0)
         self.model_output_array=torch.cat((self.model_output_array, model_output_array), dim=0)
@@ -427,7 +427,7 @@ class LinearDatamodelingScore(RetrainMetric):
         spearman = SpearmanCorrCoef(num_outputs=self.n_test)
         correlation_scores = spearman(self.attribution_array.T, self.model_output_array.T)
         resdict = {'metric': self.name, 'correlation_scores': correlation_scores, 'avg_score': correlation_scores.mean(),
-                   'sample_attributions': self.attribution_array, 'sample_model_outputs': self.model_output_array}
+                   'sample_attributions': self.attribution_array, 'sample_binarized_logits': self.model_output_array, "subset_indices": self.sample_indices}
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
