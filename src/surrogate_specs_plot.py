@@ -109,13 +109,13 @@ def main(dataset_name, device):
     fig, ax1=plt.subplots(figsize=(8,6))
 
     for i in range(len(C_values)):
-        ax1.plot(x_axis,sv_counts.T[i], label=train.class_labels[i])
+        ax1.plot(x_axis,sv_counts.T[i].to("cpu"), label=train.class_labels[i])
     ax1.set_xlabel("$log_{10}K$", fontdict=fontdict)
     ax1.set_xticks(x_axis)
     ax1.set_ylabel("Accuracy", fontdict=fontdict)
     ax2=ax1.twinx()
     ax2.set_ylabel("Train time (s)", fontdict=fontdict)
-    ax2.plot(x_axis, train_times, label="Train time", color="black")
+    ax2.plot(x_axis, train_times.to("cpu"), label="Train time", color="black")
 
     ax1.legend(loc=0, fontsize=12)
     ax2.legend(loc=4, fontsize=12)
