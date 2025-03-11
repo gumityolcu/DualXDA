@@ -129,6 +129,8 @@ class Metric(ABC):
             json.dump(self.to_float(resdict), f, ensure_ascii=False, indent=4)
         print(resdict)
 
+
+
     @staticmethod
     def to_float(results):
         if isinstance(results, dict):

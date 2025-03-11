@@ -21,7 +21,6 @@ class ResNetWrapper(torch.nn.Module):
         # print(total)
         # exit()
         super(ResNetWrapper, self).__init__()
-        print(module)
         self.classifier=torch.nn.Linear(in_features=module.fc.in_features, out_features=output_dim, bias=True)
         self.arnoldi_param_filter=arnoldi_param_filter
         seq_array=[
@@ -46,9 +45,8 @@ class ResNetWrapper(torch.nn.Module):
     def arnoldi_parameters(self):
         if self.arnoldi_param_filter is None:           
             return None #None means we use all parameters. This is needed for full model explanation with CIFAR
-        return ["classifier", "features.6", "features.7"]
-
-            
+        return ["classifier", "features.7.2.conv2"]
+         
 
     def sim_parameters(self):
         return self.parameters()
@@ -88,14 +86,14 @@ def load_model(model_name, dataset_name, num_classes):
             return ResNetWrapper(resnet50(), output_dim=num_classes)
 
 
-def compute_accuracy(model, test, device):
+def compute_accuracy(model, test, device, progress=True):
     loader=torch.utils.data.DataLoader(test, 64, shuffle=False)
     acc = 0.
     model.eval()
     index = 0
     fault_list = []
 
-    for x, y in tqdm.tqdm(loader):
+    for x, y in tqdm.tqdm(loader, disable=not progress):
         x=x.to(device)
         if isinstance(y,list):
             y=y[1]

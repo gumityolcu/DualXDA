@@ -13,6 +13,7 @@ def main(dataset_name, device):
     num_classes=n_cls[dataset_name]
     root=f"/mnt/cache/{dataset_name}/std"
     outdir="/mnt/outputs"
+
     outname=f"{dataset_name}_K_plot"
     preactivations=torch.load(f"{root}/features/samples",map_location=device)
     labels=torch.load(f"{root}/features/labels",map_location=device)
@@ -23,7 +24,7 @@ def main(dataset_name, device):
     train_accs=[]
 
     ds_kwargs = {
-        'data_root': "~/Documents/Code/Datasets",
+        'data_root': "/mnt/dataset",
         'image_set': "test",
         'validation_size': 2000,
         "only_train": False,
@@ -41,27 +42,14 @@ def main(dataset_name, device):
     model = load_model(model_name, dataset_name, ds_kwargs["num_classes"]).to(device)
     checkpoint = torch.load(model_path, map_location=device)
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
-    features=model.features
-
-    x, _ = train[0]
-
-    test_feat=torch.empty((0,features(x[None]).shape[1])).to(device)
-    test_labels=torch.empty((0,)).to(device)
 
     model.load_state_dict(checkpoint["model_state"])
-    model.to(device)
     model.eval()
+    model.to(device)
 
-    ld=torch.utils.data.DataLoader(test, 32, shuffle=False)
-    for i,(x,y) in enumerate(iter(ld)):
-        if i>=100:
-            break
-        x=x.to(device)
-        y=y.to(device)
-        _feat=features(x)
-        test_feat=torch.cat((test_feat, _feat), dim=0)
-        test_labels=torch.cat((test_labels, y), dim=0)
 
+
+    ld=torch.utils.data.DataLoader(test, 8 if dataset_name=="AWA" else 32, shuffle=False)
     sv_counts=[]
 
     for c in C_values:
@@ -75,20 +63,29 @@ def main(dataset_name, device):
                     if coefs[i, j]!=0.:
                         svs[j]+=1
         sv_counts.append(svs)
+        print(f"{dirname}")
         weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
-        pred=torch.matmul(test_feat, weight.T).argmax(dim=1)
-        test_accs.append((pred==test_labels).float().mean().item())
+        _test_accs=[]
+        for i,(x,y) in enumerate(iter(ld)):
+            if i>= 100:
+                break
+            x=x.to(device)
+            y=y.to(device)
+            feat=model.features(x)
+            pred=torch.matmul(feat, weight.T).argmax(dim=1)
+            _test_accs.append((pred==y).float().mean().item())
+        test_accs.append(torch.tensor(_test_accs, device=device).mean().item())
         train_time=torch.load(f"{root}/{dirname}/train_time", map_location=device)
         train_times.append(train_time.item())
 
     sv_counts=torch.tensor(sv_counts, device=device)
 
     x_axis=[i-6 for i in range(len(C_values))]
-    plt.rcParams['text.usetex'] = True
-    plt.rcParams['mathtext.fontset'] = 'stix'
-    plt.rcParams['font.family'] = 'STIXGeneral'
+    # plt.rcParams['text.usetex'] = True
+    # plt.rcParams['mathtext.fontset'] = 'stix'
+    # plt.rcParams['font.family'] = 'STIXGeneral'
     fontdict={"size": 15}
 
     # plot 1
@@ -112,10 +109,10 @@ def main(dataset_name, device):
     fig, ax1=plt.subplots(figsize=(8,6))
 
     for i in range(len(C_values)):
-        ax1.plot(x_axis,sv_counts.T[i], label=train.class_labels[i])
+        ax1.plot(x_axis,sv_counts.T[i].to("cpu"), label=train.class_labels[i])
     ax1.set_xlabel("$log_{10}K$", fontdict=fontdict)
     ax1.set_xticks(x_axis)
-    ax1.set_ylabel("Accuracy", fontdict=fontdict)
+    ax1.set_ylabel("Number of support vectors", fontdict=fontdict)
     ax2=ax1.twinx()
     ax2.set_ylabel("Train time (s)", fontdict=fontdict)
     ax2.plot(x_axis, train_times, label="Train time", color="black")
@@ -128,8 +125,8 @@ def main(dataset_name, device):
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="AWA")
-    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--dataset", required=True)
+    parser.add_argument("--device", default="cpu")
     args=parser.parse_args()
-    main(dataset_name=args.dataset, device=args.device)
+    main(args.dataset, args.device)
     
