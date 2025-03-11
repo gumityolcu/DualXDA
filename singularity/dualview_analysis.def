@@ -18,21 +18,19 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
     scipy \
     seaborn \
     termcolor
-  pip install torcheval
   pip install zennit
   pip install tensorboard
   pip install /sklearn
-  pip install torchmetrics
   pip install /captum
   pip install kronfluence
+  apt update
+  ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
+  apt install texlive texlive-latex-extra texlive-fonts-recommended dvipng -y
+  pip install latex
 
 %runscript
 
   cd /mnt/src
   pwd
   ls
-  if [ "$1" = "--trak" ]; then
-    pip install traker[fast] --user
-    shift
-  fi
-  python evaluate.py "$@"
+  python surrogate_specs_plot.py "$@"

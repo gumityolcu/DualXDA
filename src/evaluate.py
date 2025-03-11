@@ -1,6 +1,6 @@
 import argparse
-from utils.data import load_datasets, ReduceLabelDataset
-from utils.models import load_model
+from utils.data import load_datasets, ReduceLabelDataset, PredictionTargetDataset
+from utils.models import clear_resnet_from_checkpoints, load_model
 from explain import load_explainer
 import yaml
 import logging
@@ -10,7 +10,7 @@ from metrics import *
 
 def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                 epochs, loss, lr, momentum, optimizer, scheduler,
-                weight_decay, augmentation, sample_nr, cache_dir, num_classes, batch_size):
+                weight_decay, augmentation, sample_nr, cache_dir,lds_cache_dir, num_classes, batch_size):
     base_dict={
         "train": train,
         "test": test,
@@ -38,17 +38,22 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
                  
                  
     """
+    # dataset_sizes={
+    #     "MNIST": 60000,
+    #     "CIFAR": 50000,
+    #     "AWA": 30000
+    # }
 
     ret_dict = {"std": (SameClassMetric,{}), "group": (SameSubclassMetric,{}), 
                 "corrupt": (CorruptLabelMetric,{}),
-                "mark": (MarkImageMetric, {"model":model}),
+                "mark": (MarkImageMetric, {"model":model, "topk": 10}),
                 "stdk": (TopKSameClassMetric,{}), "groupk": (TopKSameSubclassMetric,{}),
                 "switched": (SwitchMetric,{}),
                 "add_batch_in": (BatchRetraining,{ **retrain_dict,**{"mode":"cum"}}),
                 "add_batch_in_neg": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
                 "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
                 "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
-                "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': cache_dir}}),
+                "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': lds_cache_dir}}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "labelflip": (LabelFlipMetric, retrain_dict)}
     if metric_name not in ret_dict.keys():
@@ -63,7 +68,7 @@ def evaluate(model_name, model_path, device, class_groups,
              data_root, xpl_root, coef_root,
              save_dir, validation_size, num_classes,
              epochs, loss, lr, momentum, optimizer, scheduler,
-             weight_decay, augmentation, sample_nr, xai_method, cache_dir, grad_dir, features_dir, batch_size):
+             weight_decay, augmentation, sample_nr, xai_method, cache_dir, lds_cache_dir, grad_dir, features_dir, batch_size):
     if not torch.cuda.is_available():
         device="cpu"
     if augmentation not in [None, '']:
@@ -84,15 +89,21 @@ def evaluate(model_name, model_path, device, class_groups,
     else:
         dataset_type = "std"
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
-    model = load_model(model_name, dataset_name, num_classes).to(device)
-    #if dataset_type == 'mark': # do we need these lines? not clear yet.
-    #    checkpoint = torch.load(model_path, map_location=device)
-    #    model.load_state_dict(checkpoint["model_state"])
+    if dataset_type=="group":
+        num_classes_model=len(class_groups)
+    else: 
+        num_classes_model = num_classes
+    model = load_model(model_name, dataset_name, num_classes_model).to(device)
+    checkpoint = torch.load(model_path, map_location=device)
+    checkpoint=clear_resnet_from_checkpoints(checkpoint)
+
+    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
+    test=PredictionTargetDataset(dataset=test, model=model, device=device)
     metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
-                         weight_decay, augmentation, sample_nr, cache_dir, num_classes, batch_size)
+                         weight_decay, augmentation, sample_nr, cache_dir, lds_cache_dir, num_classes, batch_size)
     print(f"Computing metric {metric.name}")
 
     if metric_name == 'lds_cache':
@@ -105,49 +116,49 @@ def evaluate(model_name, model_path, device, class_groups,
 
 ######################################################################
 
-    if metric_name == 'switched':
-        xpl_root_switched = xpl_root
-        xpl_root = xpl_root.replace('switched', 'std')
+    # if metric_name == 'switched':
+    #     xpl_root_switched = xpl_root
+    #     xpl_root = xpl_root.replace('switched', 'std')
 
-        if not os.path.isdir(xpl_root):
-            raise Exception(f"Can not find standard explanation directory {xpl_root}")
-        file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-        file_root = file_list[0].split('_')[0]
-        num_files=len(file_list)
-        #check if merged xpl exists
-        if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-            xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
-        #merge all xpl
-        else:
-            xpl_all = torch.empty(0, device=device)
-            for i in range(num_files):
-                fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
-                xpl = torch.load(fname, map_location=torch.device(device))
-                xpl.to(device)
-                xpl_all = torch.cat((xpl_all, xpl), 0)
-            torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
+    #     if not os.path.isdir(xpl_root):
+    #         raise Exception(f"Can not find standard explanation directory {xpl_root}")
+    #     file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+    #     file_root = file_list[0].split('_')[0]
+    #     num_files=len(file_list)
+    #     #check if merged xpl exists
+    #     if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
+    #         xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
+    #     #merge all xpl
+    #     else:
+    #         xpl_all = torch.empty(0, device=device)
+    #         for i in range(num_files):
+    #             fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
+    #             xpl = torch.load(fname, map_location=torch.device(device))
+    #             xpl.to(device)
+    #             xpl_all = torch.cat((xpl_all, xpl), 0)
+    #         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
 
-        if not os.path.isdir(xpl_root_switched):
-            raise Exception(f"Can not find switched explanation directory {xpl_root_switched}")
-        file_list_switched = [f for f in os.listdir(xpl_root_switched) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-        file_root_switched = file_list_switched[0].split('_')[0]
-        num_files_switched=len(file_list_switched)        
-        #check if merged switched xpl exists
-        if os.path.isfile(os.path.join(xpl_root_switched, f"{file_root_switched}_all")):
-            xpl_all_switched = torch.load(os.path.join(xpl_root_switched, f"{file_root_switched}_all"))        
-        #merge all switched xpl
-        else:
-            xpl_all_switched = torch.empty(0, device=device)
-            for i in range(num_files_switched):
-                fname_switched = os.path.join(xpl_root_switched, f"{file_root_switched}_{i:02d}")
-                xpl_switched = torch.load(fname_switched, map_location=torch.device(device))
-                xpl_switched.to(device)
-                xpl_all_switched = torch.cat((xpl_all_switched, xpl_switched), 0)
-            torch.save(xpl_all_switched, os.path.join(xpl_root_switched, f"{file_root_switched}_all"))
+    #     if not os.path.isdir(xpl_root_switched):
+    #         raise Exception(f"Can not find switched explanation directory {xpl_root_switched}")
+    #     file_list_switched = [f for f in os.listdir(xpl_root_switched) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+    #     file_root_switched = file_list_switched[0].split('_')[0]
+    #     num_files_switched=len(file_list_switched)        
+    #     #check if merged switched xpl exists
+    #     if os.path.isfile(os.path.join(xpl_root_switched, f"{file_root_switched}_all")):
+    #         xpl_all_switched = torch.load(os.path.join(xpl_root_switched, f"{file_root_switched}_all"))        
+    #     #merge all switched xpl
+    #     else:
+    #         xpl_all_switched = torch.empty(0, device=device)
+    #         for i in range(num_files_switched):
+    #             fname_switched = os.path.join(xpl_root_switched, f"{file_root_switched}_{i:02d}")
+    #             xpl_switched = torch.load(fname_switched, map_location=torch.device(device))
+    #             xpl_switched.to(device)
+    #             xpl_all_switched = torch.cat((xpl_all_switched, xpl_switched), 0)
+    #         torch.save(xpl_all_switched, os.path.join(xpl_root_switched, f"{file_root_switched}_all"))
 
-        metric(xpl_all, xpl_all_switched, 0)
-        metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
-        return
+    #     metric(xpl_all, xpl_all_switched, 0)
+    #     metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
+    #     return
     
     ################
 
@@ -173,7 +184,7 @@ def evaluate(model_name, model_path, device, class_groups,
     #check if merged xpl exists
     if not os.path.isdir(xpl_root):
         raise Exception(f"Can not find standard explanation directory {xpl_root}")
-    file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
+    file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and (".times" not in f)]
     file_root = file_list[0].split('_')[0]
     num_files=len(file_list)
     if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
@@ -233,6 +244,7 @@ if __name__ == "__main__":
                 sample_nr=train_config.get('sample_nr', None),
                 xai_method=train_config.get('xai_method', None),
                 cache_dir=train_config.get('cache_dir', None),
+                lds_cache_dir=train_config.get('lds_cache_dir', None),
                 grad_dir=train_config.get('grad_dir', None),
                 features_dir=train_config.get('features_dir', None),
                 batch_size=train_config.get('batch_size', 64)

@@ -51,6 +51,12 @@ class TRAK(Explainer):
                                 for j in range(min(self.batch_size,len(self.dataset)-i*self.batch_size))
                      ]))
         self.traker.finalize_features()
+        train_time=time()-t
+        if os.path.exists(os.path.join(self.dir, "train_time")):
+            train_time = torch.load(os.path.join(self.dir, "train_time"))
+        else:
+            torch.save(train_time, os.path.join(self.dir, "train_time"))
+        return train_time
 
     def explain(self, x, xpl_targets):
         x=x.to(self.device)

@@ -29,9 +29,9 @@ def count_params_model(model):
 
 def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
     lissa_params={
-        "MNIST": {'depth': 6000, 'repeat': 10},
-        "CIFAR": {'depth': 5000, 'repeat': 10},
-        "AWA": {'depth': 3700, 'repeat': 10}
+        "MNIST": {'depth': 6000, 'repeat': 10, "file_size": 20},
+        "CIFAR": {'depth': 5000, 'repeat': 10, "file_size":20},
+        "AWA": {'depth': 3700, 'repeat': 10, "file_size":20}
     }
 
     arnoldi_params={
@@ -130,7 +130,6 @@ def explain_model(model_name, model_path, device, class_groups,
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes_model)
 
-    #exit()
     checkpoint = torch.load(model_path, map_location=device)
     #get rid of model.resnet
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
@@ -144,9 +143,7 @@ def explain_model(model_name, model_path, device, class_groups,
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
-    print("LOG: LOADED MODEL")
     explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
-    print("LOG: LOADED EXPLAINER")
     
     if C_margin is not None:
         kwargs["C"] = C_margin

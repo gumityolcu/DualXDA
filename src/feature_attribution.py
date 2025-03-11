@@ -50,6 +50,7 @@ def evaluate(model_name, model_path, device, class_groups,
     acc, all_indices = compute_accuracy(model, test, device=device)
     all_indices=all_indices[:100]
     file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("tensor" not in f) and (".shark" not in f)]
+    print(file_list)
     file_root = file_list[0].split('_')[0]
     cur_index = 0
     cumul_xpl = torch.empty(0, len(train), dtype=torch.float32)

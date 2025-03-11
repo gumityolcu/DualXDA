@@ -104,7 +104,9 @@ class TracInExplainer(Explainer):
         else:
             self_inf=torch.zeros((len(self.dataset),), device=self.device)
             nr_explainers = len(self.explainers_info)
-            for i, (rate, path) in enumerate(self.explainers_info):
+            for i, (rate, path, ckpt) in enumerate(self.explainers_info):
+                checkpoint=torch.load(ckpt, map_location=self.device)
+                checkpoint = clear_resnet_from_checkpoints(checkpoint) 
                 graddot=GradDotExplainer(
                 model=self.model,
                 dataset=self.dataset,

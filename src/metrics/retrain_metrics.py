@@ -130,8 +130,7 @@ class RetrainMetric(Metric):
 class BatchRetraining(RetrainMetric):
     name = "BatchRetraining"
 
-    @staticmethod
-    def calculate_ce_loss(model, dataset, num_classes):
+    def calculate_ce_loss(self, model, dataset, num_classes):
         model.eval()
         num_samples = len(dataset)
         total_loss = 0.
@@ -139,6 +138,8 @@ class BatchRetraining(RetrainMetric):
         data_loader = DataLoader(dataset, batch_size=32, shuffle=False)
         with torch.no_grad():
             for x, y in data_loader:
+                x=x.to(self.device)
+                y=y.to(self.device)
                 output = model(x)
                 loss = loss_fct(output, y)
                 total_loss += loss.item()
@@ -156,6 +157,7 @@ class BatchRetraining(RetrainMetric):
         self.batchsize = len(self.train) // batch_nr
         self.mode=mode
         self.loss_array = torch.empty(self.batch_nr)
+        self.accuracy = torch.empty(self.batch_nr)
 
 
     def __call__(self, xpl, start_index=0):
@@ -179,6 +181,7 @@ class BatchRetraining(RetrainMetric):
             retrained_model = self.retrain(ds)
             #new_losses[i]=loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
             self.loss_array[i]=self.calculate_ce_loss(retrained_model, self.test, self.num_classes)
+            self.accuracy[i]=self.evaluate(retrained_model, self.test, self.num_classes)
 
     def get_result(self, dir=None, file_name=None):
         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
@@ -188,9 +191,9 @@ class BatchRetraining(RetrainMetric):
         #           'scores_for_most_relevant_batch': self.scores[0], 'score_for_most_relevant_batch_avg': avg_scores[0],
         #           'num_batches': self.scores.shape[0]}
 
-
         resdict = {'metric': self.name,
                    'all_batch_scores': self.loss_array,
+                   'all_batch_accuracies': self.accuracy,
                    'num_batches': self.batch_nr,
                    'mode':self.mode
                    }
@@ -402,7 +405,7 @@ class LinearDatamodelingScore(RetrainMetric):
         self.device = device
 
     def __call__(self, xpl, start_index=0):
-        xpl.to(self.device)
+        xpl=xpl.to(self.device)
         self.n_test = xpl.shape[0]
         evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0).to(self.device)
         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long().to(self.device)
