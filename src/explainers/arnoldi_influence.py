@@ -108,7 +108,7 @@ class CustomArnoldiInfluenceFunction(ArnoldiInfluenceFunction):
             self.projection_on_cpu,
             self.show_progress,
         ) 
-        return t - time()
+        return time()-t
 
 
 class ArnoldiInfluenceFunctionExplainer(Explainer):
