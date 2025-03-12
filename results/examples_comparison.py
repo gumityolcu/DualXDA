@@ -1,5 +1,7 @@
 import argparse
 import yaml
+import sys
+sys.path.append("../src")
 from matplotlib.gridspec import GridSpec
 from utils.data import load_datasets
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
@@ -9,16 +11,48 @@ import os
 from metrics import *
 
 
-def evaluate(model_name, model_path, device, class_groups,
-             dataset_name, dataset_type,
-             data_root, xpl_roots, method_names,
-             save_dir, validation_size, num_classes, testsplit, pages):
+def evaluate():
+
+    #hyper params
+
+    page_size = 10
+    pages=1
+    T=5 #number of most influential samples
+    root = "/home/fe/yolcu/Documents/Code/DualView-wip"
+    data_root = "/home/fe/yolcu/Documents/Code/DualView-wip/../Datasets"
+    save_dir = "/home/fe/yolcu/Documents/Code/DualView-wip/test_output"
+    dataset_name = "MNIST"
+    dataset_type = "std"
+    device = "cpu"
+    method_names= ["dualview_1e_05"]#["dualview_0.1", "dualview_0.001", "dualview_1e_05", "lissa", "arnoldi", "representer", "tracin", "gradcos", "graddot"]
+
+
+    ##################
+    model_names={
+        "MNIST":"basic_conv",
+        "CIFAR":"resnet18",
+        "AWA": "resnet50"
+    }
+    num_classes={
+        "MNIST":10,
+        "CIFAR":10,
+        "AWA":50
+    }
+    model_name = model_names[dataset_name]
+    model_path = os.path.join(root, "checkpoints",dataset_name,"std", f"{dataset_name}_{model_name}_best")
+    num_classes = 10
+    validation_size = 2000
+    xpl_roots = [
+        os.path.join(root,"explanations",dataset_name,"std",name) for name in method_names
+    ]
+
+
     if not torch.cuda.is_available():
         device = "cpu"
     ds_kwargs = {
         'data_root': data_root,
-        'class_groups': class_groups,
-        'image_set': testsplit,
+        'class_groups': None,
+        'image_set': "test",
         'validation_size': validation_size,
         'only_train': False,
         'num_classes':num_classes,
@@ -31,12 +65,10 @@ def evaluate(model_name, model_path, device, class_groups,
     checkpoint=clear_resnet_from_checkpoints(checkpoint)
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
-    page_size = 13
     offset = 0
     # if dataset_name == "CIFAR":
     #     offset = 5
 
-    fname_roots = [f"{dataset_name}_{dataset_type}_{xpl_root.split('/')[-1]}" for xpl_root in xpl_roots]
     acc, all_indices = compute_accuracy(model, test, device=device)
     all_indices = all_indices[:100]
     for root in xpl_roots:
@@ -68,19 +100,19 @@ def evaluate(model_name, model_path, device, class_groups,
                 if cur_index + k in all_indices:
                     cumul_xpl[i] = torch.concat((cumul_xpl[i], xpl[None, k]))
             cur_index = cur_index + len_xpl
-    T = 3
+
     for p in range(pages):
         start_ind = offset + p * page_size
         indices = all_indices[start_ind:start_ind + page_size]
         xpl_tensors = [c[start_ind:start_ind + page_size] for c in cumul_xpl]
         fname = f"xpl_comparison_{p}"
-        # generate_comparison_explanations_horizontal_with_spaces(model, train, test, xpl_tensors, method_names, indices, save_dir, f"H_{fname}", T, device, start_ind=start_ind-offset)
-        generate_comparison_explanations_horizontal_with_small_spaces(model, train, test, xpl_tensors, method_names,
-                                                                      indices, save_dir, f"H_{fname}", T, device,
-                                                                      start_ind=start_ind - offset)
+        if len(method_names)==1.:
+            fname=f"{method_names[0]}_{p}"
+        else:
+            fname=f"{len(method_names)}_explainers_{p}"
+        generate_comparison_explanations_horizontal_with_small_spaces(model, train, test, xpl_tensors, method_names,indices, save_dir, f"H_{fname}", T, device, start_ind=start_ind - offset)
+#        generate_comparison_explanations_vertical(model, train, test, xpl_tensors, method_names, indices, save_dir, f"V_{fname}", T, device, start_ind=start_ind-offset)
         
-        # generate_comparison_explanations_vertical(model, train, test, xpl_tensors, method_names, indices, save_dir, f"V_{fname}", T, device, start_ind=start_ind-offset)
-        # composite='EpsilonPlus', modes=["positive","overlay"])
 
 
 def mix(x, xpl):
@@ -664,37 +696,4 @@ def generate_comparison_explanations_vertical(model, train, test, xpl_tensors, m
 
 
 if __name__ == "__main__":
-    # current = os.path.dirname(os.path.realpath(__file__))
-    # parent_directory = os.path.dirname(current)
-    # sys.path.append(current)
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config_file', type=str)
-    parser.add_argument('--pages', type=int, default=1)
-    args = parser.parse_args()
-    config_file = args.config_file
-
-    with open(config_file, "r") as stream:
-        try:
-            train_config = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            logging.info(exc)
-
-    save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
-
-    evaluate(
-        model_name=train_config.get('model_name', None),
-        model_path=train_config.get('model_path', None),
-        device=train_config.get('device', 'cuda'),
-        class_groups=train_config.get('class_groups', None),
-        dataset_name=train_config.get('dataset_name', None),
-        dataset_type=train_config.get('dataset_type', 'std'),
-        data_root=train_config.get('data_root', None),
-        xpl_roots=train_config.get('xpl_roots', None),
-        method_names=train_config.get('method_names', None),
-        # coef_root=train_config.get('coef_root', None),
-        save_dir=train_config.get('save_dir', None),
-        validation_size=train_config.get('validation_size', 2000),
-        num_classes=train_config.get('num_classes'),
-        testsplit=train_config.get('testsplit', "test"),
-        pages=args.pages
-    )
+    evaluate()
