@@ -92,7 +92,7 @@ def main(dataset_name, device):
     fig, ax1=plt.subplots(figsize=(8,6))
     ax1.plot(x_axis, train_accs, label="Train accuracy", color="red")
     ax1.plot(x_axis, test_accs, label="Test accuracy", color="blue")
-    ax1.set_xlabel("$log_{10}K$", fontdict=fontdict)
+    ax1.set_xlabel("$log_{10}C$", fontdict=fontdict)
     ax1.set_xticks(x_axis)
     ax1.set_ylabel("Accuracy", fontdict=fontdict)
     ax2=ax1.twinx()
@@ -110,7 +110,7 @@ def main(dataset_name, device):
 
     for i in range(len(C_values)):
         ax1.plot(x_axis,sv_counts.T[i].to("cpu"), label=train.class_labels[i])
-    ax1.set_xlabel("$log_{10}K$", fontdict=fontdict)
+    ax1.set_xlabel("$log_{10}C$", fontdict=fontdict)
     ax1.set_xticks(x_axis)
     ax1.set_ylabel("Number of support vectors", fontdict=fontdict)
     ax2=ax1.twinx()

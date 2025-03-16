@@ -6,16 +6,16 @@ import os
 methods=[
             ('input_similarity_dot', None, 'Inp. Sim. Dot'),
             ('feature_similarity_dot', None, 'Feat. Sim. Dot'),
-            ('dualview_0.1','black','DV 0.1'),
-            ('dualview_0.001','black','DV 0.001'),
-            ('dualview_1e_05','black','DV 1e-5'),
             ('arnoldi', 'red', 'Arnoldi IF'),
             ('representer', 'cyan', 'RP'),
             ('graddot','yellow','GradDot'),
             ('tracin','blue','TracIn'),
-            ('trak','blue','TRAK-1'),
+            ('trak','blue','TRAK'),
+            ('dualview_0.1','black','DV 0.1'),
+            ('dualview_0.001','black','DV 0.001'),
+            ('dualview_1e_05','black','DV $10^{-5}$'),
         ]
-
+import seaborn as sns
 plt.rcParams['text.usetex'] = True
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
@@ -23,6 +23,7 @@ fontdict={"size": 15}
 p=f"/home/fe/yolcu/Documents/Code/DualView-wip/test_output/eval/"
 os.makedirs(os.path.join(p,"corrupt_plots"),exist_ok=True)
 for dsname in ["MNIST","CIFAR","AWA"]:
+    sns.set_theme("paper", style="whitegrid")
     plt.figure(figsize=(8,6))
     plt.xlabel('Ratio of Controlled Images')
     plt.ylabel('Ratio of Detected Poisoned Samples')
