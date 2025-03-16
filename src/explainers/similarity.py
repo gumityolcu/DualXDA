@@ -18,6 +18,7 @@ class FeatureSimilarityExplainer(Explainer):
         super(FeatureSimilarityExplainer, self).__init__(model, dataset, device)
         os.makedirs(dir, exist_ok=True)
         self.dir=dir
+        self.dataset=dataset
         self.features_dir = os.path.join(features_dir, "samples")
         self.labels_dir = os.path.join(features_dir, "labels")
         self.mode=mode
