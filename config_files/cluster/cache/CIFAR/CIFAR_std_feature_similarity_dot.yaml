@@ -7,7 +7,7 @@ dataset_type: std
 device: cuda
 features_dir: /mnt/outputs/CIFAR/std/features
 grad_dir: /mnt/outputs/CIFAR/std/tracin/best
-model_name: basic_conv
+model_name: resnet18
 model_path: /mnt/checkpoints/CIFAR/std/CIFAR_resnet18_best
 num_batches_per_file: 0
 num_classes: 10
