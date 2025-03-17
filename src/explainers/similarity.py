@@ -47,7 +47,7 @@ class FeatureSimilarityExplainer(Explainer):
             self.normalized_features=self.features
             self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
             t1=time()-t
-            torch.save(torch.tensor(t1), self.dir)
+            torch.save(torch.tensor(t1), os.path.join(self.dir,"train_time"))
 
     def explain(self, x, xpl_targets):
         labels_expanded = self.labels.view(1, -1)
