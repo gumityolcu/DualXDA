@@ -272,7 +272,6 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         cnt = 0
         for inputs, targets in tqdm(iter(loader)):
             inputs = inputs.to(device)
-            targets = targets.long()
             if isinstance(loss, BCEWithLogitsLoss):
                 targets = one_hot(targets, num_classes_model).float()
             targets = targets.to(device)

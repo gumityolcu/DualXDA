@@ -157,6 +157,7 @@ class BatchRetraining(RetrainMetric):
         self.batchsize = len(self.train) // batch_nr
         self.mode=mode
         self.loss_array = torch.empty(self.batch_nr)
+        self.accuracy = torch.empty(self.batch_nr)
 
 
     def __call__(self, xpl, start_index=0):
@@ -180,6 +181,7 @@ class BatchRetraining(RetrainMetric):
             retrained_model = self.retrain(ds)
             #new_losses[i]=loss(retrained_model(evalds[start_index + test_index].unsqueeze(0)), evalds_labels[start_index + test_index].unsqueeze(0)).cpu().detach().numpy()
             self.loss_array[i]=self.calculate_ce_loss(retrained_model, self.test, self.num_classes)
+            self.accuracy[i]=self.evaluate(retrained_model, self.test, self.num_classes)
 
     def get_result(self, dir=None, file_name=None):
         # USE THIS WHEN MULTIPLE FILES FOR DIFFERENT XPL ARE READ IN
@@ -191,6 +193,7 @@ class BatchRetraining(RetrainMetric):
 
         resdict = {'metric': self.name,
                    'all_batch_scores': self.loss_array,
+                   'all_batch_accuracies': self.accuracy,
                    'num_batches': self.batch_nr,
                    'mode':self.mode
                    }
