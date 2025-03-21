@@ -14,7 +14,7 @@ from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, Co
 import torch
 from torchvision.transforms import Compose, RandomResizedCrop, RandomHorizontalFlip, RandomApply, RandomEqualize, RandomRotation, AutoAugment, AutoAugmentPolicy
 import matplotlib.pyplot as plt
-from datasets.MNIST import MNIST
+from dataset.MNIST import MNIST
 from torch.utils.data import DataLoader
 from torch.optim import SGD, Adam, RMSprop
 from torch.optim.lr_scheduler import ConstantLR, StepLR, CosineAnnealingLR

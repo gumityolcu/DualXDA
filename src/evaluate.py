@@ -8,7 +8,7 @@ from metrics import *
 
 
 
-def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
+def load_metric(metric_name, dataset_name, train, test, device, model, model_name,
                 epochs, loss, lr, momentum, optimizer, scheduler,
                 weight_decay, augmentation, sample_nr, cache_dir,lds_cache_dir, num_classes, batch_size):
     base_dict={
@@ -44,6 +44,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
     #     "AWA": 30000
     # }
 
+
     ret_dict = {"std": (SameClassMetric,{}), "group": (SameSubclassMetric,{}), 
                 "corrupt": (CorruptLabelMetric,{}),
                 "mark": (MarkImageMetric, {"model":model, "topk": 10}),
@@ -53,7 +54,8 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
                 "add_batch_in_neg": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
                 "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
                 "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
-                "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': lds_cache_dir}}),
+                "lds_old": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': lds_cache_dir}}),
+                "lds": (QuandaLDSWrapper, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "labelflip": (LabelFlipMetric, retrain_dict)}
     if metric_name not in ret_dict.keys():
@@ -65,7 +67,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
 
 def evaluate(model_name, model_path, device, class_groups,
              dataset_name, metric_name,
-             data_root, xpl_root, coef_root,
+             data_root, xpl_root,
              save_dir, validation_size, num_classes,
              epochs, loss, lr, momentum, optimizer, scheduler,
              weight_decay, augmentation, sample_nr, xai_method, cache_dir, lds_cache_dir, grad_dir, features_dir, batch_size):
@@ -101,7 +103,7 @@ def evaluate(model_name, model_path, device, class_groups,
     model.to(device)
     model.eval()
     test=PredictionTargetDataset(dataset=test, model=model, device=device)
-    metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
+    metric = load_metric(metric_name, dataset_name, train, test, device, model, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, sample_nr, cache_dir, lds_cache_dir, num_classes, batch_size)
     print(f"Computing metric {metric.name}")
@@ -229,7 +231,6 @@ if __name__ == "__main__":
                 metric_name=train_config.get('metric', 'std'),
                 data_root=train_config.get('data_root', None),
                 xpl_root=train_config.get('xpl_root', None),
-                coef_root=train_config.get('coef_root', None),
                 save_dir=train_config.get('save_dir', None),
                 validation_size=train_config.get('validation_size', 2000),
                 num_classes=train_config.get('num_classes'),

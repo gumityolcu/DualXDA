@@ -2,10 +2,10 @@ from tqdm import tqdm
 import torch
 from torch.utils.data.dataset import Dataset
 from torchvision.transforms.functional import to_pil_image
-from datasets.MNIST import MNIST, FashionMNIST
-from datasets.CIFAR import CIFAR
-from datasets.AWA import AWA
-from datasets.AWA_sub import AWA_sub
+from dataset.MNIST import MNIST, FashionMNIST
+from dataset.CIFAR import CIFAR
+from dataset.AWA import AWA
+from dataset.AWA_sub import AWA_sub
 import matplotlib.pyplot as plt
 import os
 

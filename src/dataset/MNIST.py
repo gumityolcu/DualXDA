@@ -41,16 +41,16 @@ class MNIST(tvMNIST):
         N = super(MNIST, self).__len__()
 
         if not train:
-            if (os.path.isfile(f"datasets/{self.name}_val_ids")and os.path.isfile(f"datasets/{self.name}_test_ids")):
-                self.val_ids=torch.load(f"datasets/{self.name}_val_ids")
-                self.test_ids=torch.load(f"datasets/{self.name}_test_ids")
+            if (os.path.isfile(f"dataset/{self.name}_val_ids")and os.path.isfile(f"dataset/{self.name}_test_ids")):
+                self.val_ids=torch.load(f"dataset/{self.name}_val_ids")
+                self.test_ids=torch.load(f"dataset/{self.name}_test_ids")
             else:
                 torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
                 perm = torch.randperm(N)
                 self.val_ids = torch.tensor([i for i in perm[:validation_size]])
                 self.test_ids = torch.tensor([i for i in perm[validation_size:]])
-                torch.save(self.val_ids, f'datasets/{self.name}_val_ids')
-                torch.save(self.test_ids, f'datasets/{self.name}_test_ids')
+                torch.save(self.val_ids, f'dataset/{self.name}_val_ids')
+                torch.save(self.test_ids, f'dataset/{self.name}_test_ids')
 
 
             print("Validation ids:")
