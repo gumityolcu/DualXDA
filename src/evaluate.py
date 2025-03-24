@@ -116,54 +116,6 @@ def evaluate(model_name, model_path, device, class_groups,
         splitted=splitted[:-1]
     outfile_name=splitted[-1]
 
-######################################################################
-
-    # if metric_name == 'switched':
-    #     xpl_root_switched = xpl_root
-    #     xpl_root = xpl_root.replace('switched', 'std')
-
-    #     if not os.path.isdir(xpl_root):
-    #         raise Exception(f"Can not find standard explanation directory {xpl_root}")
-    #     file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-    #     file_root = file_list[0].split('_')[0]
-    #     num_files=len(file_list)
-    #     #check if merged xpl exists
-    #     if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-    #         xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
-    #     #merge all xpl
-    #     else:
-    #         xpl_all = torch.empty(0, device=device)
-    #         for i in range(num_files):
-    #             fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
-    #             xpl = torch.load(fname, map_location=torch.device(device))
-    #             xpl.to(device)
-    #             xpl_all = torch.cat((xpl_all, xpl), 0)
-    #         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
-
-    #     if not os.path.isdir(xpl_root_switched):
-    #         raise Exception(f"Can not find switched explanation directory {xpl_root_switched}")
-    #     file_list_switched = [f for f in os.listdir(xpl_root_switched) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-    #     file_root_switched = file_list_switched[0].split('_')[0]
-    #     num_files_switched=len(file_list_switched)        
-    #     #check if merged switched xpl exists
-    #     if os.path.isfile(os.path.join(xpl_root_switched, f"{file_root_switched}_all")):
-    #         xpl_all_switched = torch.load(os.path.join(xpl_root_switched, f"{file_root_switched}_all"))        
-    #     #merge all switched xpl
-    #     else:
-    #         xpl_all_switched = torch.empty(0, device=device)
-    #         for i in range(num_files_switched):
-    #             fname_switched = os.path.join(xpl_root_switched, f"{file_root_switched}_{i:02d}")
-    #             xpl_switched = torch.load(fname_switched, map_location=torch.device(device))
-    #             xpl_switched.to(device)
-    #             xpl_all_switched = torch.cat((xpl_all_switched, xpl_switched), 0)
-    #         torch.save(xpl_all_switched, os.path.join(xpl_root_switched, f"{file_root_switched}_all"))
-
-    #     metric(xpl_all, xpl_all_switched, 0)
-    #     metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
-    #     return
-    
-    ################
-
 
     if metric_name == "corrupt":
         explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)

@@ -72,7 +72,7 @@ class QuandaLDSWrapper(Metric):
 
     def get_result(self, dir=None, file_name=None):
         score=self.quanda_metric.compute()["score"]
-        resdict = {'metric': self.name, 'correlation_scores': self.quanda_metric.results, 'avg_score': score,}
+        resdict = {'metric': self.name, 'correlation_scores': torch.tensor(self.quanda_metric.results), 'avg_score': torch.tensor(score)}
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
