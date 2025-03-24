@@ -6,6 +6,7 @@ from typing import Callable, Dict, List, Optional, Union
 
 import lightning as L
 import torch
+from torch.nn.functional import log_softmax
 from torch.utils.data import DataLoader
 
 from quanda.metrics.base import Metric
@@ -302,7 +303,8 @@ class LinearDatamodelingMetric(Metric):
 
             counterfactual_model = self.load_counterfactual_model(s)
             counterfactual_output = counterfactual_model(test_data).detach()
-
+            # take log softmax since we want the correlation of probabilities, not logits.
+            counterfactual_output = log_softmax(counterfactual_output, dim=-1)
             if (
                 counterfactual_output.ndim == 1
                 or counterfactual_output.shape[1] == 1

@@ -13,6 +13,7 @@ import numpy as np
 from torchmetrics.regression import SpearmanCorrCoef
 from torchmetrics.regression import KendallRankCorrCoef
 
+
 class RetrainMetric(Metric):
     name = "RetrainMetric"
     
@@ -419,9 +420,9 @@ class LinearDatamodelingScore(RetrainMetric):
             cur_indices=torch.load(model_path, map_location=torch.device(self.device))['sample_indices']
             attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach()
             logits = retrained_model(evalds)
-            probs = F.softmax(logits, dim=1)
-            correct_probs = probs.gather(1, evalds_labels.unsqueeze(1)).squeeze()
-            binary_logits = torch.log(correct_probs / (1-correct_probs+1e-10)) #added for numerical stability
+            probs = F.log_softmax(logits, dim=1)
+            binary_logits = probs.gather(1, evalds_labels.unsqueeze(1)).squeeze()
+            #binary_logits = torch.log(correct_probs / (1-correct_probs+1e-10)) #added for numerical stability
             model_output_array[:, i] = binary_logits.cpu().detach()
         self.attribution_array=torch.cat((self.attribution_array, attribution_array), dim=0)
         self.model_output_array=torch.cat((self.model_output_array, model_output_array), dim=0)

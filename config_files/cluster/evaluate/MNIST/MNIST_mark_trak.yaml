@@ -6,7 +6,7 @@ dataset_type: mark
 device: cuda
 features_dir: /mnt/cache/MNIST/mark/features
 grad_dir: /mnt/cache/MNIST/mark/tracin/best
-lds_cache_dir: /mnt/cache/MNIST/lds
+lds_cache_dir: /mnt/cache/MNIST/mark
 metric: mark
 model_name: basic_conv
 model_path: /mnt/checkpoints/MNIST/mark/MNIST_basic_conv_best

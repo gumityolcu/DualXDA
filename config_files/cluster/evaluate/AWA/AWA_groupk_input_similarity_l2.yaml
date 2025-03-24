@@ -57,7 +57,7 @@ dataset_type: group
 device: cuda
 features_dir: /mnt/cache/AWA/group/features
 grad_dir: /mnt/cache/AWA/group/tracin/best
-lds_cache_dir: /mnt/cache/AWA/lds
+lds_cache_dir: /mnt/cache/AWA/groupk
 metric: groupk
 model_name: resnet50
 model_path: /mnt/checkpoints/AWA/group/AWA_resnet50_best
