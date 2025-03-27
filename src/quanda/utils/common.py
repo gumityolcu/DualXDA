@@ -1,10 +1,15 @@
 """Common utility functions for the Quanda package."""
 
 import functools
+import os
+import yaml
+from abc import ABC
 from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import reduce
-from typing import Any, Callable, List, Mapping, Optional, Sized, Union
+from typing import Any, Callable, List, Mapping, Optional, Sized, Union, Dict
 
+import torch
 import torch.utils
 import torch.utils.data
 
@@ -329,3 +334,84 @@ def load_last_checkpoint(
     if len(checkpoints) == 0:
         return
     checkpoints_load_func(model, checkpoints[-1])
+
+
+@dataclass
+class TrainValTest(ABC):
+    """Class to store train, validation, and test indices."""
+
+    train: torch.Tensor
+    val: torch.Tensor
+    test: torch.Tensor
+
+    def __getitem__(self, key):
+        """Get the indices for the specified key."""
+        if key == "train":
+            return self.train
+        elif key == "val":
+            return self.val
+        elif key == "test":
+            return self.test
+        else:
+            raise KeyError(f"Key '{key}' not found.")
+
+    @classmethod
+    def split(
+        cls, n_indices: int, seed: int, val_size: float, test_size: float
+    ) -> "TrainValTest":
+        """Split the indices into train, validation, and test sets."""
+        if val_size + test_size >= 1:
+            raise ValueError("val_size + test_size must be less than 1.")
+
+        torch.manual_seed(seed)
+        indices = torch.randperm(n_indices)
+        val_indices = indices[: int(val_size * len(indices))]
+        test_indices = indices[
+            int(val_size * len(indices)) : int(
+                (val_size + test_size) * len(indices)
+            )
+        ]
+        train_indices = indices[int((val_size + test_size) * len(indices)) :]
+        return cls(
+            train=train_indices,
+            val=val_indices,
+            test=test_indices,
+        )
+
+    @classmethod
+    def load(cls, path: str, name: str) -> "TrainValTest":
+        """Load the TrainValTest instance from disk."""
+        with open(os.path.join(path, name), "r") as f:
+            data = yaml.safe_load(f)
+            # Convert lists to tensors
+            return cls(
+                train=torch.tensor(data["train"]),
+                val=torch.tensor(data["val"]),
+                test=torch.tensor(data["test"]),
+            )
+
+    def save(self, path: str, name: str) -> None:
+        """Save the TrainValTest instance to disk."""
+        os.makedirs(path, exist_ok=True)
+        # Convert tensors to lists for YAML serialization
+        data = {
+            "train": self.train.tolist(),
+            "val": self.val.tolist(),
+            "test": self.test.tolist(),
+        }
+        with open(os.path.join(path, name), "w") as f:
+            yaml.safe_dump(data, f)
+
+    def to_dict(self) -> Dict:
+        """Convert the TrainValTest instance to a dictionary."""
+        return {
+            "train": self.train,
+            "val": self.val,
+            "test": self.test,
+        }
+
+    @staticmethod
+    def exists(path: str, name: str) -> bool:
+        """Check if metadata exists on disk."""
+        metadata_path = os.path.join(path, name)
+        return os.path.exists(metadata_path)

@@ -1,3 +1,4 @@
+from quanda.metrics.downstream_eval import *
 from quanda.metrics.ground_truth import LinearDatamodelingMetric
 import torch
 import os
@@ -69,11 +70,55 @@ class QuandaLDSWrapper(Metric):
         t_data,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
         self.quanda_metric.update(explanations=xpl, test_targets=t_labels, test_data=t_data)
         
-
     def get_result(self, dir=None, file_name=None):
         corr_scores = torch.cat(self.quanda_metric.results["scores"])
         score=corr_scores.mean().item()
         resdict = {'metric': self.name, 'correlation_scores': corr_scores , 'avg_score': score}
+        if dir is not None:
+            self.write_result(resdict, dir, file_name)
+        return resdict
+
+class QuandaClassDetection(Metric):
+    name = "QuandaClassDetection"
+
+    def get_test_datapoints(self, start, length):
+        targets=[]
+        samples=[]
+        for i in range(length):
+            x, y = self.test[start+i]
+            targets.append(y)
+            samples.append(x)
+        return torch.stack(samples).to(self.device), torch.tensor(targets, device=self.device)
+    
+    def __init__(self, train, test, model, device="cuda"):
+        super().__init__(train,test)
+        if train.name != "AWA":
+            if isinstance(train.targets,list):
+                train.targets=torch.tensor(train.targets,device=device)
+            self.train_labels = train.targets.to(device)
+        self.device=device
+        self.train = train
+        self.test = test
+        self.scores = torch.empty(0, dtype=torch.float, device=device)
+        
+        self.quanda_metric=ClassDetectionMetric(
+            model=model,
+            train_dataset=train,
+            )
+
+        self.device = device
+
+    def __call__(self, xpl, start_index):
+        xpl.to(self.device)
+        if xpl.nelement() == 0: #to exit if xpl is empty
+            return
+        t_data,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
+        self.quanda_metric.update(explanations=xpl, test_targets=t_labels)
+        
+    def get_result(self, dir=None, file_name=None):
+        scores = torch.cat(self.quanda_metric.results["scores"])
+        score=scores.mean().item()
+        resdict = {'metric': self.name, 'detection_scores': scores , 'avg_score': score}
         if dir is not None:
             self.write_result(resdict, dir, file_name)
         return resdict
