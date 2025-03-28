@@ -66,18 +66,19 @@ class QuandaLDSWrapper(Metric):
         self.device = device
 
     def __call__(self, xpl, start_index):
+        BATCH_SIZE=10
         xpl.to(self.device)
         if xpl.nelement() == 0: #to exit if xpl is empty
             return
-        if xpl.shape[0]<=100:
+        if xpl.shape[0]<=BATCH_SIZE:
             t_data,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
             self.quanda_metric.update(explanations=xpl, test_targets=t_labels, test_data=t_data)
         else:
             start_new=deepcopy(start_index)
-            for i in range(int(xpl.shape[0]/100)+1):
-                t_data,t_labels=self.get_test_datapoints(start_new, min(100, xpl.shape[0]-start_new))
+            for i in range(int(xpl.shape[0]/BATCH_SIZE)+1):
+                t_data,t_labels=self.get_test_datapoints(start_new, min(BATCH_SIZE, xpl.shape[0]-start_new))
                 self.quanda_metric.update(explanations=xpl, test_targets=t_labels, test_data=t_data)
-                start_new=start_new+100
+                start_new=start_new+BATCH_SIZE
                 
 
     def get_result(self, dir=None, file_name=None):
