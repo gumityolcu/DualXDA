@@ -11,6 +11,7 @@ class QuandaLDSWrapper(Metric):
         subset_indices=[]
         subset_fpath=os.path.join(self.cache_dir, "subset_indices")
         if not os.path.exists(subset_fpath):
+            print(f"{subset_fpath} not found")
             # if there is no subset_indices file, that means the cache is the output of LDSCacher and
             # we handle files to have only model state_dicts in files and have a seperate subset_indices file
             for model in pretrained_models:
