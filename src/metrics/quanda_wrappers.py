@@ -77,7 +77,7 @@ class QuandaLDSWrapper(Metric):
             start_new=deepcopy(start_index)
             for i in range(int(xpl.shape[0]/BATCH_SIZE)+1):
                 t_data,t_labels=self.get_test_datapoints(start_new, min(BATCH_SIZE, xpl.shape[0]-start_new))
-                self.quanda_metric.update(explanations=xpl, test_targets=t_labels, test_data=t_data)
+                self.quanda_metric.update(explanations=xpl[start_new:min(BATCH_SIZE, xpl.shape[0]-start_new)], test_targets=t_labels, test_data=t_data)
                 start_new=start_new+BATCH_SIZE
                 
 
