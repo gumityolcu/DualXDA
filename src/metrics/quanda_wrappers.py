@@ -1,4 +1,5 @@
 from quanda.metrics.downstream_eval import *
+from copy import deepcopy
 from quanda.metrics.ground_truth import LinearDatamodelingMetric
 import torch
 import os
@@ -68,9 +69,17 @@ class QuandaLDSWrapper(Metric):
         xpl.to(self.device)
         if xpl.nelement() == 0: #to exit if xpl is empty
             return
-        t_data,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
-        self.quanda_metric.update(explanations=xpl, test_targets=t_labels, test_data=t_data)
-        
+        if xpl.shape[0]<=100:
+            t_data,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
+            self.quanda_metric.update(explanations=xpl, test_targets=t_labels, test_data=t_data)
+        else:
+            start_new=deepcopy(start_index)
+            for i in range(int(xpl.shape[0]/100)+1):
+                t_data,t_labels=self.get_test_datapoints(start_new, min(100, xpl.shape[0]-start_new))
+                self.quanda_metric.update(explanations=xpl, test_targets=t_labels, test_data=t_data)
+                start_new=start_new+100
+                
+
     def get_result(self, dir=None, file_name=None):
         corr_scores = torch.cat(self.quanda_metric.results["scores"])
         score=corr_scores.mean().item()
