@@ -76,7 +76,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             y = y.to(device)
             preds = torch.argmax(model(x), dim=1)
         t0=time()
-        xpl = explainer.explain(x=x, xpl_targets=preds)
+        xpl = explainer.explain(x=x, xpl_targets=preds).to(device)
         compute_times.append(time()-t0)
         explanations = torch.cat((explanations, xpl), dim=0)
         if graddot:
