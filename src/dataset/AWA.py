@@ -138,16 +138,16 @@ class AWA(VisionDataset):
 
         # DON'T WE NEED A TRAIN / TEST / VAL SPLIT? -> SPLIT UP ORIGINAL VAL DATAPOINTS IN TEST AND VAL
         if not train:
-            if (os.path.isfile("datasets/AWA_val_ids") and os.path.isfile("datasets/AWA_test_ids")):
-                self.val_ids=torch.load("datasets/AWA_val_ids")
-                self.test_ids=torch.load("datasets/AWA_test_ids")
+            if (os.path.isfile("dataset/AWA_val_ids") and os.path.isfile("dataset/AWA_test_ids")):
+                self.val_ids=torch.load("dataset/AWA_val_ids")
+                self.test_ids=torch.load("dataset/AWA_test_ids")
             else:
                 torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
                 perm = torch.randperm(len(self.val_indices))
                 self.val_ids = torch.tensor(perm[:validation_size].clone().detach())
                 self.test_ids = torch.tensor(perm[validation_size:].clone().detach())
-                torch.save(self.val_ids, "datasets/AWA_val_ids")
-                torch.save(self.test_ids, "datasets/AWA_test_ids")
+                torch.save(self.val_ids, "dataset/AWA_val_ids")
+                torch.save(self.test_ids, "dataset/AWA_test_ids")
 
             print("Validation ids:")
             print(self.val_ids)

@@ -41,16 +41,16 @@ class CIFAR(CIFAR10):
         N = super(CIFAR, self).__len__()
 
         if not train:
-            if (os.path.isfile("datasets/CIFAR_val_ids") and os.path.isfile("datasets/CIFAR_test_ids")):
-                self.val_ids=torch.load("datasets/CIFAR_val_ids")
-                self.test_ids=torch.load("datasets/CIFAR_test_ids")
+            if (os.path.isfile("dataset/CIFAR_val_ids") and os.path.isfile("dataset/CIFAR_test_ids")):
+                self.val_ids=torch.load("dataset/CIFAR_val_ids")
+                self.test_ids=torch.load("dataset/CIFAR_test_ids")
             else:
                 torch.manual_seed(42)  # THIS SHOULD NOT BE CHANGED BETWEEN TRAIN TIME AND TEST TIME
                 perm = torch.randperm(N)
                 self.val_ids = torch.tensor([i for i in perm[:validation_size]])
                 self.test_ids = torch.tensor([i for i in perm[validation_size:]])
-                torch.save(self.val_ids, 'datasets/CIFAR_val_ids')
-                torch.save(self.test_ids, 'datasets/CIFAR_test_ids')
+                torch.save(self.val_ids, 'dataset/CIFAR_val_ids')
+                torch.save(self.test_ids, 'dataset/CIFAR_test_ids')
 
             print("Validation ids:")
             print(self.val_ids)
