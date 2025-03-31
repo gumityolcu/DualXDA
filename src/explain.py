@@ -39,7 +39,9 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "CIFAR": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
     }
-    kronfluence_params={}
+    kronfluence_params={
+         "score_data_partitions":10
+    } if dataset_name=="CIFAR" else {}
 
     # if we want seperate kwargs for each dataset, below is a dictionary with default values
     # kronfluence_params={
