@@ -18,6 +18,7 @@ class FeatureSimilarityExplainer(Explainer):
         super(FeatureSimilarityExplainer, self).__init__(model, dataset, device)
         os.makedirs(dir, exist_ok=True)
         self.dir=dir
+        self.dataset=dataset
         self.features_dir = os.path.join(features_dir, "samples")
         self.labels_dir = os.path.join(features_dir, "labels")
         self.mode=mode
@@ -26,11 +27,27 @@ class FeatureSimilarityExplainer(Explainer):
         #self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
 
     def train(self):
-        if os.path.isfile(self.features_dir):
+        if False:#os.path.isfile(self.features_dir):
             print("Features found.")
             self.features=torch.load(self.features_dir, map_location=self.device)
             print("Labels found.")
             self.labels=torch.load(self.labels_dir, map_location=self.device)
+        else:
+            os.makedirs(self.dir, exist_ok=True)
+            t=time()
+            feature_ds = FeatureDataset(self.model, self.dataset, self.device, self.features_dir)
+            self.coefficients = None  # the coefficients for each training datapoint x class
+            self.learned_weight = None
+            self.normalize=False
+            self.features = feature_ds.samples.to(self.device)
+            self.mean = self.features.sum(0) / self.features.shape[0]
+            #self.mean = torch.zeros_like(self.mean)
+            self.stdvar = torch.sqrt(torch.sum((self.features - self.mean) ** 2, dim=0) / self.features.shape[0])
+            #self.stdvar=torch.ones_like(self.stdvar)
+            self.normalized_features=self.features
+            self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
+            t1=time()-t
+            torch.save(torch.tensor(t1), os.path.join(self.dir,"train_time"))
 
     def explain(self, x, xpl_targets):
         labels_expanded = self.labels.view(1, -1)

@@ -2,10 +2,10 @@ from tqdm import tqdm
 import torch
 from torch.utils.data.dataset import Dataset
 from torchvision.transforms.functional import to_pil_image
-from datasets.MNIST import MNIST, FashionMNIST
-from datasets.CIFAR import CIFAR
-from datasets.AWA import AWA
-from datasets.AWA_sub import AWA_sub
+from dataset.MNIST import MNIST, FashionMNIST
+from dataset.CIFAR import CIFAR
+from dataset.AWA import AWA
+from dataset.AWA_sub import AWA_sub
 import matplotlib.pyplot as plt
 import os
 
@@ -46,25 +46,25 @@ class CorruptLabelDataset(Dataset):
         if hasattr(dataset, "class_groups"):
             self.class_groups = dataset.class_groups
         self.classes = dataset.classes
-        if os.path.isfile(f'datasets/{dataset.name}_corrupt_ids'):
-            self.corrupt_samples = torch.load(f'datasets/{dataset.name}_corrupt_ids')
-            self.corrupt_labels = torch.load(f'datasets/{dataset.name}_corrupt_labels')
+        if os.path.isfile(f'dataset/{dataset.name}_corrupt_ids'):
+            self.corrupt_samples = torch.load(f'dataset/{dataset.name}_corrupt_ids')
+            self.corrupt_labels = torch.load(f'dataset/{dataset.name}_corrupt_labels')
         else:
             self.corrupt_labels = []
             corrupt = torch.rand(len(dataset))
             self.corrupt_samples = torch.squeeze((corrupt < p).nonzero())
             if dataset.name == "AWA":
-                torch.save(self.corrupt_samples, f'/mnt/outputs/{dataset.name}_corrupt_ids')
+                torch.save(self.corrupt_samples, f'dataset/{dataset.name}_corrupt_ids')
             else:
-                torch.save(self.corrupt_samples, f'datasets/{dataset.name}_corrupt_ids')
+                torch.save(self.corrupt_samples, f'dataset/{dataset.name}_corrupt_ids')
             for i in self.corrupt_samples:
                 _, y = self.dataset.__getitem__(i)
                 self.corrupt_labels.append(self.corrupt_label(y))
             self.corrupt_labels = torch.tensor(self.corrupt_labels)
             if dataset.name == "AWA":
-                torch.save(self.corrupt_labels, f"/mnt/outputs/{dataset.name}_corrupt_labels")
+                torch.save(self.corrupt_labels, f"dataset/{dataset.name}_corrupt_labels")
             else:
-                torch.save(self.corrupt_labels, f"datasets/{dataset.name}_corrupt_labels")
+                torch.save(self.corrupt_labels, f"dataset/{dataset.name}_corrupt_labels")
 
     def __len__(self):
         return len(self.dataset)
@@ -104,14 +104,14 @@ class MarkDataset(Dataset):
             self.class_groups = dataset.class_groups
         self.classes = dataset.classes
         if dataset.split == "train":
-            if os.path.isfile(f'datasets/{dataset.name}_mark_ids'):
-                self.mark_samples = torch.load(f'datasets/{dataset.name}_mark_ids')
+            if os.path.isfile(f'dataset/{dataset.name}_mark_ids'):
+                self.mark_samples = torch.load(f'dataset/{dataset.name}_mark_ids')
             else:
                 self.mark_samples = self.get_mark_sample_ids()
                 if dataset.name == "AWA":
-                    torch.save(self.mark_samples, f'/mnt/outputs/{dataset.name}_mark_ids')
+                    torch.save(self.mark_samples, f'dataset/{dataset.name}_mark_ids')
                 else:
-                    torch.save(self.mark_samples, f'datasets/{dataset.name}_mark_ids')
+                    torch.save(self.mark_samples, f'dataset/{dataset.name}_mark_ids')
         else:
             self.mark_samples = range(len(dataset))
 
