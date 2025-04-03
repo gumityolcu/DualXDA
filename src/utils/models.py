@@ -1,6 +1,7 @@
 import torch.utils.data
 from models import BasicConvModel
 from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
+from torchvision.models import vgg16, VGG16_Weights
 import tqdm
 
 def clear_resnet_from_checkpoints(checkpoint):
@@ -51,6 +52,34 @@ class ResNetWrapper(torch.nn.Module):
     def sim_parameters(self):
         return self.parameters()
     
+class VGGWrapper(torch.nn.Module):
+    def __init__(self, module, output_dim, arnoldi_param_filter=None):
+        super(VGGWrapper, self).__init__()
+        self.classifier=torch.nn.Linear(in_features=module.classifier[6].in_features, out_features=output_dim, bias=True)
+        self.arnoldi_param_filter=arnoldi_param_filter
+        seq_array=[
+            module.features,
+            module.avgpool,
+            module.classifier[0],
+            module.classifier[1],
+            module.classifier[2],
+            module.classifier[3],
+            module.classifier[4],
+            module.classifier[5],
+            ]
+
+        self.features=torch.nn.Sequential(*seq_array)
+
+    def forward(self, x):
+        x=self.features(x)
+        return self.classifier(x)
+
+    def influence_named_parameters(self):
+       return [("classifier.weight", self.classifier.weight), ("classifier.bias", self.classifier.bias)]        
+
+    def sim_parameters(self):
+        return self.parameters()
+    
 def load_model(model_name, dataset_name, num_classes):
     if dataset_name=="MNIST":
         bias = not ('homo' in model_name)
@@ -79,11 +108,16 @@ def load_model(model_name, dataset_name, num_classes):
         else:
             return ResNetWrapper(resnet18(), output_dim=num_classes)
     
-    else:
+    elif model_name=="resnet50":
         if dataset_name=="AWA":
             return ResNetWrapper(resnet50(weights=ResNet50_Weights.IMAGENET1K_V1), output_dim=num_classes, arnoldi_param_filter=True)
         else:
             return ResNetWrapper(resnet50(), output_dim=num_classes)
+    elif model_name=="vgg16":
+        if dataset_name=="AWA":
+            return VGGWrapper(vgg16(weights=VGG16_Weights.IMAGENET1K_V1), output_dim=num_classes, arnoldi_param_filter=True)
+        else:
+            return VGGWrapper(vgg16(), output_dim=num_classes)        
 
 
 def compute_accuracy(model, test, device, progress=True):
