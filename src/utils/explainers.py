@@ -66,7 +66,6 @@ class FeatureKernelExplainer(Explainer):
             xpl = torch.gather(xpl, dim=-1, index=indices)
             return torch.squeeze(xpl)
 
-
     def self_influences(self, only_coefs=False):
         self_coefs = self.coefficients[torch.arange(self.coefficients.shape[0]), self.labels]
         if only_coefs:
@@ -74,7 +73,6 @@ class FeatureKernelExplainer(Explainer):
         else:
             return self.normalized_samples.norm(dim=-1)*self_coefs
         
-
     def save_coefs(self, dir):
         torch.save(self.coefficients, os.path.join(dir, f"{self.name}_coefs"))
 

@@ -14,7 +14,7 @@ from utils.data import ReduceLabelDataset, FeatureDataset, GroupLabelDataset, Co
 import torch
 from torchvision.transforms import Compose, RandomResizedCrop, RandomHorizontalFlip, RandomApply, RandomEqualize, RandomRotation, AutoAugment, AutoAugmentPolicy
 import matplotlib.pyplot as plt
-from datasets.MNIST import MNIST
+from dataset.MNIST import MNIST
 from torch.utils.data import DataLoader
 from torch.optim import SGD, Adam, RMSprop
 from torch.optim.lr_scheduler import ConstantLR, StepLR, CosineAnnealingLR
@@ -110,7 +110,8 @@ def get_validation_loss(model, ds, loss, num_classes, device):
     loader = DataLoader(ds, batch_size=32)
     l = torch.tensor(0.0)
     # count = 0
-    for inputs, targets in tqdm(iter(loader)):
+    #for inputs, targets in tqdm(iter(loader)): #Disable for cluster
+    for inputs, targets in iter(loader):
         inputs = inputs.to(torch.device(device))
         targets = targets.long()
         if isinstance(loss, BCEWithLogitsLoss):
@@ -270,7 +271,8 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
         y_out = torch.empty((0, num_classes_model), device=device)
         cum_loss = 0
         cnt = 0
-        for inputs, targets in tqdm(iter(loader)):
+        #for inputs, targets in tqdm(iter(loader)): # Disable for cluster
+        for inputs, targets in iter(loader):
             inputs = inputs.to(device)
             if isinstance(loss, BCEWithLogitsLoss):
                 targets = one_hot(targets, num_classes_model).float()
@@ -420,7 +422,8 @@ def evaluate_model(model, device, num_classes, class_groups, data_root, batch_si
     y_true = torch.empty(0, device=device)
     y_out = torch.empty((0, num_classes_model), device=device)
 
-    for i, (inputs, targets) in enumerate(tqdm(iter(loader), total=min(num_batches_to_process, len(loader)))):
+    #for i, (inputs, targets) in enumerate(tqdm(iter(loader), total=min(num_batches_to_process, len(loader)))): #Disable for cluster
+    for i, (inputs, targets) in enumerate(iter(loader)):
         inputs = inputs.to(device)
         targets = targets.to(device)
         y_true = torch.cat((y_true, targets), 0)

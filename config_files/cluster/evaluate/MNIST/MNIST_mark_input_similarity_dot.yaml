@@ -1,0 +1,17 @@
+batch_size: 16
+cache_dir: /mnt/cache/MNIST/mark/input_similarity_dot
+data_root: /mnt/dataset
+dataset_name: MNIST
+dataset_type: mark
+device: cuda
+features_dir: /mnt/cache/MNIST/mark/features
+grad_dir: /mnt/cache/MNIST/mark/tracin/best
+lds_cache_dir: /mnt/cache/MNIST/mark
+metric: mark
+model_name: basic_conv
+model_path: /mnt/checkpoints/MNIST/mark/MNIST_basic_conv_best
+num_classes: 10
+save_dir: /mnt/outputs/
+validation_size: 2000
+xai_method: input_similarity_dot
+xpl_root: /mnt/explanations/MNIST/mark/input_similarity_dot/

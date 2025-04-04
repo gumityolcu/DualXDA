@@ -39,7 +39,9 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "CIFAR": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
     }
-    kronfluence_params={}
+    kronfluence_params={
+         "score_data_partitions":10
+    }
 
     # if we want seperate kwargs for each dataset, below is a dictionary with default values
     # kronfluence_params={
@@ -149,7 +151,6 @@ def explain_model(model_name, model_path, device, class_groups,
         kwargs["C"] = C_margin
     
     print(f"Generating explanations with {explainer_cls.name}")
-    #train=torch.utils.data.Subset(train, range(0, 10)) # TODO : delete
     xplain(
         model=model,
         train=train,
