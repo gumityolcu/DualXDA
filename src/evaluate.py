@@ -154,9 +154,7 @@ def evaluate(model_name, model_path, device, class_groups,
             xpl.to(device)
             xpl_all = torch.cat((xpl_all, xpl), 0)
         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
-    
-    #xpl_all=xpl_all[:5,:] # DELETE THISSSS
-    metric(xpl_all, 0)
+    metric(xpl_all[:5], 0)
     metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{outfile_name}_eval_results.json")
 
 
