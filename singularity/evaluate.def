@@ -7,9 +7,13 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
   ../captum /captum
 
 %post
-
   export "PATH=/opt/conda/bin:$PATH"
   pip install numpy \
+    lightning \
+    tqdm \
+    annoy \
+    datasets \
+    transformers==4.49.0\
     matplotlib \
     xmltodict \
     pyyaml \
@@ -17,14 +21,14 @@ From: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-devel
     scikit-image \
     scipy \
     seaborn \
-    termcolor
-  pip install torcheval
-  pip install zennit
-  pip install tensorboard
+    termcolor \
+    torcheval \
+    zennit \
+    tensorboard \
+    torchmetrics \
+    kronfluence  \
   pip install /sklearn
-  pip install torchmetrics
   pip install /captum
-  pip install kronfluence
 
 %runscript
 

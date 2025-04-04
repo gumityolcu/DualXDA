@@ -2,13 +2,15 @@ import argparse
 from utils.data import load_datasets, ReduceLabelDataset, PredictionTargetDataset
 from utils.models import clear_resnet_from_checkpoints, load_model
 from explain import load_explainer
+
+
 import yaml
 import logging
 from metrics import *
 
 
 
-def load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
+def load_metric(metric_name, dataset_name, train, test, device, model, model_name,
                 epochs, loss, lr, momentum, optimizer, scheduler,
                 weight_decay, augmentation, sample_nr, cache_dir,lds_cache_dir, num_classes, batch_size):
     base_dict={
@@ -44,6 +46,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
     #     "AWA": 30000
     # }
 
+
     ret_dict = {"std": (SameClassMetric,{}), "group": (SameSubclassMetric,{}), 
                 "corrupt": (CorruptLabelMetric,{}),
                 "mark": (MarkImageMetric, {"model":model, "topk": 10}),
@@ -54,6 +57,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
                 "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
                 "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
                 "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': lds_cache_dir}}),
+                "lindatmod": (QuandaLDSWrapper, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "labelflip": (LabelFlipMetric, retrain_dict)}
     if metric_name not in ret_dict.keys():
@@ -65,7 +69,7 @@ def load_metric(metric_name, dataset_name, train, test, device, coef_root, model
 
 def evaluate(model_name, model_path, device, class_groups,
              dataset_name, metric_name,
-             data_root, xpl_root, coef_root,
+             data_root, xpl_root,
              save_dir, validation_size, num_classes,
              epochs, loss, lr, momentum, optimizer, scheduler,
              weight_decay, augmentation, sample_nr, xai_method, cache_dir, lds_cache_dir, grad_dir, features_dir, batch_size):
@@ -101,7 +105,7 @@ def evaluate(model_name, model_path, device, class_groups,
     model.to(device)
     model.eval()
     test=PredictionTargetDataset(dataset=test, model=model, device=device)
-    metric = load_metric(metric_name, dataset_name, train, test, device, coef_root, model, model_name,
+    metric = load_metric(metric_name, dataset_name, train, test, device, model, model_name,
                          epochs, loss, lr, momentum, optimizer, scheduler,
                          weight_decay, augmentation, sample_nr, cache_dir, lds_cache_dir, num_classes, batch_size)
     print(f"Computing metric {metric.name}")
@@ -113,54 +117,6 @@ def evaluate(model_name, model_path, device, class_groups,
     if splitted[-1]=="":
         splitted=splitted[:-1]
     outfile_name=splitted[-1]
-
-######################################################################
-
-    # if metric_name == 'switched':
-    #     xpl_root_switched = xpl_root
-    #     xpl_root = xpl_root.replace('switched', 'std')
-
-    #     if not os.path.isdir(xpl_root):
-    #         raise Exception(f"Can not find standard explanation directory {xpl_root}")
-    #     file_list = [f for f in os.listdir(xpl_root) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-    #     file_root = file_list[0].split('_')[0]
-    #     num_files=len(file_list)
-    #     #check if merged xpl exists
-    #     if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-    #         xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
-    #     #merge all xpl
-    #     else:
-    #         xpl_all = torch.empty(0, device=device)
-    #         for i in range(num_files):
-    #             fname = os.path.join(xpl_root, f"{file_root}_{i:02d}")
-    #             xpl = torch.load(fname, map_location=torch.device(device))
-    #             xpl.to(device)
-    #             xpl_all = torch.cat((xpl_all, xpl), 0)
-    #         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
-
-    #     if not os.path.isdir(xpl_root_switched):
-    #         raise Exception(f"Can not find switched explanation directory {xpl_root_switched}")
-    #     file_list_switched = [f for f in os.listdir(xpl_root_switched) if ("tgz" not in f) and ("csv" not in f) and ("coefs" not in f) and ("_tensor" not in f) and (".shark" not in f) and ("_all" not in f)]
-    #     file_root_switched = file_list_switched[0].split('_')[0]
-    #     num_files_switched=len(file_list_switched)        
-    #     #check if merged switched xpl exists
-    #     if os.path.isfile(os.path.join(xpl_root_switched, f"{file_root_switched}_all")):
-    #         xpl_all_switched = torch.load(os.path.join(xpl_root_switched, f"{file_root_switched}_all"))        
-    #     #merge all switched xpl
-    #     else:
-    #         xpl_all_switched = torch.empty(0, device=device)
-    #         for i in range(num_files_switched):
-    #             fname_switched = os.path.join(xpl_root_switched, f"{file_root_switched}_{i:02d}")
-    #             xpl_switched = torch.load(fname_switched, map_location=torch.device(device))
-    #             xpl_switched.to(device)
-    #             xpl_all_switched = torch.cat((xpl_all_switched, xpl_switched), 0)
-    #         torch.save(xpl_all_switched, os.path.join(xpl_root_switched, f"{file_root_switched}_all"))
-
-    #     metric(xpl_all, xpl_all_switched, 0)
-    #     metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{xpl_root.split('/')[-1]}_eval_results.json")
-    #     return
-    
-    ################
 
 
     if metric_name == "corrupt":
@@ -198,7 +154,8 @@ def evaluate(model_name, model_path, device, class_groups,
             xpl.to(device)
             xpl_all = torch.cat((xpl_all, xpl), 0)
         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
-        
+    
+    #xpl_all=xpl_all[:5,:] # DELETE THISSSS
     metric(xpl_all, 0)
     metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{outfile_name}_eval_results.json")
 
@@ -229,7 +186,6 @@ if __name__ == "__main__":
                 metric_name=train_config.get('metric', 'std'),
                 data_root=train_config.get('data_root', None),
                 xpl_root=train_config.get('xpl_root', None),
-                coef_root=train_config.get('coef_root', None),
                 save_dir=train_config.get('save_dir', None),
                 validation_size=train_config.get('validation_size', 2000),
                 num_classes=train_config.get('num_classes'),
