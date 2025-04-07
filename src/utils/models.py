@@ -57,7 +57,7 @@ class VGGWrapper(torch.nn.Module):
         super(VGGWrapper, self).__init__()
         self.classifier=torch.nn.Linear(in_features=module.classifier[6].in_features, out_features=output_dim, bias=True)
         self.arnoldi_param_filter=arnoldi_param_filter
-        seq_array=module.features + [
+        seq_array= [module.features[i] for i in range(len(module.features))] + [
             module.avgpool,
             module.classifier[0],
             module.classifier[1],
