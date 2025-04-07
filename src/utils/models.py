@@ -2,6 +2,7 @@ import torch.utils.data
 from models import BasicConvModel
 from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 from torchvision.models import vgg16, VGG16_Weights
+from torch.nn import Flatten
 import tqdm
 
 def clear_resnet_from_checkpoints(checkpoint):
@@ -59,6 +60,7 @@ class VGGWrapper(torch.nn.Module):
         self.arnoldi_param_filter=arnoldi_param_filter
         seq_array= [module.features[i] for i in range(len(module.features))] + [
             module.avgpool,
+            Flatten(1),
             module.classifier[0],
             module.classifier[1],
             module.classifier[2],
