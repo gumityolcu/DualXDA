@@ -117,8 +117,7 @@ def load_model(model_name, dataset_name, num_classes):
     elif model_name=="vgg16":
         print("Using VGG16 model\n")
         if dataset_name=="AWA":
-            #return VGGWrapper(vgg16(weights=VGG16_Weights.IMAGENET1K_V1), output_dim=num_classes, arnoldi_param_filter=True)
-            return VGGWrapper(vgg16(), output_dim=num_classes, arnoldi_param_filter=True)
+            return VGGWrapper(vgg16(weights=VGG16_Weights.IMAGENET1K_V1), output_dim=num_classes, arnoldi_param_filter=True)
         else:
             return VGGWrapper(vgg16(), output_dim=num_classes)        
 
