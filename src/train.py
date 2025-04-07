@@ -267,6 +267,7 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir,exist_ok=True)
     for e in range(epochs):
+        print(f"Epoch {e + 1}/{epochs}", flush=True)
         y_true = torch.empty(0, device=device)
         y_out = torch.empty((0, num_classes_model), device=device)
         cum_loss = 0
