@@ -6,6 +6,7 @@ import os
 import json
 import sys
 import yaml
+import numpy as np
 from torch.nn import CrossEntropyLoss, KLDivLoss, BCEWithLogitsLoss, MultiMarginLoss, BCELoss
 from torch.nn.functional import one_hot
 from tqdm import tqdm
@@ -189,6 +190,12 @@ def start_training(model_name, device, num_classes, class_groups, data_root, epo
     else: 
         num_classes_model = num_classes
     model = load_model(model_name, dataset_name, num_classes_model).to(device)
+
+    # Count trainable parameters
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    print(f"Number of Parameter: {params/1000000:.2f}M")
+
     tensorboarddir = f"{model_name}_{lr}_{scheduler}_{optimizer}{f'_aug' if augmentation is not None else ''}"
     tensorboarddir = os.path.join(save_dir, tensorboarddir)
     writer = SummaryWriter(tensorboarddir)
