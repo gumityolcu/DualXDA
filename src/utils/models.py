@@ -117,9 +117,27 @@ def load_model(model_name, dataset_name, num_classes):
     elif model_name=="vgg16":
         print("Using VGG16 model\n")
         if dataset_name=="AWA":
-            return VGGWrapper(vgg16(weights=VGG16_Weights.IMAGENET1K_V1), output_dim=num_classes, arnoldi_param_filter=True)
+            vgg = vgg16(weights=VGG16_Weights.IMAGENET1K_V1)
+            # Freeze parameters of early layers (up to and incl. first linear layer)
+            for layer in vgg.features:
+                for param in layer.parameters():
+                    param.requires_grad = False
+            for params in vgg.avgpool.parameters():
+                params.requires_grad = False
+            for params in vgg.classifier[0].parameters():
+                params.requires_grad = False
+            return VGGWrapper(vgg, output_dim=num_classes, arnoldi_param_filter=True)
         else:
-            return VGGWrapper(vgg16(), output_dim=num_classes)        
+            vgg = vgg16()
+            # Freeze parameters of early layers (up to and incl. first linear layer)
+            for layer in vgg.features:
+                for param in layer.parameters():
+                    param.requires_grad = False
+            for params in vgg.avgpool.parameters():
+                params.requires_grad = False
+            for params in vgg.classifier[0].parameters():
+                params.requires_grad = False
+            return VGGWrapper(vgg, output_dim=num_classes)        
 
 
 def compute_accuracy(model, test, device, progress=True):
