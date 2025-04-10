@@ -144,7 +144,7 @@ def evaluate(model_name, model_path, device, class_groups,
     file_root = file_list[0].split('_')[0]
     num_files=len(file_list)
     if os.path.isfile(os.path.join(xpl_root, f"{file_root}_all")):
-        xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"))
+        xpl_all = torch.load(os.path.join(xpl_root, f"{file_root}_all"), map_location=device)
     #merge all xpl
     else:
         xpl_all = torch.empty(0, device=device)
@@ -154,7 +154,7 @@ def evaluate(model_name, model_path, device, class_groups,
             xpl.to(device)
             xpl_all = torch.cat((xpl_all, xpl), 0)
         torch.save(xpl_all, os.path.join(xpl_root, f"{file_root}_all"))
-    metric(xpl_all[:5], 0)
+    metric(xpl_all, 0)
     metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{outfile_name}_eval_results.json")
 
 
