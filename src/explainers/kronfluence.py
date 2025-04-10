@@ -113,7 +113,7 @@ class KronfluenceExplainer(Explainer):
         
     def self_influences(self):
         if os.path.exists(os.path.join(self.dir, "self_influences")):
-            return torch.load(os.path.join(self.dir, "self_influences"),map_location=self.device)
+            return torch.load(os.path.join(self.dir, "self_influences"),map_location=self.device)["all_modules"]
         else:
             score_args = ScoreArguments(**self.score_kwargs)
             self.analyzer.compute_self_scores(scores_name="self", factors_name="exp_factors", score_args=score_args, train_dataset=self.dataset,overwrite_output_dir=True)
