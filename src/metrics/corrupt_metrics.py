@@ -40,6 +40,9 @@ class CorruptLabelMetric(Metric):
         return resdict
 
     def get_result(self, dir, file_name, coef_influences=None):
+        print("Self.corrupt_samples  ", type(self.corrupt_samples))
+        if type(self.corrupt_samples) == dict:
+            print(self.corrupt_samples.keys())
         max_score = (self.corrupt_samples.shape[0] + 1) / 2 + self.scores.shape[0] - self.corrupt_samples.shape[0]
         max_score = max_score / self.scores.shape[0]
         score, curve = self.compute_score(self.scores)
