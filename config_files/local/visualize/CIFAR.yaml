@@ -1,0 +1,28 @@
+batch_size: 16
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/std/arnoldi
+data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
+dataset_name: CIFAR
+dataset_type: std
+device: cpu
+features_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/std/features
+grad_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/std/tracin/best
+metric: std
+model_name: resnet18
+model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/std/CIFAR_resnet18_best
+num_classes: 10
+save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
+validation_size: 2000
+xpl_roots: [
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/dualview_0.1/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/dualview_0.01/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/dualview_0.001/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/dualview_0.0001/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/lissa/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/arnoldi/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/representer/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/tracin/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/gradcos/",
+  "/home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/graddot/",
+  ]
+method_names: ["dualview_0.1", "dualview_0.01", "dualview_0.001", "dualview_0.0001", "lissa", "arnoldi", "representer", "tracin", "gradcos", "graddot"]
+
