@@ -1,6 +1,6 @@
 C: 0.99
 accuracy: true
-batch_size: 20
+batch_size: 200
 cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/std/representer_0.99
 data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
 dataset_name: CIFAR
@@ -14,6 +14,6 @@ num_batches_per_file: 1
 num_classes: 10
 num_files: 1
 save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/representer_0.99
-start_file: 99
+start_file: 9
 validation_size: 2000
 xai_method: representer
