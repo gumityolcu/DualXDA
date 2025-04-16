@@ -1,6 +1,6 @@
 C: 0.99
 accuracy: true
-batch_size: 20
+batch_size: 200
 cache_dir: /mnt/cache/CIFAR/std/representer_0.99
 data_root: /mnt/dataset/
 dataset_name: CIFAR

@@ -1,6 +1,6 @@
 C: 0.96
 accuracy: true
-batch_size: 20
+batch_size: 200
 cache_dir: /mnt/cache/CIFAR/mark/representer_0.96
 data_root: /mnt/dataset/
 dataset_name: CIFAR

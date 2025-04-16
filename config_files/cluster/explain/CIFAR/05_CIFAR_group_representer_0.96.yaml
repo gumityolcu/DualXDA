@@ -1,6 +1,6 @@
 C: 0.96
 accuracy: true
-batch_size: 20
+batch_size: 200
 cache_dir: /mnt/cache/CIFAR/group/representer_0.96
 class_groups:
 - - 0

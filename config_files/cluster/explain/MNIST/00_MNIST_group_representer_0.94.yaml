@@ -1,6 +1,6 @@
 C: 0.94
 accuracy: true
-batch_size: 20
+batch_size: 200
 cache_dir: /mnt/cache/MNIST/group/representer_0.94
 class_groups:
 - - 0
