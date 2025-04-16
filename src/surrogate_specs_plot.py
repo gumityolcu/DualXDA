@@ -12,6 +12,7 @@ def main(dataset_name, device):
     C_values=[1e-6,1e-5,0.0001,0.001,0.01,0.1,1.,10.,100.]
     num_classes=n_cls[dataset_name]
     root=f"/mnt/cache/{dataset_name}/std"
+    root=f"/home/fe/yolcu/Documents/Code/DualView-wip/cache/{dataset_name}/std"
     outdir="/mnt/outputs"
 
     outname=f"{dataset_name}_K_plot"
@@ -24,7 +25,7 @@ def main(dataset_name, device):
     train_accs=[]
 
     ds_kwargs = {
-        'data_root': "/mnt/dataset",
+        'data_root': "/home/fe/yolcu/Documents/Code/Datasets",
         'image_set': "test",
         'validation_size': 2000,
         "only_train": False,
@@ -68,17 +69,17 @@ def main(dataset_name, device):
         pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
         train_accs.append((pred==labels).float().mean().item())
         _test_accs=[]
-        for i,(x,y) in enumerate(iter(ld)):
-            if i>= 100:
-                break
-            x=x.to(device)
-            y=y.to(device)
-            feat=model.features(x)
-            pred=torch.matmul(feat, weight.T).argmax(dim=1)
-            _test_accs.append((pred==y).float().mean().item())
-        test_accs.append(torch.tensor(_test_accs, device=device).mean().item())
-        train_time=torch.load(f"{root}/{dirname}/train_time", map_location=device)
-        train_times.append(train_time.item())
+        # for i,(x,y) in enumerate(iter(ld)):
+        #     if i>= 100:
+        #         break
+        #     x=x.to(device)
+        #     y=y.to(device)
+        #     feat=model.features(x)
+        #     pred=torch.matmul(feat, weight.T).argmax(dim=1)
+        #     _test_accs.append((pred==y).float().mean().item())
+        # test_accs.append(torch.tensor(_test_accs, device=device).mean().item())
+        # train_time=torch.load(f"{root}/{dirname}/train_time", map_location=device)
+        # train_times.append(train_time.item())
 
     sv_counts=torch.tensor(sv_counts, device=device)
 

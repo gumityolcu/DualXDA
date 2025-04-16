@@ -90,7 +90,7 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
     def __init__(self, model, dataset, device, dir, features_dir, sparsity=0.):
         self.sparsity = sparsity
         super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=features_dir, normalize=False)
-        self.dir=dir + ("" if sparsity==0. else f"_{sparsity}")
+        self.dir=dir
         self.features_dir=features_dir
         os.makedirs(self.dir, exist_ok=True)
         os.makedirs(self.features_dir, exist_ok=True)

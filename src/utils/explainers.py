@@ -76,6 +76,17 @@ class FeatureKernelExplainer(Explainer):
     def save_coefs(self, dir):
         torch.save(self.coefficients, os.path.join(dir, f"{self.name}_coefs"))
 
+    def compute_train_acc(self, data_limit=None):
+        samples=self.normalized_samples[:data_limit] if data_limit else self.normalized_samples
+        labels=self.labels[:5] if data_limit else self.labels
+        crosscorr = torch.matmul(samples, self.normalized_samples.T)
+        crosscorr = crosscorr[:, :, None]
+        output = torch.sum(self.coefficients * crosscorr,dim=-2)
+        indices = output.argmax(dim=-1)
+        correct = (indices == labels).float()
+        acc = correct.sum() / len(correct)
+        return acc.item()
+
 class GradDotExplainer(Explainer):
     name="GradDotExplainer"     
     gradcos_name="GradCosExplainer"
