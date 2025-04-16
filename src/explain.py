@@ -53,7 +53,11 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     #     "score_data_partitions":1
     #     }
 
-    trak_params={}
+    trak_params={
+        "MNIST": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
+        "CIFAR": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
+        "AWA": {'proj_dim': 1536, "base_cache_dir":cache_dir, "dir": save_dir},
+    }
 
     dualview_params={}
 
@@ -65,7 +69,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
 
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
-        'trak': (TRAK, {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir}),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
+        'trak': (TRAK, trak_params[dataset_name]),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
         'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128,  "ds_type": dataset_type}),
@@ -81,12 +85,6 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         'input_similarity_l2': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
      }    
     return explainers[xai_method]
-
-
-        # arnoldi constructor
-        # layers = None, OOO
-        # projection_dim = 50, OOO
-        # hessian_dataset_size = 5000, OOO
 
 def print_model(model):
     total=0
