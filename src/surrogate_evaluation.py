@@ -60,7 +60,16 @@ def load_surrogate(model_name, model_path, device,
     model.to(device)
     model.eval()
     explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir_explainer, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+
+    if C_margin is not None:
+        if xai_method=="dualview":
+            kwargs["C"]=C_margin
+        elif xai_method=="representer":
+            kwargs["sparsity"]=C_margin
+    
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
+    train_acc = explainer.compute_train_acc()
+    
     if xai_method == "dualview":
         explainer.read_variables()
         w1 = explainer.learned_weight
@@ -68,8 +77,7 @@ def load_surrogate(model_name, model_path, device,
         print("SANITY ", ((w1 - w2)).abs().mean().item())
     else:
         explainer.train()
-    if C_margin is not None:
-        kwargs["C"]=C_margin
+
     print(f"Checking surrogate faithfulness of {explainer_cls.name}")
 
     model_weights = model.classifier.weight.detach() #and bias?
@@ -97,11 +105,27 @@ def load_surrogate(model_name, model_path, device,
     print("Correlation of prediction:", score_matthews_predictions)
     print("Kendall tau-rank correlation of logits:", score_kendall_logits)
     print("\n")
+    
+    loader=torch.utils.data.DataLoader(test, 32, shuffle=False) #concat train and test and check activations on both
+    model_logits=torch.empty((0,num_classes)).to(device)
+    test_classifications=[]
+    for x, y in iter(loader): #tqdm.tqdm(loader)
+        x=x.to(device)
+        y=y.to(device)
+        _model_logits = model(x).detach()
+        model_logits=torch.cat((model_logits, _model_logits), dim=0)
+        preds=torch.argmax(model_logits, dim=1)
+        test_classifications.append(preds==y)
+    test_classifications=torch.cat(test_classifications, dim=0)
+    test_acc = test_classifications.float().mean().item()
 
     results_dict = [{"Metric": "Cosine similarity of weight matrices", "Score": score_cos_weights},
                     {"Metric": "Correlation of logits", "Score": score_cos_logits},
                     {"Metric": "Correlation of prediction", "Score": score_matthews_predictions},
-                    {"Metric": "Kendall tau-rank correlation of logits", "Score": score_kendall_logits}]
+                    {"Metric": "Kendall tau-rank correlation of logits", "Score": score_kendall_logits},
+                    {"Metric": "Train Accuracy", "Score": train_acc},
+                    {"Metric": "Test Accuracy", "Score": test_acc}]
+    
     with open(os.path.join(save_dir_results ,f"{dataset_name}_{dataset_type}_surrogate_evaluation.csv"), "w") as file: 
         writer = csv.DictWriter(file, fieldnames = ['Metric', 'Score'])
         writer.writeheader()
