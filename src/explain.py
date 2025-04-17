@@ -40,7 +40,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
     }
     kronfluence_params={
-         "score_data_partitions":10
+         "score_data_partitions":20 if dataset_name=="CIFAR" and dataset_type=="mark" else 10
     }
 
     # if we want seperate kwargs for each dataset, below is a dictionary with default values
@@ -79,7 +79,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         'input_similarity_dot': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
         'input_similarity_cos': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
         'input_similarity_l2': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
-    }
+     }    
     return explainers[xai_method]
 
 
