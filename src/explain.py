@@ -31,13 +31,15 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     lissa_params={
         "MNIST": {'depth': 6000, 'repeat': 10, "file_size": 20},
         "CIFAR": {'depth': 5000, 'repeat': 10, "file_size":20},
-        "AWA": {'depth': 3700, 'repeat': 10, "file_size":20}
+        "AWA": {'depth': 3700, 'repeat': 10, "file_size":20},
+        "ImageNet": {'depth': 3700, 'repeat': 10, "file_size":20}
     }
 
     arnoldi_params={
         "MNIST": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "CIFAR": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
+        "ImageNet": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
     }
     kronfluence_params={
          "score_data_partitions":10
@@ -132,11 +134,11 @@ def explain_model(model_name, model_path, device, class_groups,
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes_model)
 
-    checkpoint = torch.load(model_path, map_location=device)
-    #get rid of model.resnet
-    checkpoint=clear_resnet_from_checkpoints(checkpoint)
-
-    model.load_state_dict(checkpoint["model_state"])
+    if dataset_name != "ImageNet":
+        checkpoint = torch.load(model_path, map_location=device)
+        #get rid of model.resnet
+        checkpoint=clear_resnet_from_checkpoints(checkpoint)
+        model.load_state_dict(checkpoint["model_state"])
     # print_model(model)
     # exit()
     model.to(device)
