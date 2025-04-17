@@ -415,6 +415,7 @@ class LinearDatamodelingScore(RetrainMetric):
         attribution_array = torch.empty((xpl.shape[0], self.samples))
         model_output_array = torch.empty((xpl.shape[0], self.samples))
         for i in range(self.samples):
+            print(f"Running sample {i+1}...")
             model_path = os.path.join(self.cache_dir, f'lds{self.alpha}_{i:02d}')
             retrained_model = load_model(self.model_name, self.dataset_name, self.num_classes).to(self.device)
             retrained_model.load_state_dict(torch.load(model_path, map_location=torch.device(self.device))['model_state'])
