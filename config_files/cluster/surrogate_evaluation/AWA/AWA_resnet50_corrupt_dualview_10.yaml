@@ -24,8 +24,8 @@ model_path: /mnt/checkpoints/AWA/corrupt/AWA_resnet50_best
 num_batches_per_file: 100
 num_classes: 50
 num_files: 500
-save_dir_explainer: /mnt/outputs/AWA/corrupt/dualview_10.0_10.0
-save_dir_results: /mnt/outputs/AWA/corrupt/dualview_10.0_10.0
+save_dir_explainer: /mnt/outputs/AWA/corrupt/dualview_10.0
+save_dir_results: /mnt/outputs/AWA/corrupt/dualview_10.0
 start_file: 0
 validation_size: 2000
 xai_method: dualview

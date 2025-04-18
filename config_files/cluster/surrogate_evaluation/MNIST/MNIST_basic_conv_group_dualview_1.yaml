@@ -24,8 +24,8 @@ model_path: /mnt/checkpoints/MNIST/group/MNIST_basic_conv_best
 num_batches_per_file: 100
 num_classes: 5
 num_files: 500
-save_dir_explainer: /mnt/outputs/MNIST/group/dualview_1.0_1.0
-save_dir_results: /mnt/outputs/MNIST/group/dualview_1.0_1.0
+save_dir_explainer: /mnt/outputs/MNIST/group/dualview_1.0
+save_dir_results: /mnt/outputs/MNIST/group/dualview_1.0
 start_file: 0
 validation_size: 2000
 xai_method: dualview
