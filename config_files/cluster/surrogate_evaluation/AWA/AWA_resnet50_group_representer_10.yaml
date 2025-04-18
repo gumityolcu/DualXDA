@@ -1,0 +1,31 @@
+C: '10'
+accuracy: true
+batch_size: 32
+cache_dir: /mnt/cache/AWA/group/dualview_10
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: /mnt/dataset
+dataset_name: AWA
+dataset_type: group
+device: cuda
+features_dir: /mnt/cache/AWA/group/features
+grad_dir: /mnt/cache/AWA/group/tracin/best
+model_name: resnet50
+model_path: /mnt/checkpoints/AWA/group/AWA_resnet50_best
+num_batches_per_file: 100
+num_classes: 5
+num_files: 500
+save_dir_explainer: /mnt/outputs/AWA/group/dualview_10
+save_dir_results: /mnt/outputs/AWA/group/dualview_10
+start_file: 0
+validation_size: 2000
+xai_method: dualview
