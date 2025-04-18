@@ -1,7 +1,7 @@
 C: 0.1
 accuracy: true
 batch_size: 200
-cache_dir: /mnt/cache/AWA/mark/representer_0.1
+cache_dir: /mnt/cache/AWA/mark/representer
 data_root: /mnt/dataset/
 dataset_name: AWA
 dataset_type: mark

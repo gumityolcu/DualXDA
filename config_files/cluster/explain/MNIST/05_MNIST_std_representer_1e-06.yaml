@@ -1,7 +1,7 @@
 C: 1.0e-06
 accuracy: true
 batch_size: 200
-cache_dir: /mnt/cache/MNIST/std/representer_1e-06
+cache_dir: /mnt/cache/MNIST/std/representer
 data_root: /mnt/dataset/
 dataset_name: MNIST
 dataset_type: std

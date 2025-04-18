@@ -1,7 +1,7 @@
 C: 0.001
 accuracy: true
 batch_size: 200
-cache_dir: /mnt/cache/MNIST/mark/representer_0.001
+cache_dir: /mnt/cache/MNIST/mark/representer
 data_root: /mnt/dataset/
 dataset_name: MNIST
 dataset_type: mark

@@ -1,7 +1,7 @@
 C: 1.0e-06
 accuracy: true
 batch_size: 200
-cache_dir: /mnt/cache/CIFAR/std/representer_1e-06
+cache_dir: /mnt/cache/CIFAR/std/representer
 data_root: /mnt/dataset/
 dataset_name: CIFAR
 dataset_type: std

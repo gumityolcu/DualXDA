@@ -1,7 +1,7 @@
 C: 1.0e-05
 accuracy: true
 batch_size: 200
-cache_dir: /mnt/cache/CIFAR/group/representer_1e-05
+cache_dir: /mnt/cache/CIFAR/group/representer
 class_groups:
 - - 0
   - 1

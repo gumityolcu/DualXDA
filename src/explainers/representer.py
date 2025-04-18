@@ -105,6 +105,7 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
             self.coefficients=torch.load(os.path.join(self.dir,'coefficients'), map_location=self.device)
             self.learned_weight=torch.load(os.path.join(self.dir,'weights'), map_location=self.device)
             self.train_time=torch.load(os.path.join(self.dir,'train_time'), map_location=self.device)
+            self.sparsify_coefficients()
             return self.train_time
 
         t0=time()
@@ -189,9 +190,11 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         if self.sparsity==0:
             return
         else:
-            dualview_coefs=torch.load(os.path.join(self.dir,f'dualview_{self.sparsity}'), map_location=self.device)
-            pass
-
+            dualview_coefs=torch.load(os.path.join(self.dir.replace("representer","dualview"), "coefficients"), map_location=self.device)
+            zeros=(dualview_coefs==0.).sum(dim=0)
+            min_idx=self.coefficients.abs().argsort(descending=False, dim=0)
+            for i in range(min_idx.shape[-1]):
+                self.coefficients[min_idx[:zeros[i],i]]=0.
 
     def self_influences(self, only_coefs=False):
         self_coefs=super().self_influences()
