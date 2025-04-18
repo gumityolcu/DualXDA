@@ -189,14 +189,9 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         if self.sparsity==0:
             return
         else:
-            abs_scores=torch.abs(self.coefficients)
-            if int(self.sparsity)==self.sparsity:
-                sparsity_count=int(self.sparsity)
-            else:
-                sparsity_count=int(abs_scores.shape[0]*self.sparsity)
-            for i in range(abs_scores.shape[1]):
-                sorted_coefs=abs_scores[:,i].argsort(descending=True, dim=0)
-                self.coefficients[sorted_coefs,i][:-sparsity_count] = 0
+            dualview_coefs=torch.load(os.path.join(self.dir,f'dualview_{self.sparsity}'), map_location=self.device)
+            pass
+
 
     def self_influences(self, only_coefs=False):
         self_coefs=super().self_influences()
