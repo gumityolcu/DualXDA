@@ -29,12 +29,12 @@ from explain import load_explainer
 
 def load_surrogate(model_name, model_path, device,
                      class_groups, dataset_name, dataset_type,
-                     data_root, cache_dir, grad_dir, features_dir, batch_size, save_dir_explainer, save_dir_results,
+                     data_root, cache_dir, grad_dir, features_dir, batch_size, save_dir,
                      validation_size, xai_method,num_classes, C_margin, testsplit
                      ):
     # (explainer_class, kwargs)
-    if not os.path.exists(save_dir_results):
-        os.makedirs(save_dir_results)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     if not torch.cuda.is_available():
         device="cpu"
 
@@ -59,7 +59,7 @@ def load_surrogate(model_name, model_path, device,
     model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
-    explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir_explainer, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
 
     if C_margin is not None:
         if xai_method=="dualview":
@@ -126,7 +126,7 @@ def load_surrogate(model_name, model_path, device,
                     {"Metric": "Train Accuracy", "Score": train_acc},
                     {"Metric": "Test Accuracy", "Score": test_acc}]
     
-    with open(os.path.join(save_dir_results ,f"{dataset_name}_{dataset_type}_surrogate_evaluation.csv"), "w") as file: 
+    with open(os.path.join(save_dir ,f"{dataset_name}_{dataset_type}_surrogate_evaluation.csv"), "w") as file: 
         writer = csv.DictWriter(file, fieldnames = ['Metric', 'Score'])
         writer.writeheader()
         writer.writerows(results_dict)
