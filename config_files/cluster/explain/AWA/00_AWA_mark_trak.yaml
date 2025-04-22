@@ -11,7 +11,7 @@ model_name: resnet50
 model_path: /mnt/checkpoints/AWA/mark/AWA_resnet50_best
 num_batches_per_file: 1
 num_classes: 50
-num_files: 1
+num_files: 100
 save_dir: /mnt/outputs/
 start_file: 0
 validation_size: 2000
