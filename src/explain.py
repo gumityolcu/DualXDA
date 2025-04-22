@@ -56,7 +56,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     trak_params={
         "MNIST": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
         "CIFAR": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
-        "AWA": {'proj_dim': 1, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 16},
+        "AWA": {'proj_dim': 512, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 16},
     }
 
     dualview_params={}
