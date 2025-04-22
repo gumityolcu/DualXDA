@@ -113,17 +113,14 @@ def load_surrogate(model_name, model_path, device,
         y=y.to(device)
         _model_logits = model(x).detach()
         model_logits=torch.cat((model_logits, _model_logits), dim=0)
-        preds=torch.argmax(model_logits, dim=1)
+        preds=torch.argmax(_model_logits, dim=1)
         test_classifications.append(preds==y)
     test_classifications=torch.cat(test_classifications, dim=0)
-    test_acc = test_classifications.float().mean().item()
 
     results_dict = [{"Metric": "Cosine similarity of weight matrices", "Score": score_cos_weights},
                     {"Metric": "Correlation of logits", "Score": score_cos_logits},
                     {"Metric": "Correlation of prediction", "Score": score_matthews_predictions},
-                    {"Metric": "Kendall tau-rank correlation of logits", "Score": score_kendall_logits},
-                    {"Metric": "Train Accuracy", "Score": train_acc},
-                    {"Metric": "Test Accuracy", "Score": test_acc}]
+                    {"Metric": "Kendall tau-rank correlation of logits", "Score": score_kendall_logits},]
     
     with open(os.path.join(save_dir_results ,f"{dataset_name}_{dataset_type}_surrogate_evaluation.csv"), "w") as file: 
         writer = csv.DictWriter(file, fieldnames = ['Metric', 'Score'])
