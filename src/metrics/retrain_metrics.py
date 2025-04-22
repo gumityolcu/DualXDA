@@ -427,8 +427,8 @@ class LinearDatamodelingScore(RetrainMetric):
                 attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach()
 
                 logits = []
-                for i in range(start_index,start_index + xpl.shape[0]):
-                    logit = retrained_model(self.test[i][0].unsqueeze(dim=0).to(self.device))
+                for j in range(start_index,start_index + xpl.shape[0]):
+                    logit = retrained_model(self.test[j][0].unsqueeze(dim=0).to(self.device))
                     logits.append(logit)
                 logits = torch.cat(logits, dim=0)
                 print(logits.shape)
@@ -436,8 +436,8 @@ class LinearDatamodelingScore(RetrainMetric):
                 probs = F.log_softmax(logits, dim=1)
                 print(probs.shape)
                 binary_logits = probs.gather(0, evalds_labels.unsqueeze(1)).squeeze()
-                print(binary_logits)
-                print(model_output_array[:,i].shape)
+                print(binary_logits.shape)
+                print(model_output_array[:, i].shape)
                 model_output_array[:, i] = binary_logits.cpu().detach()
         if self.sample_indices is None:
             self.sample_indices=torch.stack(sample_indices,dim=0).to(self.device)
