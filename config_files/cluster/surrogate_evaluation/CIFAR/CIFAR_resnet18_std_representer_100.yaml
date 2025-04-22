@@ -1,7 +1,7 @@
 C: '100'
 accuracy: true
 batch_size: 32
-cache_dir: /mnt/cache/CIFAR/std/dualview_100
+cache_dir: /mnt/cache/CIFAR/std/representer
 class_groups:
 - - 0
   - 1
@@ -24,8 +24,8 @@ model_path: /mnt/checkpoints/CIFAR/std/CIFAR_resnet18_best
 num_batches_per_file: 100
 num_classes: 10
 num_files: 500
-save_dir_explainer: /mnt/outputs/CIFAR/std/dualview_100
-save_dir_results: /mnt/outputs/CIFAR/std/dualview_100
+save_dir_explainer: /mnt/outputs/CIFAR/std/representer_100
+save_dir_results: /mnt/outputs/CIFAR/std/representer_100
 start_file: 0
 validation_size: 2000
-xai_method: dualview
+xai_method: representer

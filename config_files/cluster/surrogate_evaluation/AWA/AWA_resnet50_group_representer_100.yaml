@@ -1,7 +1,7 @@
 C: '100'
 accuracy: true
 batch_size: 32
-cache_dir: /mnt/cache/AWA/group/dualview_100
+cache_dir: /mnt/cache/AWA/group/representer
 class_groups:
 - - 0
   - 1
@@ -24,8 +24,8 @@ model_path: /mnt/checkpoints/AWA/group/AWA_resnet50_best
 num_batches_per_file: 100
 num_classes: 5
 num_files: 500
-save_dir_explainer: /mnt/outputs/AWA/group/dualview_100
-save_dir_results: /mnt/outputs/AWA/group/dualview_100
+save_dir_explainer: /mnt/outputs/AWA/group/representer_100
+save_dir_results: /mnt/outputs/AWA/group/representer_100
 start_file: 0
 validation_size: 2000
-xai_method: dualview
+xai_method: representer

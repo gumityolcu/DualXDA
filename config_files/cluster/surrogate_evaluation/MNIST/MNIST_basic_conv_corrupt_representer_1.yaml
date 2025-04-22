@@ -1,7 +1,7 @@
 C: '1'
 accuracy: true
 batch_size: 32
-cache_dir: /mnt/cache/MNIST/corrupt/dualview_1
+cache_dir: /mnt/cache/MNIST/corrupt/representer
 class_groups:
 - - 0
   - 1
@@ -24,8 +24,8 @@ model_path: /mnt/checkpoints/MNIST/corrupt/MNIST_basic_conv_best
 num_batches_per_file: 100
 num_classes: 10
 num_files: 500
-save_dir_explainer: /mnt/outputs/MNIST/corrupt/dualview_1
-save_dir_results: /mnt/outputs/MNIST/corrupt/dualview_1
+save_dir_explainer: /mnt/outputs/MNIST/corrupt/representer_1
+save_dir_results: /mnt/outputs/MNIST/corrupt/representer_1
 start_file: 0
 validation_size: 2000
-xai_method: dualview
+xai_method: representer
