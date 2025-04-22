@@ -1,6 +1,7 @@
+C: 1.0e-05
 accuracy: true
-batch_size: 20
-cache_dir: /mnt/cache/AWA/group/trak
+batch_size: 200
+cache_dir: /mnt/cache/AWA/group/representer
 class_groups:
 - - 0
   - 1
@@ -62,8 +63,8 @@ model_name: resnet50
 model_path: /mnt/checkpoints/AWA/group/AWA_resnet50_best
 num_batches_per_file: 1
 num_classes: 50
-num_files: 100
+num_files: 1
 save_dir: /mnt/outputs/
-start_file: 0
+start_file: 1
 validation_size: 2000
-xai_method: trak
+xai_method: representer
