@@ -163,7 +163,8 @@ def load_augmentation(name, dataset_name):
     shapes={
         "MNIST": (28,28),
         "CIFAR": (32,32),
-        "AWA": (224,224)
+        "AWA": (224,224),
+        "Shapes2x2": (224, 224)
     }
     trans_arr=[]
     trans_dict={
