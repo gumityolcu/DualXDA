@@ -2,11 +2,19 @@ from tqdm import tqdm
 import torch
 from torch.utils.data.dataset import Dataset
 from torchvision.transforms.functional import to_pil_image
+<<<<<<< HEAD
 from datasets.MNIST import MNIST, FashionMNIST
 from datasets.CIFAR import CIFAR
 from datasets.AWA import AWA
 from datasets.AWA_sub import AWA_sub
 from datasets.Shapes2x2 import Shapes2x2
+=======
+from dataset.MNIST import MNIST, FashionMNIST
+from dataset.CIFAR import CIFAR
+from dataset.AWA import AWA
+from dataset.AWA_sub import AWA_sub
+from dataset.ImageNet import ImageNet
+>>>>>>> e83ad996c09335431fa34a082c9ad8652028a5dc
 import matplotlib.pyplot as plt
 import os
 
@@ -315,7 +323,7 @@ class FlipLabelDataset(Dataset):
 def load_datasets(dataset_name, dataset_type, **kwparams):
     ds = None
     evalds = None
-    ds_dict = {'MNIST': MNIST, 'CIFAR': CIFAR, 'FashionMNIST': FashionMNIST, 'AWA': AWA, 'AWA_sub': AWA_sub, 'Shapes2x2': Shapes2x2}
+    ds_dict = {'MNIST': MNIST, 'CIFAR': CIFAR, 'FashionMNIST': FashionMNIST, 'AWA': AWA, 'AWA_sub': AWA_sub, "ImageNet": ImageNet}
     if "only_train" not in kwparams.keys():
         only_train = False
     else:
