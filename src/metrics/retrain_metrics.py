@@ -429,7 +429,7 @@ class LinearDatamodelingScore(RetrainMetric):
                 logits = []
                 for i in range(start_index,start_index + xpl.shape[0]):
                     logit = retrained_model(self.test[i][0].unsqueeze(dim=0).to(self.device))
-                    logits.append(logit.unsqueeze(dim=0))
+                    logits.append(logit)
                 logits = torch.cat(logits, dim=0)
                 #logits = retrained_model(evalds)
                 probs = F.log_softmax(logits, dim=1)
