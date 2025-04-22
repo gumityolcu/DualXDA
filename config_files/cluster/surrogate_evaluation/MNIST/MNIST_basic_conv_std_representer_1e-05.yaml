@@ -1,4 +1,4 @@
-C: 1e-5
+C: 1e-05
 accuracy: true
 batch_size: 32
 cache_dir: /mnt/cache/MNIST/std/representer
@@ -24,8 +24,8 @@ model_path: /mnt/checkpoints/MNIST/std/MNIST_basic_conv_best
 num_batches_per_file: 100
 num_classes: 10
 num_files: 500
-save_dir_explainer: /mnt/outputs/MNIST/std/representer_1e-5
-save_dir_results: /mnt/outputs/MNIST/std/representer_1e-5
+save_dir_explainer: /mnt/outputs/MNIST/std/representer_1e-05
+save_dir_results: /mnt/outputs/MNIST/std/representer_1e-05
 start_file: 0
 validation_size: 2000
 xai_method: representer

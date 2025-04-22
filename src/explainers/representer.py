@@ -190,7 +190,7 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         if self.sparsity==0:
             return
         else:
-            dualview_coefs=torch.load(os.path.join(self.dir.replace("representer","dualview"), "coefficients"), map_location=self.device)
+            dualview_coefs=torch.load(os.path.join(self.dir.replace("representer",f"dualview_{self.sparsity}"), "coefficients"), map_location=self.device)
             zeros=(dualview_coefs==0.).sum(dim=0)
             min_idx=self.coefficients.abs().argsort(descending=False, dim=0)
             for i in range(min_idx.shape[-1]):
