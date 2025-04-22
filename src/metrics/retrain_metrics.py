@@ -435,7 +435,9 @@ class LinearDatamodelingScore(RetrainMetric):
                 #logits = retrained_model(evalds)
                 probs = F.log_softmax(logits, dim=1)
                 print(probs.shape)
-                binary_logits = probs.gather(1, evalds_labels.unsqueeze(1)).squeeze()
+                binary_logits = probs.gather(0, evalds_labels.unsqueeze(1)).squeeze()
+                print(binary_logits)
+                print(model_output_array[:,i].shape)
                 model_output_array[:, i] = binary_logits.cpu().detach()
         if self.sample_indices is None:
             self.sample_indices=torch.stack(sample_indices,dim=0).to(self.device)
