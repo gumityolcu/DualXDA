@@ -46,6 +46,7 @@ def zennit_inner_product_explanation(model, train, test, composite_cls=EpsilonAl
 def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_batches_per_file, save_dir,
            start_file, num_files, graddot=False, self_influence=False):
     torch.manual_seed(42)
+    xpl_happened=False
     # the graddot parameter indicates if we are generating graddot attributions
     # if it is true, graddot.explain will be called a second time with normalize_train=True to generate gradcos along the way
     print("LOG: XPLAIN INTRO")
@@ -78,6 +79,9 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         t0=time()
         xpl = explainer.explain(x=x, xpl_targets=preds).to(device)
         compute_times.append(time()-t0)
+        if not xpl_happened:
+            xpl_happened=True
+            print("XPL HAPPENED")
         explanations = torch.cat((explanations, xpl), dim=0)
         if graddot:
             gradcos_t0 = time()
