@@ -195,6 +195,8 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
             min_idx=self.coefficients.abs().argsort(descending=False, dim=0)
             for i in range(min_idx.shape[-1]):
                 self.coefficients[min_idx[:zeros[i],i],i]=0.
+                w2 = self.coefficients.T @ self.samples
+            self.learned_weight = self.coefficients.T @ self.samples
 
     def self_influences(self, only_coefs=False):
         self_coefs=super().self_influences()
