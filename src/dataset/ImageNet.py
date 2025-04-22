@@ -29,7 +29,7 @@ class ImageNet(tvImageNet):
 
     def __init__(
             self,
-            root= "imagenet/",
+            root= "imagenet-val/",
             split="train",
             transform=None,
             inv_transform=None,
