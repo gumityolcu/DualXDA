@@ -1,4 +1,4 @@
-C: '0.001'
+C: 0.001
 accuracy: true
 batch_size: 32
 cache_dir: /mnt/cache/CIFAR/std/representer
