@@ -76,7 +76,6 @@ def load_surrogate(model_name, model_path, device,
         print("SANITY ", ((w1 - w2)).abs().mean().item())
     else:
         explainer.train()
-    train_acc = explainer.compute_train_acc()
 
     print(f"Checking surrogate faithfulness of {explainer_cls.name}")
 
