@@ -5,6 +5,8 @@ from scipy.stats import kendalltau
 from matplotlib import pyplot as plt
 import os
 import argparse
+import seaborn as sns
+
 
 def main(dataset_name, device):
     n_cls={"MNIST":10, "CIFAR":10, "AWA":50}
@@ -89,6 +91,10 @@ def main(dataset_name, device):
     # plt.rcParams['font.family'] = 'STIXGeneral'
     fontdict={"size": 15}
 
+    sns.set_theme()
+    plt.rcParams['text.usetex'] = True
+    plt.rcParams['mathtext.fontset'] = 'stix'
+    plt.rcParams['font.family'] = 'STIXGeneral'
     # plot 1
     fig, ax1=plt.subplots(figsize=(8,6))
     ax1.plot(x_axis, train_accs, label="Train accuracy", color="red")
@@ -122,12 +128,10 @@ def main(dataset_name, device):
     ax2.legend(loc=4, fontsize=12)
 
     fig.tight_layout()
+    plt.show(block=True)
     plt.savefig(os.path.join(outdir, f"{outname}_2.pdf"))
 
 if __name__=="__main__":
-    parser=argparse.ArgumentParser()
-    parser.add_argument("--dataset", required=True)
-    parser.add_argument("--device", default="cpu")
-    args=parser.parse_args()
-    main(args.dataset, args.device)
+    for ds in ["MNIST", "CIFAR", "AWA"]:
+        main(ds, "cpu")
     

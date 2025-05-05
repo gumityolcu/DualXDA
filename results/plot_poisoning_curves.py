@@ -5,31 +5,42 @@ import os
 import seaborn as sns
 
 xai_methods=[
-            'lissa',
             'arnoldi',
             'kronfluence',
-            'graddot',
             'tracin',
+            'graddot',
             'trak',
             'representer',
             'dualview_0.1',
             'dualview_0.001',
             'dualview_1e_05',
         ]
+COLOURS_HEX = {
+    "dualview_1e_05":"#D55E00",
+    "dualview_0.001":"#FF8B2F",
+    "dualview_0.1":"#FFBD88",
+    "lissa":"#0072B2",
+    "arnoldi":"#17ABFF",
+    "kronfluence":"#7ACFFF",
+    "tracin":"#009E73",
+    "graddot":"#09FFBC",
+    "gradcos":"#72FFD9",
+    "trak":"#CC79A7",
+    "representer":"#F0E442",
+}
 xai_legends=[
-    "LISSA",
     "Arnoldi",
     "EK-FAC",
     "TracIn",
-    "TRAK",
     "GradDot",
+    "TRAK",
     "Representer Points",
     #"DualView 1e-06",
-    "DualView $C=10^{-5}$",
+    "DualView $C=10^{-1}$",
     #"DualView 0.0001",
     "DualView $C=10^{-3}$",
     #"DualView 0.01",
-    "DualView $C=10^{-1}$",
+    "DualView $C=10^{-5}$",
 ]
 datasets=["MNIST", "CIFAR", "AWA"]
 ds_names=["MNIST", "CIFAR-10", "AWA"]
