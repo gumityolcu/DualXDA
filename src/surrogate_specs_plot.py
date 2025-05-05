@@ -139,5 +139,4 @@ def main(device):
     plt.show(block=True)
 
 if __name__=="__main__":
-    main("cpu")
-    
+    main("cuda")
