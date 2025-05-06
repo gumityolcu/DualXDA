@@ -15,4 +15,4 @@ num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: representer
-xpl_root: /mnt/explanations/MNIST/mark/representer/
+xpl_root: /mnt/explanations/MNIST/mark/representer_0.001/
