@@ -70,26 +70,22 @@ def main(device):
                         if coefs[k, j]!=0.:
                             svs[j]+=1
             sv_counts.append(svs)
-        #     print(f"{dirname}")
-        #     weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
-        #     pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
-        #     train_accs.append((pred==labels).float().mean().item())
-        #     _test_accs=[]
-        #     for k,(x,y) in enumerate(iter(ld)):
-        #         x=x.to(device)
-        #         y=y.to(device)
-        #         feat=model.features(x)
-        #         pred=torch.matmul(feat, weight.T).argmax(dim=1)
-        #         _test_accs.append((pred==y).float().mean().item())
-        #     test_accs.append(torch.tensor(_test_accs, device=device).mean().item())
+            print(f"{dirname}")
+            weight=torch.load(f"{root}/{dirname}/weights",map_location=device)
+            pred=torch.matmul(preactivations, weight.T).argmax(dim=1)
+            train_accs.append((pred==labels).float().mean().item())
+            _test_accs=[]
+            for k,(x,y) in enumerate(iter(ld)):
+                x=x.to(device)
+                y=y.to(device)
+                feat=model.features(x)
+                pred=torch.matmul(feat, weight.T).argmax(dim=1)
+                _test_accs.append((pred==y).float().mean().item())
+            test_accs.append(torch.tensor(_test_accs, device=device).mean().item())
             train_time=torch.load(f"{root}/{dirname}/train_time", map_location=device)
             train_times.append(train_time.item())
 
         sv_counts=torch.tensor(sv_counts, device=device)
-
-        test_accs=torch.ones(len(C_values))
-        train_accs=torch.ones(len(C_values))*2
-    
 
         # plt.rcParams['text.usetex'] = True
         # plt.rcParams['mathtext.fontset'] = 'stix'
@@ -109,7 +105,7 @@ def main(device):
         ax1.set_xticks(x_axis)
         ax1.set_ylabel("Accuracy", fontdict=fontdict)
         ax2=ax1.twinx()
-        ax2.set_ylabel("Train time (s)", fontdict=fontdict)
+        ax2.set_ylabel("\\text{Train time (s)}", fontdict=fontdict)
         ax2.plot(x_axis, train_times, label="Train time", color="black")
         ax1.grid(False)
         ax2.grid(False)
@@ -129,7 +125,7 @@ def main(device):
         ax1.set_xticks(x_axis)
         ax1.set_ylabel("Number of support vectors", fontdict=fontdict)
         ax2=ax1.twinx()
-        ax2.set_ylabel("Train time (s)", fontdict=fontdict)
+        ax2.set_ylabel("\\text{Train time (s)}", fontdict=fontdict)
         ax2.plot(x_axis, train_times, label="Train time", color="black")
 
         ax1.grid(False)
