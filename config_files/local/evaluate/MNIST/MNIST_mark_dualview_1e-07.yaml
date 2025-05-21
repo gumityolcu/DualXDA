@@ -1,6 +1,6 @@
-C: 1.0e-08
-batch_size: 16
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/mark/dualview_1e_08
+C: 1.0e-07
+batch_size: 32
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/mark/dualview_1e_07
 data_root: ~/Documents/Code/Datasets
 dataset_name: MNIST
 dataset_type: mark
@@ -15,4 +15,4 @@ num_classes: 10
 save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
 validation_size: 2000
 xai_method: dualview
-xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/MNIST/mark/dualview_1e_08/
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/MNIST/mark/dualview_1e_07/
