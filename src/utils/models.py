@@ -134,7 +134,7 @@ def load_model(model_name, dataset_name, num_classes):
         elif dataset_name == "ImageNet":
             # No freezing because we don't retrain
             print("Loading ImageNet VGG16")
-            return VGGWrapper(vgg16(weights=VGG16_Weights.IMAGENET1K_V1), output_dim=num_classes)  
+            return VGGWrapper(vgg16(weights=VGG16_Weights.IMAGENET1K_V1), output_dim=num_classes, load_classification_layer=True)  
         else:
             vgg = vgg16()
             # Freeze parameters of early layers (up to and incl. first linear layer)
