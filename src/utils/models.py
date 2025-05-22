@@ -54,9 +54,13 @@ class ResNetWrapper(torch.nn.Module):
         return self.parameters()
     
 class VGGWrapper(torch.nn.Module):
-    def __init__(self, module, output_dim, arnoldi_param_filter=None):
+    def __init__(self, module, output_dim, arnoldi_param_filter=None, load_classification_layer=False):
         super(VGGWrapper, self).__init__()
-        self.classifier=torch.nn.Linear(in_features=module.classifier[6].in_features, out_features=output_dim, bias=True)
+        classifier=torch.nn.Linear(in_features=module.classifier[6].in_features, out_features=output_dim, bias=True)
+        if load_classification_layer:
+            classifier.weight.data=module.classifier[6].weight.clone()
+            classifier.bias.data=module.classifier[6].bias.clone()
+        self.classifier=classifier
         self.arnoldi_param_filter=arnoldi_param_filter
         seq_array= [module.features[i] for i in range(len(module.features))] + [
             module.avgpool,
@@ -128,9 +132,9 @@ def load_model(model_name, dataset_name, num_classes):
                 params.requires_grad = False
             return VGGWrapper(vgg, output_dim=num_classes, arnoldi_param_filter=True)
         elif dataset_name == "ImageNet":
-            vgg = vgg16(weights=VGG16_Weights.IMAGENET1K_V1)
             # No freezing because we don't retrain
-            return VGGWrapper(vgg, output_dim=num_classes)  
+            print("Loading ImageNet VGG16")
+            return VGGWrapper(vgg16(weights=VGG16_Weights.IMAGENET1K_V1), output_dim=num_classes)  
         else:
             vgg = vgg16()
             # Freeze parameters of early layers (up to and incl. first linear layer)
