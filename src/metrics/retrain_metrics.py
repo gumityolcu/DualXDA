@@ -410,24 +410,35 @@ class LinearDatamodelingScore(RetrainMetric):
         xpl=xpl.to(self.device)
         self.n_test = xpl.shape[0]
         sample_indices=[]
-        evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0).to(self.device)
+        #evalds = torch.cat([self.test[i][0].unsqueeze(dim=0) for i in range(start_index,start_index + xpl.shape[0])], dim=0).to(self.device)
         evalds_labels = torch.Tensor([self.test[i][1] for i in range(start_index,start_index + xpl.shape[0])]).long().to(self.device)
         attribution_array = torch.empty((xpl.shape[0], self.samples))
         model_output_array = torch.empty((xpl.shape[0], self.samples))
         for i in range(self.samples):
-            model_path = os.path.join(self.cache_dir, f'lds{self.alpha}_{i:02d}')
-            retrained_model = load_model(self.model_name, self.dataset_name, self.num_classes).to(self.device)
-            retrained_model.load_state_dict(torch.load(model_path, map_location=torch.device(self.device))['model_state'])
-            retrained_model.eval()
-            cur_indices=torch.load(model_path, map_location=torch.device(self.device))['sample_indices']
-            if self.sample_indices is None:
-                sample_indices.append(cur_indices)
-            attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach()
-            logits = retrained_model(evalds)
-            probs = F.log_softmax(logits, dim=1)
-            binary_logits = probs.gather(1, evalds_labels.unsqueeze(1)).squeeze()
-            #binary_logits = torch.log(correct_probs / (1-correct_probs+1e-10)) #added for numerical stability
-            model_output_array[:, i] = binary_logits.cpu().detach()
+            print(f"Running sample {i+1}...")
+            with torch.no_grad():
+                model_path = os.path.join(self.cache_dir, f'lds{self.alpha}_{i:02d}')
+                retrained_model = load_model(self.model_name, self.dataset_name, self.num_classes).to(self.device)
+                retrained_model.load_state_dict(torch.load(model_path, map_location=torch.device(self.device))['model_state'])
+                retrained_model.eval()
+                cur_indices=torch.load(model_path, map_location=torch.device(self.device))['sample_indices']
+                if self.sample_indices is None:
+                    sample_indices.append(cur_indices)
+                attribution_array[:, i] = xpl[:, cur_indices].sum(dim=1).cpu().detach()
+
+                logits = []
+                for j in range(start_index,start_index + xpl.shape[0]):
+                    logit = retrained_model(self.test[j][0].unsqueeze(dim=0).to(self.device))
+                    logits.append(logit)
+                logits = torch.cat(logits, dim=0)
+                print(logits.shape)
+                #logits = retrained_model(evalds)
+                probs = F.log_softmax(logits, dim=1)
+                print(probs.shape)
+                binary_logits = probs.gather(0, evalds_labels.unsqueeze(1)).squeeze()
+                print(binary_logits.shape)
+                print(model_output_array[:, i].shape)
+                model_output_array[:, i] = binary_logits.cpu().detach()
         if self.sample_indices is None:
             self.sample_indices=torch.stack(sample_indices,dim=0).to(self.device)
         self.attribution_array=torch.cat((self.attribution_array, attribution_array), dim=0)
