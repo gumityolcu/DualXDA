@@ -7,7 +7,7 @@ dataset_name: MNIST
 dataset_type: std
 device: cuda
 epochs: 200
-features_dir: /home/yolcu/DualView_wip/cache/MNIST/std/featurews
+features_dir: /home/yolcu/DualView_wip/cache/MNIST/std/features
 grad_dir: /home/yolcu/DualView_wip/cache/MNIST/std/tracin/best
 lds_cache_dir: /home/yolcu/DualView_wip/cache/MNIST/add_batch_in
 loss: cross_entropy

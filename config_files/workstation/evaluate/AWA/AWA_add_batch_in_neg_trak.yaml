@@ -17,7 +17,7 @@ model_path: /home/yolcu/DualView_wip/checkpoints/AWA/std/AWA_resnet50_best
 momentum: 0.9
 num_classes: 50
 optimizer: sgd
-save_dir: /home/yolcu/DualView_wip/test_output
+save_dir: /home/yolcu/DualView_wip/test_output/trak
 scheduler: constant
 validation_size: 2000
 weight_decay: 0
