@@ -1,6 +1,6 @@
-This repository implements the experiments for the paper [DualView: Data Attribution from the Dual Perspective](https://arxiv.org/abs/2402.12118)
+This repository implements the experiments for the paper DualView: **Runtime-Efficient and Sparse Training Data Attribution**
 
-The repository contains the code used to generate and evaluate post-hoc local data attribution of torch models using four evaluation criteria and four explanation methods. These include DualView, Influence Functions and Representer Point Selection. [Shark ML library](https://github.com/Shark-ML/Shark) has been used for DualView explanations. Open source implementations have been used for [Influence Functions](https://github.com/nimarb/pytorch_influence_functions) and [Representer Points](https://github.com/chihkuanyeh/Representer_Point_Selection).
+The repository contains the code used to generate and evaluate post-hoc local data attribution of torch models using seven evaluation criteria and eleven explanation methods. These include DualView, 3 different approximations of Influence Functions, TRAK, TracIn and Representer Point Selection. [sklearn]() has been used for DualView explanations. Open source implementations have been used for [Influence Functions](https://github.com/nimarb/pytorch_influence_functions) and [Representer Points](https://github.com/chihkuanyeh/Representer_Point_Selection).
 
 # Prerequisites
 Shark ML requires Boost and CBLAS. A requirements file is given for Python packages.
