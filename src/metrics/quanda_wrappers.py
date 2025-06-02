@@ -150,7 +150,7 @@ class QuandaSubclassDetection(QuandaClassDetection):
         super().__init__(train.dataset, test.dataset.dataset, model, k=k, device=device)
 
 class QuandaShortcutDetection(Metric):
-    name = "QuandaClassDetection"
+    name = "QuandaShortcutDetection"
 
     def get_test_datapoints(self, start, length):
         targets=[]
