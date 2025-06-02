@@ -84,14 +84,16 @@ def evaluate(model_name, model_path, device, class_groups,
         'transform': augmentation,
         'num_classes': num_classes
     }
-    if metric_name in ["corrupt", "mark", "switched", "group"]:
-        dataset_type=metric_name
-    elif metric_name == "groupk":
+    if metric_name == "shortcut_detection":
+        dataset_type="mark"
+    elif metric_name == "subclass_detection":
         dataset_type="group"
+    elif metric_name == "mislabeling_detection":
+        dataset_type="corrupt"
     else:
         dataset_type = "std"
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
-    if dataset_type=="group":
+    if dataset_type=="subclass_detection":
         num_classes_model=len(class_groups)
     else: 
         num_classes_model = num_classes
@@ -117,7 +119,7 @@ def evaluate(model_name, model_path, device, class_groups,
     outfile_name=splitted[-1]
 
 
-    if metric_name == "corrupt":
+    if metric_name == "mislabeling_detection":
         explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
         train = ReduceLabelDataset(train)
         explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)

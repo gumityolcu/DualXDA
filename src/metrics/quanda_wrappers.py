@@ -163,10 +163,10 @@ class QuandaShortcutDetection(Metric):
     
     def __init__(self, train, test, model, device="cuda"):
         super().__init__(train,test)
-        if train.name != "AWA":
-            if isinstance(train.targets,list):
-                train.targets=torch.tensor(train.targets,device=device)
-            self.train_labels = train.targets.to(device)
+        if train.dataset.name != "AWA":
+            if isinstance(train.dataset.targets,list):
+                train.dataset.targets=torch.tensor(train.dataset.targets,device=device)
+            self.train_labels = train.dataset.targets.to(device)
         self.device=device
         self.train = train
         self.test = test
