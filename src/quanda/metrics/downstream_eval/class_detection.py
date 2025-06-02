@@ -89,7 +89,7 @@ class ClassDetectionMetric(Metric):
                 for i in top_k_xpl_indices.squeeze()
             ]
         ).to(self.device)
-        expanded_targets= test_targets.unsqueeze(1) * torch.ones(self.k)
+        expanded_targets= test_targets.unsqueeze(1) * torch.ones(self.k,device=self.device)
         scores = (expanded_targets == top_k_xpl_targets) * 1.0
         self.scores.append(scores.mean(dim=-1))
 
