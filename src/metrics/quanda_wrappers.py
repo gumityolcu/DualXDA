@@ -4,6 +4,7 @@ from quanda.metrics.ground_truth import LinearDatamodelingMetric
 import torch
 import os
 from metrics import Metric
+from utils.data import GroupLabelDataset
 
 class QuandaLDSWrapper(Metric):
     name = "QuandaLDS"
@@ -139,8 +140,16 @@ class QuandaClassDetection(Metric):
             self.write_result(resdict, dir, file_name)
         return resdict
 
-class QuandaSubclassDetection(Metric):
+class QuandaSubclassDetection(QuandaClassDetection): 
     name = "QuandaSubclassDetection"
+
+    def __init__(self, train, test, model, device="cuda"):
+        assert isinstance(train, GroupLabelDataset)
+        assert isinstance(test.dataset, GroupLabelDataset)
+        super().__init__(train.dataset, test.dataset.dataset, model, device)
+
+class QuandaShortcutDetection(Metric):
+    name = "QuandaClassDetection"
 
     def get_test_datapoints(self, start, length):
         targets=[]
@@ -165,6 +174,10 @@ class QuandaSubclassDetection(Metric):
         self.quanda_metric=ClassDetectionMetric(
             model=model,
             train_dataset=train,
+            shortcut_indices=train.mark_samples,
+            device=device,
+            filter_by_prediction = True,
+            filter_by_class = True,
             )
 
         self.device = device
@@ -174,7 +187,7 @@ class QuandaSubclassDetection(Metric):
         if xpl.nelement() == 0: #to exit if xpl is empty
             return
         t_data,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
-        self.quanda_metric.update(explanations=xpl, test_targets=t_labels)
+        self.quanda_metric.update(explanations=xpl, test_data=t_data, test_targets=t_labels)
         
     def get_result(self, dir=None, file_name=None):
         scores = torch.cat(self.quanda_metric.results["scores"])
