@@ -93,7 +93,7 @@ def evaluate(model_name, model_path, device, class_groups,
     else:
         dataset_type = "std"
     train, test = load_datasets(dataset_name, dataset_type, **ds_kwargs)
-    if dataset_type=="subclass_detection":
+    if dataset_type=="group":
         num_classes_model=len(class_groups)
     else: 
         num_classes_model = num_classes
