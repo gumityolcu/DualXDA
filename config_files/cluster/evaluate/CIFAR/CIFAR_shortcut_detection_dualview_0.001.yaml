@@ -15,4 +15,4 @@ num_classes: 10
 save_dir: /mnt/outputs/
 validation_size: 2000
 xai_method: dualview
-xpl_root: /mnt/explanations/CIFAR/std/dualview_0.001/
+xpl_root: /mnt/explanations/CIFAR/mark/dualview_0.001/
