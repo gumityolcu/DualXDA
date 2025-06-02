@@ -1,0 +1,31 @@
+augmentation: flip_rotate
+base_epoch: 0
+batch_size: 64
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: /home/fe/yolcu/Documents/Code/DualView-wip/src/datasets
+dataset_name: CIFAR
+dataset_type: std
+device: cpu
+epochs: 10
+loss: cross_entropy
+lr: 0.05
+model_name: resnet18
+momentum: 0.9
+num_batches_eval: 200
+num_classes: 10
+optimizer: adam
+save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/std/resnet18_std
+save_each: 2
+scheduler: annealing
+validation_size: 2000
+weight_decay: 1.0e-05
