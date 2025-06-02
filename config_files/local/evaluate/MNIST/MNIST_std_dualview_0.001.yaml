@@ -8,7 +8,7 @@ device: cpu
 features_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/std/features
 grad_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/std/tracin/best
 lds_cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/std
-metric: std
+metric: class_detection
 model_name: basic_conv
 model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/MNIST/std/MNIST_basic_conv_best
 num_classes: 10

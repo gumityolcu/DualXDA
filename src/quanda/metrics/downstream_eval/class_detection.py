@@ -82,15 +82,16 @@ class ClassDetectionMetric(Metric):
         test_targets = test_targets.to(self.device)
         explanations = explanations.to(self.device)
 
-        _, top_one_xpl_indices = explanations.topk(k=self.k, dim=1)
-        top_one_xpl_targets = torch.tensor(
+        _, top_k_xpl_indices = explanations.topk(k=self.k, dim=1)
+        top_k_xpl_targets = torch.tensor(
             [
-                self.train_dataset[int(i)][1]
-                for i in top_one_xpl_indices.squeeze()
+                [self.train_dataset[int(j)][1] for j in i]
+                for i in top_k_xpl_indices.squeeze()
             ]
         ).to(self.device)
-        scores = (test_targets == top_one_xpl_targets) * 1.0
-        self.scores.append(scores.mean())
+        expanded_targets= test_targets.unsqueeze(1) * torch.ones(self.k)
+        scores = (expanded_targets == top_k_xpl_targets) * 1.0
+        self.scores.append(scores.mean(dim=-1))
 
     def compute(self):
         """Aggregate the metric state and return the final score.

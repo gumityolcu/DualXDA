@@ -134,7 +134,7 @@ class QuandaClassDetection(Metric):
         self.quanda_metric.update(explanations=xpl, test_targets=t_labels)
         
     def get_result(self, dir=None, file_name=None):
-        scores = torch.cat(self.quanda_metric.results["scores"])
+        scores = torch.cat(self.quanda_metric.scores)
         score=scores.mean().item()
         resdict = {'metric': self.name, 'detection_scores': scores , 'avg_score': score}
         if dir is not None:
