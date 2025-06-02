@@ -6,8 +6,8 @@ import os
 from metrics import Metric
 from utils.data import GroupLabelDataset
 
-class QuandaLDSWrapper(Metric):
-    name = "QuandaLDS"
+class LDS(Metric):
+    name = "LDS"
 
     def process_cache_dir(self, pretrained_models):
         subset_indices=[]
@@ -107,7 +107,7 @@ class QuandaClassDetection(Metric):
             samples.append(x)
         return torch.stack(samples).to(self.device), torch.tensor(targets, device=self.device)
     
-    def __init__(self, train, test, model, device="cuda"):
+    def __init__(self, train, test, model, k=5, device="cuda"):
         super().__init__(train,test)
         if train.name != "AWA":
             if isinstance(train.targets,list):
@@ -121,6 +121,7 @@ class QuandaClassDetection(Metric):
         self.quanda_metric=ClassDetectionMetric(
             model=model,
             train_dataset=train,
+            k=k
             )
 
         self.device = device
@@ -143,10 +144,10 @@ class QuandaClassDetection(Metric):
 class QuandaSubclassDetection(QuandaClassDetection): 
     name = "QuandaSubclassDetection"
 
-    def __init__(self, train, test, model, device="cuda"):
+    def __init__(self, train, test, model,k, device="cuda"):
         assert isinstance(train, GroupLabelDataset)
         assert isinstance(test.dataset, GroupLabelDataset)
-        super().__init__(train.dataset, test.dataset.dataset, model, device)
+        super().__init__(train.dataset, test.dataset.dataset, model, k=k, device=device)
 
 class QuandaShortcutDetection(Metric):
     name = "QuandaClassDetection"
@@ -171,16 +172,15 @@ class QuandaShortcutDetection(Metric):
         self.test = test
         self.scores = torch.empty(0, dtype=torch.float, device=device)
         
-        self.quanda_metric=ClassDetectionMetric(
+        self.quanda_metric=ShortcutDetectionMetric(
             model=model,
             train_dataset=train,
             shortcut_indices=train.mark_samples,
             device=device,
             filter_by_prediction = True,
             filter_by_class = True,
+            shortcut_cls=train.cls_to_mark
             )
-
-        self.device = device
 
     def __call__(self, xpl, start_index):
         xpl.to(self.device)

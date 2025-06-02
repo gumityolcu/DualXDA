@@ -47,19 +47,21 @@ def load_metric(metric_name, dataset_name, train, test, device, model, model_nam
     # }
 
 
-    ret_dict = {"std": (SameClassMetric,{}), "group": (SameSubclassMetric,{}), 
+    ret_dict = {
                 "corrupt": (CorruptLabelMetric,{}),
                 "mark": (MarkImageMetric, {"model":model, "topk": 10}),
+                "shortcut_detection":(ShortcutDetectionMetric,{"model":model}),
                 "stdk": (TopKSameClassMetric,{}), "groupk": (TopKSameSubclassMetric,{}),
+                "class_detection": (QuandaClassDetection,{"model":model}), "subclass_detection": (QuandaSubclassDetection,{"model":model}), 
                 "switched": (SwitchMetric,{}),
                 "add_batch_in": (BatchRetraining,{ **retrain_dict,**{"mode":"cum"}}),
                 "add_batch_in_neg": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
                 "leave_out": (BatchRetraining, { **retrain_dict,**{"mode":"leave_batch_out"}}),
                 "only_batch": (BatchRetraining, { **retrain_dict,**{"mode":"single_batch"}}),
-                "lds": (LinearDatamodelingScore, { **retrain_dict, **{'cache_dir': lds_cache_dir}}),
-                "lindatmod": (QuandaLDSWrapper, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
+                "lindatmod": (LDS, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
-                "labelflip": (LabelFlipMetric, retrain_dict)}
+                "labelflip": (LabelFlipMetric, retrain_dict)
+                }
     if metric_name not in ret_dict.keys():
         raise Exception(f"{metric_name} is not a metric name")
     metric_cls, metric_kwargs = ret_dict[metric_name]

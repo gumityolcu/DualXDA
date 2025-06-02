@@ -34,6 +34,7 @@ class ClassDetectionMetric(Metric):
         self,
         model: torch.nn.Module,
         train_dataset: torch.utils.data.Dataset,
+        k:int=5,
         checkpoints: Optional[Union[str, List[str]]] = None,
         checkpoints_load_func: Optional[Callable[..., Any]] = None,
     ):
@@ -58,6 +59,7 @@ class ClassDetectionMetric(Metric):
             train_dataset=train_dataset,
             checkpoints_load_func=checkpoints_load_func,
         )
+        self.k=k
 
         self.scores: List[torch.Tensor] = []
 
@@ -80,7 +82,7 @@ class ClassDetectionMetric(Metric):
         test_targets = test_targets.to(self.device)
         explanations = explanations.to(self.device)
 
-        _, top_one_xpl_indices = explanations.topk(k=1, dim=1)
+        _, top_one_xpl_indices = explanations.topk(k=self.k, dim=1)
         top_one_xpl_targets = torch.tensor(
             [
                 self.train_dataset[int(i)][1]
@@ -88,7 +90,7 @@ class ClassDetectionMetric(Metric):
             ]
         ).to(self.device)
         scores = (test_targets == top_one_xpl_targets) * 1.0
-        self.scores.append(scores)
+        self.scores.append(scores.mean())
 
     def compute(self):
         """Aggregate the metric state and return the final score.
