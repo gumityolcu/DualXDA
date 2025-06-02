@@ -48,9 +48,7 @@ def load_metric(metric_name, dataset_name, train, test, device, model, model_nam
 
 
     ret_dict = {
-                "stdk": (TopKSameClassMetric,{}), "groupk": (TopKSameSubclassMetric,{}),
                 "class_detection": (QuandaClassDetection,{"model":model}), "subclass_detection": (QuandaSubclassDetection,{"model":model}), 
-                "mark": (MarkImageMetric, {"model":model, "topk": 10}),
                 "shortcut_detection":(QuandaShortcutDetection,{"model":model}),
                 "corrupt": (MislabelingDetection,{}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
