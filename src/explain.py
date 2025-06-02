@@ -110,7 +110,7 @@ def explain_model(model_name, model_path, device, class_groups,
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    if dataset_type=="group":
+    if dataset_type in ["group","groupk","subclass_detection"]:
         num_classes_model=len(class_groups)
     else: 
         num_classes_model = num_classes
