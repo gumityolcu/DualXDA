@@ -53,8 +53,8 @@ def load_metric(metric_name, dataset_name, train, test, device, model, model_nam
                 "corrupt": (MislabelingDetection,{}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "lds": (QuandaLDS, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
-                "add_batch_in": (BatchRetraining,{ **retrain_dict,**{"mode":"cum"}}),
-                "add_batch_in_neg": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
+                "coreset_selection": (BatchRetraining,{ **retrain_dict,**{"mode":"cum"}}),
+                "data_pruning": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
                 }
     if metric_name not in ret_dict.keys():
         raise Exception(f"{metric_name} is not a metric name")
