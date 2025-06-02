@@ -51,7 +51,7 @@ def load_metric(metric_name, dataset_name, train, test, device, model, model_nam
                 "stdk": (TopKSameClassMetric,{}), "groupk": (TopKSameSubclassMetric,{}),
                 "class_detection": (QuandaClassDetection,{"model":model}), "subclass_detection": (QuandaSubclassDetection,{"model":model}), 
                 "mark": (MarkImageMetric, {"model":model, "topk": 10}),
-                "shortcut_detection":(ShortcutDetectionMetric,{"model":model}),
+                "shortcut_detection":(QuandaClassDetection,{"model":model}),
                 "corrupt": (CorruptLabelMetric,{}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "lindatmod": (LDS, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
