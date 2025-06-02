@@ -144,7 +144,7 @@ class QuandaClassDetection(Metric):
 class QuandaSubclassDetection(QuandaClassDetection): 
     name = "QuandaSubclassDetection"
 
-    def __init__(self, train, test, model,k, device="cuda"):
+    def __init__(self, train, test, model,k=5, device="cuda"):
         assert isinstance(train, GroupLabelDataset)
         assert isinstance(test.dataset, GroupLabelDataset)
         super().__init__(train.dataset, test.dataset.dataset, model, k=k, device=device)
