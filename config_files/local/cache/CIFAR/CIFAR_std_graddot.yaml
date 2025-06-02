@@ -1,7 +1,7 @@
 accuracy: true
 batch_size: 20
 cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/std/tracin
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
+data_root: <data_root>
 dataset_name: CIFAR
 dataset_type: std
 device: cpu

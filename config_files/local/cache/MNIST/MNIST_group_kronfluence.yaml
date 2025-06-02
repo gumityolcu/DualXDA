@@ -1,5 +1,5 @@
 accuracy: true
-batch_size: 32
+batch_size: 20
 cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/group/kronfluence
 class_groups:
 - - 0
@@ -12,7 +12,7 @@ class_groups:
   - 7
 - - 8
   - 9
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
+data_root: <data_root>
 dataset_name: MNIST
 dataset_type: group
 device: cpu

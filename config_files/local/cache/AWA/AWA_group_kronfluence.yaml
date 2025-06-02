@@ -1,5 +1,5 @@
 accuracy: true
-batch_size: 32
+batch_size: 20
 cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/kronfluence
 class_groups:
 - - 0
@@ -52,7 +52,7 @@ class_groups:
   - 47
 - - 48
   - 49
-data_root: /home/fe/yolcu/Documents/Code/DualView-wip/../Datasets
+data_root: <data_root>
 dataset_name: AWA
 dataset_type: group
 device: cpu
