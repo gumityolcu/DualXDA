@@ -107,7 +107,7 @@ class ShortcutDetectionMetric(Metric):
     def update(
         self,
         explanations: torch.Tensor,
-        test_data: Optional[torch.Tensor] = None,
+        test_targets: Optional[torch.Tensor] = None,
         test_labels: Optional[torch.Tensor] = None,
     ):
         """Update the metric state with the provided explanations.
@@ -116,8 +116,8 @@ class ShortcutDetectionMetric(Metric):
         ----------
         explanations : torch.Tensor
             Explanations to be evaluated.
-        test_data : Union[List, torch.Tensor], optional
-            Test samples for which the explanations were computed. Not optional
+        test_targets : Union[List, torch.Tensor], optional
+            Prediction targets for explanations. Not optional
             if `filter_by_prediction` is True.
         test_labels : torch.Tensor, optional
             Labels of the test samples. Not optional if `filter_by_prediction`
@@ -126,9 +126,9 @@ class ShortcutDetectionMetric(Metric):
         """
         explanations = explanations.to(self.device)
 
-        if test_data is None and self.filter_by_prediction:
+        if test_targets is None and self.filter_by_prediction:
             raise ValueError(
-                "test_data must be provided if filter_by_prediction is True"
+                "test_targets must be provided if filter_by_prediction is True"
             )
         if test_labels is None and (
             self.filter_by_prediction or self.filter_by_class
@@ -138,16 +138,15 @@ class ShortcutDetectionMetric(Metric):
                 "filter_by_class is True"
             )
 
-        if test_data is not None:
-            test_data = test_data.to(self.device)
+        if test_targets is not None:
+            test_targets = test_targets.to(self.device)
         if test_labels is not None:
             test_labels = test_labels.to(self.device)
 
         select_idx = torch.tensor([True] * len(explanations)).to(self.device)
 
         if self.filter_by_prediction:
-            pred_cls = self.model(test_data).argmax(dim=1)
-            select_idx *= pred_cls == self.shortcut_cls
+            select_idx *= test_targets == self.shortcut_cls
         if self.filter_by_class:
             select_idx *= test_labels != self.shortcut_cls
 

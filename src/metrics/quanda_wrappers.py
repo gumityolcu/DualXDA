@@ -6,7 +6,7 @@ import os
 from metrics import Metric
 from utils.data import GroupLabelDataset
 
-class LDS(Metric):
+class QuandaLDS(Metric):
     name = "LDS"
 
     def process_cache_dir(self, pretrained_models):
@@ -154,12 +154,15 @@ class QuandaShortcutDetection(Metric):
 
     def get_test_datapoints(self, start, length):
         targets=[]
+        labels=[]
         samples=[]
         for i in range(length):
             x, y = self.test[start+i]
             targets.append(y)
             samples.append(x)
-        return torch.stack(samples).to(self.device), torch.tensor(targets, device=self.device)
+            _,y=self.test.dataset[start+i]
+            labels.append(y)
+        return torch.stack(samples).to(self.device), torch.tensor(targets, device=self.device), torch.tensor(labels,device=self.device) 
     
     def __init__(self, train, test, model, device="cuda"):
         super().__init__(train,test)
@@ -176,7 +179,6 @@ class QuandaShortcutDetection(Metric):
             model=model,
             train_dataset=train,
             shortcut_indices=train.mark_samples,
-            device=device,
             filter_by_prediction = True,
             filter_by_class = True,
             shortcut_cls=train.cls_to_mark
@@ -186,11 +188,11 @@ class QuandaShortcutDetection(Metric):
         xpl.to(self.device)
         if xpl.nelement() == 0: #to exit if xpl is empty
             return
-        t_data,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
-        self.quanda_metric.update(explanations=xpl, test_data=t_data, test_targets=t_labels)
+        _,t_targets,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
+        self.quanda_metric.update(explanations=xpl, test_labels=t_labels, test_targets=t_targets)
         
     def get_result(self, dir=None, file_name=None):
-        scores = torch.cat(self.quanda_metric.results["scores"])
+        scores = torch.tensor(self.quanda_metric.auprc_scores, device=self.device)
         score=scores.mean().item()
         resdict = {'metric': self.name, 'detection_scores': scores , 'avg_score': score}
         if dir is not None:

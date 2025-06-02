@@ -52,9 +52,9 @@ def load_metric(metric_name, dataset_name, train, test, device, model, model_nam
                 "class_detection": (QuandaClassDetection,{"model":model}), "subclass_detection": (QuandaSubclassDetection,{"model":model}), 
                 "mark": (MarkImageMetric, {"model":model, "topk": 10}),
                 "shortcut_detection":(QuandaShortcutDetection,{"model":model}),
-                "corrupt": (CorruptLabelMetric,{}),
+                "corrupt": (MislabelingDetection,{}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
-                "lindatmod": (LDS, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
+                "lds": (QuandaLDS, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
                 "add_batch_in": (BatchRetraining,{ **retrain_dict,**{"mode":"cum"}}),
                 "add_batch_in_neg": (BatchRetraining, { **retrain_dict,**{"mode":"neg_cum"}}), 
                 }

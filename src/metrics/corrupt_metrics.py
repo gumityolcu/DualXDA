@@ -4,7 +4,7 @@ import os
 from utils import Metric
 
 
-class CorruptLabelMetric(Metric):
+class MislabelingDetection(Metric):
     name = "CorruptLabelMetric"
 
     def __init__(self, train, test, device="cuda"):
