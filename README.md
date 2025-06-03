@@ -2,11 +2,12 @@ This repository implements the experiments for the paper DualView: **Runtime-Eff
 
 DualView provides a runtime-efficient method for Training Data Attribution that is also sparse by construction. In our paper, DualView has shown competitive performance against state-of-the-art methods while requiring orders of magnitude less computational time and memory.
 
-![Average ranks plotted against total explanation time over seven evaluation metric for DualView and prominent approaches from the literature.](img/runtime_vs_rank.png)
+<img src="img/runtime_vs_rank.png" alt="Average ranks plotted against total explanation time over seven evaluation metric for DualView and prominent approaches from the literature." width="800"/>
 
 We further introduce DuaLRP, a novel method to obtain feature maps, which indicate why a certain training point is relevant for the prediction on a test point.
 
-![DualLRP provides heatmaps on test-train sample pairs that indicate _why_ a certain training image is influential for the prediction on the test sample.](img/dualrp_overview_with_explanation_flattened.jpg)
+<img src="img/dualrp_overview_with_explanation_flattened.jpg" alt="DualLRP provides heatmaps on test-train sample pairs that indicate _why_ a certain training image is influential for the prediction on the test sample." width="800"/>
+
 
 This repository contains the code used to generate and evaluate post-hoc local data attribution of torch models using seven evaluation criteria and against eight explanation methods. These include three different approximations of Influence Functions, TRAK, TracIn and Representer Point Selection. [`sklearn`](https://scikit-learn.org/) has been used for DualView explanations.
 
