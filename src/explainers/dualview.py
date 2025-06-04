@@ -2,12 +2,14 @@ import torch
 import os
 import subprocess
 import time
+import numpy as np
 from copy import deepcopy
 from utils.csv_io import read_matrix, write_data
 from utils.explainers import FeatureKernelExplainer
 from struct import pack
 from sklearn.svm import LinearSVC ##modified LIBLINEAR MCSVM_CS_Solver which returns the dual variables
 from tqdm import tqdm
+from scipy.sparse import csr_matrix, save_npz, load_npz
 
 
 class DualView(FeatureKernelExplainer):
@@ -16,31 +18,45 @@ class DualView(FeatureKernelExplainer):
     def get_name(self):
         return f"{self.name}-{str(self.C)}"
     
-    def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, max_iter=1000000, normalize=False):
-        super().__init__(model, dataset, device, features_dir, normalize=normalize)
+    def __init__(self, model, dataset, device, dir, features_dir, use_preds=False, C=1.0, max_iter=1000000, normalize=False, sparse=True):
+        super().__init__(model, dataset, device, features_dir, normalize=normalize, sparse=sparse)
         self.C=C
         if dir[-1]=="\\":
             dir=dir[:-1]
         self.dir=dir
         self.features_dir=features_dir
         self.max_iter=max_iter
+        self.sparse=sparse
         os.makedirs(self.dir, exist_ok=True)
         os.makedirs(self.features_dir, exist_ok=True)
 
     def read_variables(self):
-        self.learned_weight = torch.load(os.path.join(self.dir,"weights"), map_location=self.device).to(torch.float)
-        self.coefficients=torch.load(os.path.join(self.dir,"coefficients"), map_location=self.device).to(torch.float)
-        self.train_time=torch.load(os.path.join(self.dir,"train_time"), map_location=self.device).to(torch.float)
+        if not self.sparse:
+            self.learned_weight = torch.load(os.path.join(self.dir,"weights"), map_location=self.device).to(torch.float)
+            self.coefficients=torch.load(os.path.join(self.dir,"coefficients"), map_location=self.device).to(torch.float)
+            self.train_time=torch.load(os.path.join(self.dir,"train_time"), map_location=self.device).to(torch.float)
+        else:
+            #weights_npz = load_npz(os.path.join(self.dir,"weights.npz"))
+            #crow_indices = torch.tensor(weights_npz.indptr, dtype=torch.int64)
+            #col_indices = torch.tensor(weights_npz.indices, dtype=torch.int64)
+            #values = torch.tensor(weights_npz.data, dtype=torch.float32)
+            #self.coefficients = torch.sparse_csr_tensor(crow_indices, col_indices, values, size=weights_npz.shape, device=self.device)
+
+            coefficients_npz = load_npz(os.path.join(self.dir,"coefficients.npz"))
+            crow_indices = torch.tensor(coefficients_npz.indptr, dtype=torch.int64)
+            col_indices = torch.tensor(coefficients_npz.indices, dtype=torch.int64)
+            values = torch.tensor(coefficients_npz.data, dtype=torch.float32)
+            self.coefficients = torch.sparse_csr_tensor(crow_indices, col_indices, values, size=coefficients_npz.shape, device=self.device)
+
+            self.train_time=torch.load(os.path.join(self.dir,"train_time"), map_location=self.device).to(torch.float)
+
 
     def train(self):
         tstart = time.time()
         
-        if not os.path.isfile(os.path.join(self.features_dir, "samples")):
-            torch.save(self.normalized_samples,os.path.join(self.features_dir, "samples"))
-        if not os.path.isfile(os.path.join(self.features_dir, "labels")):
-            torch.save(self.labels,os.path.join(self.features_dir, "labels"))
-        
-        if os.path.isfile(os.path.join(self.dir,'weights')) and os.path.isfile(os.path.join(self.dir,'coefficients')):
+        if not self.sparse and os.path.isfile(os.path.join(self.dir,'weights')) and os.path.isfile(os.path.join(self.dir,'coefficients')):
+            self.read_variables()
+        elif self.sparse and os.path.isfile(os.path.join(self.dir,'weights.npz')) and os.path.isfile(os.path.join(self.dir,'coefficients.npz')) and os.path.isfile(os.path.join(self.dir,'samples.npz')):
             self.read_variables()
         else:
             model = LinearSVC(multi_class="crammer_singer", max_iter=self.max_iter, C=self.C)
@@ -50,11 +66,35 @@ class DualView(FeatureKernelExplainer):
 
             self.coefficients=torch.tensor(model.alpha_.T,dtype=torch.float,device=self.device)
             self.learned_weight=torch.tensor(model.coef_,dtype=torch.float, device=self.device)
-            self.train_time = torch.tensor(time.time() - tstart)
 
+            if not self.sparse: 
+                torch.save(self.learned_weight,os.path.join(self.dir,'weights'))
+                torch.save(self.coefficients,os.path.join(self.dir,'coefficients'))
+
+                if not os.path.isfile(os.path.join(self.features_dir, "samples")):
+                    torch.save(self.normalized_samples, os.path.join(self.features_dir, "samples"))
+                if not os.path.isfile(os.path.join(self.features_dir, "labels")):
+                    torch.save(self.labels,os.path.join(self.features_dir, "labels"))
+            else:
+                sparse_weights = csr_matrix(self.learned_weight)
+                sparse_coefficients = csr_matrix(self.coefficients)
+
+                # Save sparse matrices to disk
+                save_npz(os.path.join(self.dir, 'weights'), sparse_weights)
+                save_npz(os.path.join(self.dir, 'coefficients'), sparse_coefficients)
+
+                if not os.path.isfile(os.path.join(self.dir, "samples")):
+                    crow = sparse_coefficients.indptr
+                    zero_rows_mask = (crow[1:] == crow[:-1])
+                    self.normalized_samples[zero_rows_mask] = 0
+                    sparse_samples = csr_matrix(self.normalized_samples)
+                    save_npz(os.path.join(self.dir, "samples"), sparse_samples)
+
+                if not os.path.isfile(os.path.join(self.dir, "labels")):
+                    torch.save(self.labels, os.path.join(self.dir, "labels"))
+            self.train_time = torch.tensor(time.time() - tstart)
             torch.save(self.train_time,os.path.join(self.dir,'train_time'))
-            torch.save(self.learned_weight,os.path.join(self.dir,'weights'))
-            torch.save(self.coefficients,os.path.join(self.dir,'coefficients'))
+            
             print(f"Training took {self.train_time} seconds")
         return self.train_time
 
