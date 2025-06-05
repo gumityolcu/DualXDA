@@ -25,7 +25,7 @@ class DualView(FeatureKernelExplainer):
         self.dir=dir
         self.features_dir=features_dir
         self.max_iter=max_iter
-        super().__init__(model, dataset, device, features_dir, normalize=normalize, sparse=sparse)
+        super().__init__(model, dataset, device, dir, features_dir, normalize=normalize, sparse=sparse)
         os.makedirs(self.dir, exist_ok=True)
         os.makedirs(self.features_dir, exist_ok=True)
 

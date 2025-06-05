@@ -35,14 +35,14 @@ class Explainer(ABC):
 
 class FeatureKernelExplainer(Explainer):
 
-    def __init__(self, model, dataset, device, dir=None, normalize=False, sparse=False):
+    def __init__(self, model, dataset, device, dir=None, features_dir=None, normalize=False, sparse=False):
         super().__init__(model, dataset, device)
         # self.sanity_check = sanity_check
         os.makedirs(dir, exist_ok=True)
         self.coefficients = None  # the coefficients for each training datapoint x class
         self.learned_weight = None
         self.normalize=normalize
-        if not sparse or not (os.path.isfile(os.path.join(self.dir,'weights')) and os.path.isfile(os.path.join(self.dir,'sparse_coefficients')) and os.path.isfile(os.path.join(self.dir,'zero_indices')) and os.path.isfile(os.path.join(self.dir,'sparse_samples'))):
+        if not sparse or not (os.path.isfile(os.path.join(dir,'weights')) and os.path.isfile(os.path.join(dir,'sparse_coefficients')) and os.path.isfile(os.path.join(dir,'zero_indices')) and os.path.isfile(os.path.join(dir,'sparse_samples'))):
             feature_ds = FeatureDataset(self.model, dataset, device, dir)
             self.samples = feature_ds.samples.to(self.device)
             self.mean = self.samples.sum(0) / self.samples.shape[0]
@@ -55,7 +55,7 @@ class FeatureKernelExplainer(Explainer):
             self.labels = torch.load(os.path.join(dir, "labels"), device=self.device)
         self.sparse=sparse
         self.zero_indices = None
-        self.sparse_samples = torch.load(os.path.join(self.dir, "sparse_samples"), map_location=self.device) if (sparse and os.path.isfile(os.path.join(self.dir, "sparse_samples"))) else None
+        self.sparse_samples = torch.load(os.path.join(dir, "sparse_samples"), map_location=self.device) if (sparse and os.path.isfile(os.path.join(dir, "sparse_samples"))) else None
 
     def normalize_features(self, features):
         return (features - self.mean) / self.stdvar
