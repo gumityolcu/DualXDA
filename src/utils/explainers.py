@@ -39,17 +39,20 @@ class FeatureKernelExplainer(Explainer):
         super().__init__(model, dataset, device)
         # self.sanity_check = sanity_check
         os.makedirs(dir, exist_ok=True)
-        feature_ds = FeatureDataset(self.model, dataset, device, dir)
         self.coefficients = None  # the coefficients for each training datapoint x class
         self.learned_weight = None
         self.normalize=normalize
-        self.samples = feature_ds.samples.to(self.device)
-        self.mean = self.samples.sum(0) / self.samples.shape[0]
-        #self.mean = torch.zeros_like(self.mean)
-        self.stdvar = torch.sqrt(torch.sum((self.samples - self.mean) ** 2, dim=0) / self.samples.shape[0])
-        #self.stdvar=torch.ones_like(self.stdvar)
-        self.normalized_samples=self.normalize_features(self.samples) if normalize else self.samples
-        self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
+        if not sparse or not (os.path.isfile(os.path.join(self.dir,'weights')) and os.path.isfile(os.path.join(self.dir,'sparse_coefficients')) and os.path.isfile(os.path.join(self.dir,'zero_indices')) and os.path.isfile(os.path.join(self.dir,'sparse_samples'))):
+            feature_ds = FeatureDataset(self.model, dataset, device, dir)
+            self.samples = feature_ds.samples.to(self.device)
+            self.mean = self.samples.sum(0) / self.samples.shape[0]
+            #self.mean = torch.zeros_like(self.mean)
+            self.stdvar = torch.sqrt(torch.sum((self.samples - self.mean) ** 2, dim=0) / self.samples.shape[0])
+            #self.stdvar=torch.ones_like(self.stdvar)
+            self.normalized_samples=self.normalize_features(self.samples) if normalize else self.samples
+            self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
+        else:
+            self.labels = torch.load(os.path.join(dir, "labels"), device=self.device)
         self.sparse=sparse
         self.zero_indices = None
         self.sparse_samples = torch.load(os.path.join(self.dir, "sparse_samples"), map_location=self.device) if (sparse and os.path.isfile(os.path.join(self.dir, "sparse_samples"))) else None
