@@ -35,66 +35,6 @@ class Explainer(ABC):
 
 class FeatureKernelExplainer(Explainer):
 
-    @staticmethod
-    def sparse_3D_outer_product(X, Y):
-        """
-        Computes the outer product of two sparse matrices X and Y, resulting in a 3D sparse tensor.
-        Assumes both X and Y are CSR tensors of shape (A, B) and (A, C), respectively.
-        Assumes both share the same empty rows.
-        Returns a dense tensor of shape (A, B, C)
-        """
-        # TODO: Return as a sparse tensor and unify for fast inference with torch.gather function.
-        # TODO: Probably get rid of this entirely, this is incredibly slow
-        assert X.is_sparse_csr and Y.is_sparse_csr
-        A, B = X.shape
-        _, C = Y.shape
-
-        device = X.device
-        dtype = X.dtype
-
-        # Get row pointers
-        x_crow = X.crow_indices()
-        x_col = X.col_indices()
-        x_val = X.values()
-
-        y_crow = Y.crow_indices()
-        y_col = Y.col_indices()
-        y_val = Y.values()
-
-        indices = []
-        values = []
-
-        for a in range(A):
-            x_start, x_end = x_crow[a].item(), x_crow[a+1].item()
-            y_start, y_end = y_crow[a].item(), y_crow[a+1].item()
-
-            if x_start == x_end or y_start == y_end:
-                continue  # Skip empty rows
-
-            xb = x_col[x_start:x_end]  # (Bx,)
-            yk = y_col[y_start:y_end]  # (Cy,)
-            xv = x_val[x_start:x_end]
-            yv = y_val[y_start:y_end]
-
-            # Compute outer product indices and values
-            bb, cc = torch.meshgrid(xb, yk, indexing='ij')
-            vv = xv[:, None] * yv[None, :]  # Outer product
-
-            n = bb.numel()
-            a_idx = torch.full((n,), a, dtype=torch.int64, device=device)
-            indices.append(torch.stack([a_idx, bb.reshape(-1), cc.reshape(-1)], dim=0))
-            values.append(vv.reshape(-1))
-
-        if not indices:
-            # Fully empty result
-            empty_indices = torch.zeros((3, 0), dtype=torch.int64, device=device)
-            empty_values = torch.zeros((0,), dtype=dtype, device=device)
-            return torch.sparse_coo_tensor(empty_indices, empty_values, (A, B, C), device=device)
-
-        indices = torch.cat(indices, dim=1)
-        values = torch.cat(values)
-        return torch.sparse_coo_tensor(indices, values, (A, B, C), device=device).to_dense()
-
     def __init__(self, model, dataset, device, dir=None, normalize=False, sparse=False):
         super().__init__(model, dataset, device)
         # self.sanity_check = sanity_check
@@ -111,12 +51,27 @@ class FeatureKernelExplainer(Explainer):
         self.normalized_samples=self.normalize_features(self.samples) if normalize else self.samples
         self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
         self.sparse=sparse
+        self.zero_indices = None
+        self.sparse_samples = torch.load(os.path.join(self.dir, "sparse_samples"), map_location=self.device) if (sparse and os.path.isfile(os.path.join(self.dir, "sparse_samples"))) else None
 
     def normalize_features(self, features):
         return (features - self.mean) / self.stdvar
 
     def explain(self, x, xpl_targets):
-        if not self.sparse:
+        if self.sparse:
+            with torch.no_grad():
+                assert self.coefficients is not None
+                x = x.to(self.device)
+                f = self.model.features(x)
+                if self.normalize:
+                    f = self.normalize_features(f)
+                crosscorr = torch.matmul(f, self.sparse_samples.T)
+                crosscorr = crosscorr[:, :, None]
+                xpl = self.coefficients * crosscorr
+                indices = xpl_targets[:, None, None].expand(-1, self.sparse_samples.shape[0], 1)
+                xpl = torch.gather(xpl, dim=-1, index=indices)
+                return torch.squeeze(xpl)
+        else:
             with torch.no_grad():
                 assert self.coefficients is not None
                 x = x.to(self.device)
@@ -128,26 +83,6 @@ class FeatureKernelExplainer(Explainer):
                 xpl = self.coefficients * crosscorr
                 indices = xpl_targets[:, None, None].expand(-1, self.samples.shape[0], 1)
                 xpl = torch.gather(xpl, dim=-1, index=indices)
-                return torch.squeeze(xpl)
-        else:
-            with torch.no_grad():
-                assert self.coefficients is not None
-                x = x.to(self.device)
-                f = self.model.features(x)
-                if self.normalize:
-                    f = self.normalize_features(f)
-                samples_npy = load_npz(os.path.join(self.dir, "samples.npz"))
-                crow_indices = torch.tensor(samples_npy.indptr, dtype=torch.int64)
-                col_indices = torch.tensor(samples_npy.indices, dtype=torch.int64)
-                values = torch.tensor(samples_npy.data, dtype=torch.float32) 
-                normalized_samples_sparse = torch.sparse_csr_tensor(crow_indices, col_indices, values, size=samples_npy.shape, device=self.device)
-                crosscorr = torch.spmm(normalized_samples_sparse, f.T).to_sparse_csr() #does not make sense to further sparsify this because sparse entrywise multiplication is currently not supported
-                print("Crosscorr shape:", crosscorr.shape)
-                print("Coefficients shape:", self.coefficients.shape)
-                xpl = self.sparse_3D_outer_product(crosscorr, self.coefficients)  # (N, M, C) #TODO: return this to normal dense product, I don't currently see a way to make this faster
-                indices = xpl_targets[None, :, None].expand(self.samples.shape[0], -1, 1)
-                xpl = torch.gather(xpl, dim=-1, index=indices)
-                xpl = xpl.squeeze().T
                 return torch.squeeze(xpl)
 
     def self_influences(self, only_coefs=False):
