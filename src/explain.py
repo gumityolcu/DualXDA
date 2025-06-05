@@ -27,7 +27,7 @@ def count_params_model(model):
         total=total+num
     return total
 
-def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type):
+def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type, sparse):
     lissa_params={
         "MNIST": {'depth': 6000, 'repeat': 10, "file_size": 20},
         "CIFAR": {'depth': 5000, 'repeat': 10, "file_size":20},
@@ -66,7 +66,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
         'trak': (TRAK, {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir}),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
-        'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
+        'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir, "sparse": sparse}),
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128,  "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128}),
@@ -108,7 +108,7 @@ def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
                   save_dir, cache_dir, grad_dir, features_dir, validation_size, num_batches_per_file,
                   start_file, num_files, xai_method,
-                  num_classes, C_margin, testsplit):
+                  num_classes, C_margin, testsplit, sparse):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -145,7 +145,7 @@ def explain_model(model_name, model_path, device, class_groups,
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
     #    print(f"Accuracy: {acc}")
-    explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
+    explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type, sparse)
     
     if C_margin is not None:
         kwargs["C"] = C_margin
@@ -205,4 +205,5 @@ if __name__ == "__main__":
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
                   testsplit=train_config.get('testsplit', "test"),
+                  sparse=train_config.get("sparse", False)
                   )
