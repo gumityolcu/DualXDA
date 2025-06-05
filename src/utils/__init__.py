@@ -60,7 +60,6 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     if "DualView" in name:
         name=explainer.get_name()
     test_ld = DataLoader(test, batch_size=batch_size, shuffle=False)
-    explanations = torch.empty((0, len(train)), device=device)
     if graddot:
         gradcos_explanations = torch.empty((0, len(train)), device=device)
         gradcos_compute_times = []
@@ -70,6 +69,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     file_indices[start_file * num_batches_per_file:(start_file + num_files) * num_batches_per_file] = 1
     compute_times=[]
     iter_loader = itertools.compress(test_ld, file_indices)
+    explanations = None
     for u, (x, y) in enumerate(iter_loader):
         with torch.no_grad():
             x = x.to(device)
@@ -77,8 +77,12 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             preds = torch.argmax(model(x), dim=1)
         t0=time()
         xpl = explainer.explain(x=x, xpl_targets=preds).to(device)
+        #xpl = explainer.explain(x=x, xpl_targets=torch.Tensor([2,2]).to(torch.int64)).to(device)
         compute_times.append(time()-t0)
-        explanations = torch.cat((explanations, xpl), dim=0)
+        if u == 0:
+            explanations = xpl
+        else:
+            explanations = torch.cat((explanations, xpl), dim=0)
         if graddot:
             gradcos_t0 = time()
             xpl = explainer.explain(x=x, xpl_targets=preds, normalize_train=True)
