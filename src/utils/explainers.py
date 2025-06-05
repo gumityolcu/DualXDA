@@ -52,7 +52,7 @@ class FeatureKernelExplainer(Explainer):
             self.normalized_samples=self.normalize_features(self.samples) if normalize else self.samples
             self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
         else:
-            self.labels = torch.load(os.path.join(dir, "labels"), device=self.device)
+            self.labels = torch.load(os.path.join(dir, "labels"), map_location=self.device)
         self.sparse=sparse
         self.zero_indices = None
         self.sparse_samples = torch.load(os.path.join(dir, "sparse_samples"), map_location=self.device) if (sparse and os.path.isfile(os.path.join(dir, "sparse_samples"))) else None
