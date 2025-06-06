@@ -153,7 +153,7 @@ if __name__ == "__main__":
         "CIFAR": "resnet18",
         "AWA": "resnet50"
     }
-    for ds_name in ["MNIST", "CIFAR", "AWA"]:
+    for ds_name in model_names.keys():
         model_path=f"/mnt/checkpoints/{ds_name}/{ds_name}_{model_names[ds_name]}_best.pth"
         explain_model(model_name=model_names[ds_name],
                   model_path=model_path,
