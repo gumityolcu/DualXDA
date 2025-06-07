@@ -154,7 +154,7 @@ if __name__ == "__main__":
         "AWA": "resnet50"
     }
     for ds_name in model_names.keys():
-        model_path=f"/mnt/checkpoints/{ds_name}/std/{ds_name}_{model_names[ds_name]}_best.pth"
+        model_path=f"/mnt/checkpoints/{ds_name}/std/{ds_name}_{model_names[ds_name]}_best"
         explain_model(model_name=model_names[ds_name],
                   model_path=model_path,
                   device='cuda',
