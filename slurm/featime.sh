@@ -19,6 +19,5 @@ run \
       --bind ${HOME}/DualView/src:/mnt/src \
       --bind ${HOME}/DualView/checkpoints:/mnt/checkpoints \
       --bind ${DATAPOOL3}/datasets:/mnt/dataset \
-      --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
       --bind ${HOME}/DualView/cache:/mnt/cache \
       ../singularity/featime.sif
