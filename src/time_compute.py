@@ -102,7 +102,7 @@ def print_model(model):
         print(name, "Percentage: ", float(count)/float(total), "Cumulative: ", float(cum)/float(total))
     print("TOTAL:",total)
 
-def explain_model(model_name, model_path, device,dataset_name, dataset_type,
+def explain_model(model_name, model_path, device,dataset_name,
                   data_root, batch_size, save_dir, validation_size, testsplit):
     
     if not os.path.exists(save_dir):
@@ -118,7 +118,7 @@ def explain_model(model_name, model_path, device,dataset_name, dataset_type,
         'transform': None,
         'num_classes': num_classes, 
     }
-
+    dataset_type="std"
     train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes)
 
@@ -158,9 +158,7 @@ if __name__ == "__main__":
         explain_model(model_name=model_names[ds_name],
                   model_path=model_path,
                   device='cuda',
-                  class_groups=None,
                   dataset_name=ds_name,
-                  dataset_type="std",
                   data_root="/mnt/data",
                   batch_size=32,
                   save_dir="/mnt/outputs",
