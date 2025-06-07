@@ -159,7 +159,7 @@ if __name__ == "__main__":
                   model_path=model_path,
                   device='cuda',
                   dataset_name=ds_name,
-                  data_root="/mnt/data",
+                  data_root="/mnt/dataset",
                   batch_size=32,
                   save_dir="/mnt/outputs",
                   validation_size=2000,
