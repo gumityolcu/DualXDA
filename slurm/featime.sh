@@ -11,12 +11,14 @@
 source "/etc/slurm/local_job_dir.sh"
 
 start=`date +%s`
+mkdir -p ${LOCAL_JOB_DIR}/outputs
 
 singularity \
 run \
       --nv \
       --bind ${HOME}/DualView/config_files:/mnt/config_files \
       --bind ${HOME}/DualView/src:/mnt/src \
+      --bind ${HOME}/DualView/src:/mnt/outputs \
       --bind ${HOME}/DualView/checkpoints:/mnt/checkpoints \
       --bind ${DATAPOOL3}/datasets:/mnt/dataset \
       --bind ${HOME}/DualView/cache:/mnt/cache \
