@@ -160,7 +160,7 @@ if __name__ == "__main__":
                   device='cuda',
                   dataset_name=ds_name,
                   data_root="/mnt/dataset",
-                  batch_size=32,
+                  batch_size=1,
                   save_dir="/mnt/outputs",
                   validation_size=2000,
                   testsplit="test" if ds_name != "AWA" else "val",
