@@ -43,6 +43,7 @@ class FeatureKernelExplainer(Explainer):
         self.learned_weight = None
         self.normalize=normalize
         if not sparse or not (os.path.isfile(os.path.join(dir,'weights')) and os.path.isfile(os.path.join(dir,'sparse_coefficients')) and os.path.isfile(os.path.join(dir,'zero_indices')) and os.path.isfile(os.path.join(dir,'sparse_samples'))):
+            print("Creating new FeatureDataset")
             feature_ds = FeatureDataset(self.model, dataset, device, dir)
             self.samples = feature_ds.samples.to(self.device)
             self.mean = self.samples.sum(0) / self.samples.shape[0]
@@ -63,17 +64,26 @@ class FeatureKernelExplainer(Explainer):
     def explain(self, x, xpl_targets):
         if self.sparse:
             with torch.no_grad():
+
+                start_time_cp = time()
+
                 assert self.coefficients is not None
                 x = x.to(self.device)
                 f = self.model.features(x)
                 if self.normalize:
                     f = self.normalize_features(f)
+
+                feature_time_cp = time()
+
                 crosscorr = torch.matmul(f, self.sparse_samples.T)
                 crosscorr = crosscorr[:, :, None]
                 xpl = self.coefficients * crosscorr
                 indices = xpl_targets[:, None, None].expand(-1, self.sparse_samples.shape[0], 1)
                 xpl = torch.gather(xpl, dim=-1, index=indices)
-                return torch.squeeze(xpl)
+
+                explain_time_cp = time()
+
+                return torch.squeeze(xpl), feature_time_cp - start_time_cp, explain_time_cp - feature_time_cp
         else:
             with torch.no_grad():
                 assert self.coefficients is not None
