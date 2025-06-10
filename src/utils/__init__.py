@@ -69,7 +69,9 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     file_indices[start_file * num_batches_per_file:(start_file + num_files) * num_batches_per_file] = 1
     compute_times = []
     feature_times=[]
-    explain_times=[]
+    crosscorr_times=[]
+    xpl_times=[]
+    gather_times=[]
     iter_loader = itertools.compress(test_ld, file_indices)
     explanations = None
     for u, (x, y) in enumerate(iter_loader):
@@ -78,11 +80,13 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             y = y.to(device)
             preds = torch.argmax(model(x), dim=1)
         t0=time()
-        xpl, feature_time, explain_time = explainer.explain(x=x, xpl_targets=preds)
+        xpl, feature_time, crosscorr_time, xpl_time, gather_time = explainer.explain(x=x, xpl_targets=preds)
         xpl = xpl.to(device)
         #xpl = explainer.explain(x=x, xpl_targets=torch.Tensor([2,2]).to(torch.int64)).to(device)
         feature_times.append(feature_time)
-        explain_times.append(explain_time)
+        crosscorr_times.append(crosscorr_time)
+        xpl_times.append(xpl_time)
+        gather_times.append(gather_time)
         compute_times.append(time()-t0)
         if u == 0:
             explanations = xpl
@@ -100,8 +104,10 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             torch.save(explanations, os.path.join(save_dir, f"{name}_{j:02d}"))
             explanations = torch.empty((0, len(train)), device=device)
             torch.save(torch.tensor(feature_times), os.path.join(save_dir, f"{name}_{j:02d}.feature_times"))
-            torch.save(torch.tensor(explain_times), os.path.join(save_dir, f"{name}_{j:02d}.explain_times"))
-            torch.save(torch.tensor(explain_times), os.path.join(save_dir, f"{name}_{j:02d}.compute_times"))
+            torch.save(torch.tensor(crosscorr_times), os.path.join(save_dir, f"{name}_{j:02d}.crosscorr_times"))
+            torch.save(torch.tensor(xpl_times), os.path.join(save_dir, f"{name}_{j:02d}.xpl_times"))
+            torch.save(torch.tensor(gather_times), os.path.join(save_dir, f"{name}_{j:02d}.gather_times"))
+            torch.save(torch.tensor(compute_times), os.path.join(save_dir, f"{name}_{j:02d}.compute_times"))
             compute_times=[]
             if graddot:
                 torch.save(gradcos_explanations, os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}"))

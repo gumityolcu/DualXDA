@@ -77,13 +77,19 @@ class FeatureKernelExplainer(Explainer):
 
                 crosscorr = torch.matmul(f, self.sparse_samples.T)
                 crosscorr = crosscorr[:, :, None]
+
+                crosscorr_time_cp = time()
+
                 xpl = self.coefficients * crosscorr
+
+                xpl_time_cp = time()
+
                 indices = xpl_targets[:, None, None].expand(-1, self.sparse_samples.shape[0], 1)
                 xpl = torch.gather(xpl, dim=-1, index=indices)
 
-                explain_time_cp = time()
+                gather_time_cp = time()
 
-                return torch.squeeze(xpl), feature_time_cp - start_time_cp, explain_time_cp - feature_time_cp
+                return torch.squeeze(xpl), feature_time_cp - start_time_cp, crosscorr_time_cp - feature_time_cp, xpl_time_cp - crosscorr_time_cp, gather_time_cp - xpl_time_cp
         else:
             with torch.no_grad():
                 assert self.coefficients is not None
