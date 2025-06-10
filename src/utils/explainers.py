@@ -89,6 +89,9 @@ class FeatureKernelExplainer(Explainer):
 
                 gather_time_cp = time()
 
+                print("Sife of crosscorr tensor:", crosscorr.shape)
+                print("Size of xpl tensor:", xpl.shape)
+
                 return torch.squeeze(xpl), feature_time_cp - start_time_cp, crosscorr_time_cp - feature_time_cp, xpl_time_cp - crosscorr_time_cp, gather_time_cp - xpl_time_cp
         else:
             with torch.no_grad():
