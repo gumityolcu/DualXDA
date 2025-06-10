@@ -67,6 +67,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     j = start_file
     file_indices = torch.zeros(int(len(test) / batch_size) + 1, dtype=torch.int)
     file_indices[start_file * num_batches_per_file:(start_file + num_files) * num_batches_per_file] = 1
+    compute_times = []
     feature_times=[]
     explain_times=[]
     iter_loader = itertools.compress(test_ld, file_indices)
@@ -82,6 +83,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         #xpl = explainer.explain(x=x, xpl_targets=torch.Tensor([2,2]).to(torch.int64)).to(device)
         feature_times.append(feature_time)
         explain_times.append(explain_time)
+        compute_times.append(time()-t0)
         if u == 0:
             explanations = xpl
         else:
@@ -97,8 +99,9 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             i = 0
             torch.save(explanations, os.path.join(save_dir, f"{name}_{j:02d}"))
             explanations = torch.empty((0, len(train)), device=device)
-            torch.save(torch.tensor(compute_times), os.path.join(save_dir, f"{name}_{j:02d}.feature_times"))
+            torch.save(torch.tensor(feature_times), os.path.join(save_dir, f"{name}_{j:02d}.feature_times"))
             torch.save(torch.tensor(explain_times), os.path.join(save_dir, f"{name}_{j:02d}.explain_times"))
+            torch.save(torch.tensor(explain_times), os.path.join(save_dir, f"{name}_{j:02d}.compute_times"))
             compute_times=[]
             if graddot:
                 torch.save(gradcos_explanations, os.path.join(save_dir, f"{explainer_cls.gradcos_name}_{j:02d}"))
