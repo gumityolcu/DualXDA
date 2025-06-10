@@ -79,6 +79,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
             x = x.to(device)
             y = y.to(device)
             preds = torch.argmax(model(x), dim=1)
+        torch.cuda.synchronize()
         t0=time()
         xpl, feature_time, crosscorr_time, xpl_time, gather_time = explainer.explain(x=x, xpl_targets=preds)
         xpl = xpl.to(device)
@@ -87,6 +88,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         crosscorr_times.append(crosscorr_time)
         xpl_times.append(xpl_time)
         gather_times.append(gather_time)
+        torch.cuda.synchronize()
         compute_times.append(time()-t0)
         if u == 0:
             explanations = xpl

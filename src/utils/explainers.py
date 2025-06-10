@@ -65,6 +65,7 @@ class FeatureKernelExplainer(Explainer):
         if self.sparse:
             with torch.no_grad():
 
+                torch.cuda.synchronize()
                 start_time_cp = time()
 
                 assert self.coefficients is not None
@@ -73,20 +74,24 @@ class FeatureKernelExplainer(Explainer):
                 if self.normalize:
                     f = self.normalize_features(f)
 
+                torch.cuda.synchronize()
                 feature_time_cp = time()
 
                 crosscorr = torch.matmul(f, self.sparse_samples.T)
                 crosscorr = crosscorr[:, :, None]
 
+                torch.cuda.synchronize()
                 crosscorr_time_cp = time()
 
                 xpl = self.coefficients * crosscorr
 
+                torch.cuda.synchronize()
                 xpl_time_cp = time()
 
                 indices = xpl_targets[:, None, None].expand(-1, self.sparse_samples.shape[0], 1)
                 xpl = torch.gather(xpl, dim=-1, index=indices)
 
+                torch.cuda.synchronize()
                 gather_time_cp = time()
 
                 print("Sife of crosscorr tensor:", crosscorr.shape)
