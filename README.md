@@ -22,7 +22,7 @@ pip install ./scikit-learn-dual
 
 Then, given a classification dataset `train` and a corresponding `model`, you can start attributing the model predictions on a test dataset `test` with DualDA:
 ```python
-from explainers.DualDA
+from explainers import DualDA
 
 C = 0.001
 device = "cuda"
