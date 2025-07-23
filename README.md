@@ -55,6 +55,7 @@ These steps are done four times, using different modifications of the same datas
 "std" for vanilla dataset, "group" for modified dataset with superclasses, "corrupt" for a dataset with corrupt labels and "mark" for a dataset with shortcut features.
 
 Finally, we have the last step
+
 5. Evaluate the explanations with metrics
 
 which uses the correct dataset type and reads the correspoinding explanations for each metric.
