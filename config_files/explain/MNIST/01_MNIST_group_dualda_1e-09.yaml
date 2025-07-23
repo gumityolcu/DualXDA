@@ -1,0 +1,30 @@
+C: 1.0e-09
+accuracy: true
+batch_size: 200
+cache_dir: /home/yolcu/Documents/Code/DualXDA/cache/MNIST/group/dualda_1e-09
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+data_root: <data_root>
+dataset_name: MNIST
+dataset_type: group
+device: cpu
+features_dir: /home/yolcu/Documents/Code/DualXDA/cache/MNIST/group/features
+grad_dir: /home/yolcu/Documents/Code/DualXDA/cache/MNIST/group/tracin/best
+model_name: basic_conv
+model_path: /home/yolcu/Documents/Code/DualXDA/checkpoints/MNIST/group/MNIST_basic_conv_best
+num_batches_per_file: 1
+num_classes: 10
+num_files: 1
+save_dir: /home/yolcu/Documents/Code/DualXDA/explanations/MNIST/group/dualda_1e-09
+start_file: 1
+validation_size: 2000
+xai_method: dualda

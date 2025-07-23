@@ -1,6 +1,6 @@
 augmentation: crop_flip
 batch_size: 16
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/lds
+cache_dir: /home/yolcu/Documents/Code/DualXDA/cache/CIFAR/lds
 data_root: <data_root>
 dataset_name: CIFAR
 dataset_type: std
@@ -14,7 +14,7 @@ momentum: 0.9
 num_classes: 10
 optimizer: sgd
 sample_nr: 88
-save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/lds
+save_dir: /home/yolcu/Documents/Code/DualXDA/cache/CIFAR/lds
 scheduler: constant
 validation_size: 2000
 weight_decay: 0.01

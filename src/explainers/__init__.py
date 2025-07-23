@@ -1,4 +1,4 @@
-from .dualview import *
+from .dualda import *
 from .representer import *
 from .lissa_influence import *
 from .arnoldi_influence import *

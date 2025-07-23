@@ -1,6 +1,6 @@
 augmentation: flip
 batch_size: 16
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/lds
+cache_dir: /home/yolcu/Documents/Code/DualXDA/cache/AWA/lds
 data_root: <data_root>
 dataset_name: AWA
 dataset_type: std
@@ -14,7 +14,7 @@ momentum: 0.9
 num_classes: 50
 optimizer: sgd
 sample_nr: 34
-save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/lds
+save_dir: /home/yolcu/Documents/Code/DualXDA/cache/AWA/lds
 scheduler: annealing
 validation_size: 2000
 weight_decay: 0
