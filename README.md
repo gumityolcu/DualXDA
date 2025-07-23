@@ -1,32 +1,34 @@
-This repository implements the experiments for the paper DualView: **Runtime-Efficient and Sparse Training Data Attribution**
+This repository implements the experiments for the paper **DualXDA: Towards Sparse, Efficient and Explainable Data Attribution in Large AI Models**
 
-DualView provides a runtime-efficient method for Training Data Attribution that is also sparse by construction. In our paper, DualView has shown competitive performance against state-of-the-art methods while requiring orders of magnitude less computational time and memory.
+**DualXDA** is a framework for sparse, efficient and explainable Data Attribution. It is comprised of two interlinked approaches for Dual Data Attribution (**DualDA**) and eXplainable Data Attribution (**XDA**):
+
+With DualDA, we propose a novel approach for efficient and effective DA, leveraging Support Vector Machine theory to provide fast and naturally sparse data attributions for AI predictions. 
 
 <img src="img/runtime_vs_rank.png" alt="Average ranks plotted against total explanation time over seven evaluation metric for DualView and prominent approaches from the literature." width="800"/>
 
-We further introduce DuaLRP, a novel method to obtain feature maps, which indicate why a certain training point is relevant for the prediction on a test point.
+We further introduce XDA, a method for enhancing Data Attribution with capabilities from feature attribution methods to explain __why__ training samples are relevant for the prediction of a test sample in terms of impactful features.
 
 <img src="img/dualrp_overview_with_explanation_flattened.jpg" alt="DualLRP provides heatmaps on test-train sample pairs that indicate _why_ a certain training image is influential for the prediction on the test sample." width="800"/>
 
 
-This repository contains the code used to generate and evaluate post-hoc local data attribution of torch models using seven evaluation criteria and against eight explanation methods. These include three different approximations of Influence Functions, TRAK, TracIn and Representer Point Selection. [`sklearn`](https://scikit-learn.org/) has been used for DualView explanations.
+This repository contains the code used to generate and evaluate post-hoc local data attribution of torch models using seven evaluation criteria and against eight explanation methods. These include three different approximations of Influence Functions, TRAK, TracIn and Representer Point Selection. [`sklearn`](https://scikit-learn.org/) has been used for DualDA explanations.
 
 # Getting Started
-To start explaining predictions with DualView, you first need to install the modified `sklearn` library by running
+To start explaining predictions with DualDA, you first need to install the modified `sklearn` library by running
 
 ```bash
 pip install ./scikit-learn-dual
 ```
 
-Then, given a classification dataset `train` and a corresponding `model`, you can start attributing the model predictions on a test dataset `test` with DualView:
+Then, given a classification dataset `train` and a corresponding `model`, you can start attributing the model predictions on a test dataset `test` with DualDA:
 ```python
-from explainers.DualView
+from explainers.DualDA
 
 C = 0.001
 device = "cuda"
 cache_dir = "<cache_dir_for_dualview>"
 features_dir = "<cache_dir_for_features>"
-explainer = DualView(
+explainer = DualDA(
     model,
     train,
     device=device,
@@ -40,7 +42,7 @@ for (x, y) in ldr:
 
 ```
 
-# Evaluation of TDA methods
+# Evaluation of DA methods
 In this section, we explain how to reproduce the results in our paper.
 
 The evaluation is conducted in five steps:
@@ -86,7 +88,7 @@ To start computing the caches, run
 ```
 
 ## 4. Generate Explanations
-Once you have the checkpoints and required caches, you can start generating training data attributions:
+Once you have the checkpoints and required caches, you can start generating data attributions:
 
 ```bash
     cd src
