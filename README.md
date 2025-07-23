@@ -4,7 +4,7 @@ This repository implements the experiments for the paper **DualXDA: Towards Spar
 
 With DualDA, we propose a novel approach for efficient and effective DA, leveraging Support Vector Machine theory to provide fast and naturally sparse data attributions for AI predictions. 
 
-<img src="img/runtime_vs_rank.png" alt="Average ranks plotted against total explanation time over seven evaluation metric for DualDA and prominent approaches from the literature." width="800"/>
+<img src="img/runtime_vs_rank.jpg" alt="Average ranks plotted against total explanation time over seven evaluation metric for DualDA and prominent approaches from the literature." width="800"/>
 
 We further introduce XDA, a method for enhancing Data Attribution with capabilities from feature attribution methods to explain __why__ training samples are relevant for the prediction of a test sample in terms of impactful features.
 
