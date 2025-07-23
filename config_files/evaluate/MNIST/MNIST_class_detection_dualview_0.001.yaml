@@ -1,6 +1,6 @@
 C: 0.001
 batch_size: 32
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/std/dualview_0.001
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/std/dualda_0.001
 data_root: <data_root>
 dataset_name: MNIST
 dataset_type: std
@@ -14,5 +14,5 @@ model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/MNIST/std/MNI
 num_classes: 10
 save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
 validation_size: 2000
-xai_method: dualview
-xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/MNIST/std/dualview_0.001/
+xai_method: dualda
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/MNIST/std/dualda_0.001/

@@ -1,7 +1,7 @@
 C: 1.0e-09
 accuracy: true
 batch_size: 200
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/mark/dualview_1e-09
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/mark/dualda_1e-09
 data_root: <data_root>
 dataset_name: AWA
 dataset_type: mark
@@ -13,7 +13,7 @@ model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/AWA/mark/AWA_
 num_batches_per_file: 1
 num_classes: 50
 num_files: 1
-save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/mark/dualview_1e-09
+save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/mark/dualda_1e-09
 start_file: 0
 validation_size: 2000
-xai_method: dualview
+xai_method: dualda

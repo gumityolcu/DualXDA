@@ -1,6 +1,6 @@
 C: 0.001
 batch_size: 32
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/corrupt/dualview_0.001
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/corrupt/dualda_0.001
 data_root: <data_root>
 dataset_name: CIFAR
 dataset_type: corrupt
@@ -14,5 +14,5 @@ model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/corrupt
 num_classes: 10
 save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
 validation_size: 2000
-xai_method: dualview
-xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/corrupt/dualview_0.001/
+xai_method: dualda
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/corrupt/dualda_0.001/

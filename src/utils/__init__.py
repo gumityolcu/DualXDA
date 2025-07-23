@@ -58,7 +58,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         exit()  
 
     name=explainer_cls.name
-    if "DualView" in name:
+    if "DualDA" in name:
         name=explainer.get_name()
     test_ld = DataLoader(test, batch_size=batch_size, shuffle=False)
     explanations = torch.empty((0, len(train)), device=device)

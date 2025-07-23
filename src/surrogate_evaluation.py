@@ -62,14 +62,14 @@ def load_surrogate(model_name, model_path, device,
     explainer_cls, kwargs=load_explainer(xai_method, model_path, save_dir_explainer, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
 
     if C_margin is not None:
-        if xai_method=="dualview":
+        if xai_method=="dualda":
             kwargs["C"]=C_margin
         elif xai_method=="representer":
             kwargs["sparsity"]=C_margin
     
     explainer = explainer_cls(model=model, dataset=train, device=device, **kwargs)
     
-    if xai_method == "dualview":
+    if xai_method == "dualda":
         explainer.read_variables()
         w1 = explainer.learned_weight
         w2 = explainer.coefficients.float().T @ explainer.samples

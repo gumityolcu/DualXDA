@@ -1,7 +1,7 @@
 C: 0.001
 accuracy: true
 batch_size: 200
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/std/dualview_0.001
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/std/dualda_0.001
 data_root: <data_root>
 dataset_name: AWA
 dataset_type: std
@@ -13,7 +13,7 @@ model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/AWA/std/AWA_r
 num_batches_per_file: 1
 num_classes: 50
 num_files: 1
-save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/std/dualview_0.001
+save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/std/dualda_0.001
 start_file: 0
 validation_size: 2000
-xai_method: dualview
+xai_method: dualda

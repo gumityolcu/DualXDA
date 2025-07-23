@@ -124,7 +124,7 @@ def evaluate(model_name, model_path, device, class_groups,
         explainer.train()
         selfinf=explainer.self_influences()
         metric(selfinf)
-        if "dualview" in xai_method or "representer" in xai_method:
+        if "dualda" in xai_method or "representer" in xai_method:
             selfinf=explainer.self_influences(only_coefs=True)
         else:
             selfinf=None

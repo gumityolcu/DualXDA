@@ -2,7 +2,7 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
+from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
 from utils.data import load_datasets_reduced
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
@@ -59,7 +59,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "AWA": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
     }
 
-    dualview_params={}
+    dualda_params={}
 
     graddot_params={}
 
@@ -70,7 +70,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
         'trak': (TRAK, trak_params[dataset_name]),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
-        'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir}),
+        'dualda': (DualDA, {"dir": cache_dir, "features_dir":features_dir}),
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128,  "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128}),
@@ -146,7 +146,7 @@ def explain_model(model_name, model_path, device, class_groups,
     explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type)
     
     if C_margin is not None:
-        if xai_method=="dualview":
+        if xai_method=="dualda":
             kwargs["C"] = C_margin
         elif xai_method=="representer":
             kwargs["sparsity"] = C_margin

@@ -1,7 +1,7 @@
 C: 1.0e-05
 augmentation: crop
 batch_size: 8
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/std/dualview_1e_05
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/MNIST/std/dualda_1e_05
 data_root: <data_root>
 dataset_name: MNIST
 dataset_type: std
@@ -22,5 +22,5 @@ save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
 scheduler: constant
 validation_size: 2000
 weight_decay: 0
-xai_method: dualview
-xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/MNIST/std/dualview_1e_05/
+xai_method: dualda
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/MNIST/std/dualda_1e_05/

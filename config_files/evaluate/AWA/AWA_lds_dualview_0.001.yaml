@@ -1,7 +1,7 @@
 C: 0.001
 augmentation: flip
 batch_size: 8
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/std/dualview_0.001
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/std/dualda_0.001
 data_root: <data_root>
 dataset_name: AWA
 dataset_type: std
@@ -22,5 +22,5 @@ save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
 scheduler: constant
 validation_size: 2000
 weight_decay: 0
-xai_method: dualview
-xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/std/dualview_0.001/
+xai_method: dualda
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/std/dualda_0.001/

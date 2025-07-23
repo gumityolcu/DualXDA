@@ -1,6 +1,6 @@
 C: 0.1
 batch_size: 32
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/std/dualview_0.1
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/std/dualda_0.1
 data_root: <data_root>
 dataset_name: CIFAR
 dataset_type: std
@@ -14,5 +14,5 @@ model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/std/CIF
 num_classes: 10
 save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
 validation_size: 2000
-xai_method: dualview
-xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/dualview_0.1/
+xai_method: dualda
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/std/dualda_0.1/

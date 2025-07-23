@@ -1,7 +1,7 @@
 C: 10
 accuracy: true
 batch_size: 200
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/mark/dualview_10
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/mark/dualda_10
 data_root: <data_root>
 dataset_name: CIFAR
 dataset_type: mark
@@ -13,7 +13,7 @@ model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/mark/CI
 num_batches_per_file: 1
 num_classes: 10
 num_files: 1
-save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/mark/dualview_10
+save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/mark/dualda_10
 start_file: 1
 validation_size: 2000
-xai_method: dualview
+xai_method: dualda

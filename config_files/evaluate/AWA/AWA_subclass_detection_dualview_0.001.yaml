@@ -1,6 +1,6 @@
 C: 0.001
 batch_size: 32
-cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/dualview_0.001
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/dualda_0.001
 class_groups:
 - - 0
   - 1
@@ -65,5 +65,5 @@ model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/AWA/group/AWA
 num_classes: 50
 save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
 validation_size: 2000
-xai_method: dualview
-xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/group/dualview_0.001/
+xai_method: dualda
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/group/dualda_0.001/
