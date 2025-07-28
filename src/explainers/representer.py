@@ -87,7 +87,8 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
     name = "RepresenterPointsExplainer"
 
 
-    def __init__(self, model, dataset, device, dir, features_dir):
+    def __init__(self, model, dataset, device, dir, features_dir, sparsity=0.):
+        self.sparsity = sparsity
         super(RepresenterPointsExplainer, self).__init__(model, dataset, device, dir=features_dir, normalize=False)
         self.dir=dir
         self.features_dir=features_dir
@@ -104,6 +105,7 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
             self.coefficients=torch.load(os.path.join(self.dir,'coefficients'), map_location=self.device)
             self.learned_weight=torch.load(os.path.join(self.dir,'weights'), map_location=self.device)
             self.train_time=torch.load(os.path.join(self.dir,'train_time'), map_location=self.device)
+            self.sparsify_coefficients()
             return self.train_time
 
         t0=time()
@@ -180,8 +182,20 @@ class RepresenterPointsExplainer(FeatureKernelExplainer):
         torch.save(self.train_time,os.path.join(self.dir,'train_time'))
         torch.save(self.learned_weight,os.path.join(self.dir,'weights'))
         torch.save(self.coefficients,os.path.join(self.dir,'coefficients'))
+        self.sparsify_coefficients()
         #return weight_matrix
         return elapsed_time
+    
+    def sparsify_coefficients(self):
+        if self.sparsity==0:
+            return
+        else:
+            dualda_coefs=torch.load(os.path.join(self.dir.replace("representer",f"dualda_{self.sparsity}"), "coefficients"), map_location=self.device)
+            zeros=(dualda_coefs==0.).sum(dim=0)
+            min_idx=self.coefficients.abs().argsort(descending=False, dim=0)
+            for i in range(min_idx.shape[-1]):
+                self.coefficients[min_idx[:zeros[i],i],i]=0.
+            self.learned_weight = self.coefficients.T @ self.samples
 
     def self_influences(self, only_coefs=False):
         self_coefs=super().self_influences()
