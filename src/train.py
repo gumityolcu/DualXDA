@@ -519,35 +519,6 @@ if __name__ == "__main__":
 
     save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
 
-    # test_all_models(
-    #    model_root_path="/home/fe/yolcu/Documents/Code/DualView-wip/checkpoints",
-    #    model_name=train_config.get('model_name', 'basic_conv'),
-    #    device=train_config.get('device', 'cuda'),
-    #    num_classes=train_config.get('num_classes', None),
-    #    class_groups=train_config.get('class_groups', None),
-    #    dataset_name=train_config.get('dataset_name', None),
-    #    dataset_type=train_config.get('dataset_type', 'std'),
-    #    data_root=train_config.get('data_root', None),
-    #    batch_size=train_config.get('batch_size', None),
-    #    save_dir=train_config.get('save_dir', None),
-    #    num_batches_to_process=train_config.get('num_batches_eval', None),
-    #    validation_size=train_config.get('validation_size', 2000)
-    # )
-    # test_models_in_dir(
-    #    model_root_path="/home/fe/yolcu/Documents/Code/DualView-wip/test_output/MNIST",
-    #    model_name=train_config.get('model_name', 'basic_conv'),
-    #    device=train_config.get('device', 'cuda'),
-    #    num_classes=train_config.get('num_classes', None),
-    #    class_groups=train_config.get('class_groups', None),
-    #    dataset_name=train_config.get('dataset_name', None),
-    #    dataset_type=train_config.get('dataset_type', 'std'),
-    #    data_root=train_config.get('data_root', None),
-    #    batch_size=train_config.get('batch_size', None),
-    #    save_dir=train_config.get('save_dir', None),
-    #    num_batches_to_process=train_config.get('num_batches_eval', None),
-    #    validation_size=train_config.get('validation_size', 2000)
-    # )
-    # exit()
 
     start_training(model_name=train_config.get('model_name', None),
                    model_path=train_config.get('model_path', None),

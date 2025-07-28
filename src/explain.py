@@ -2,7 +2,7 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualView, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
+from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
 from utils.data import load_datasets_reduced
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
 import yaml
@@ -53,9 +53,13 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     #     "score_data_partitions":1
     #     }
 
-    trak_params={}
+    trak_params={
+        "MNIST": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
+        "CIFAR": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
+        "AWA": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
+    }
 
-    dualview_params={}
+    dualda_params={}
 
     graddot_params={}
 
@@ -65,8 +69,13 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
 
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
+<<<<<<< HEAD
         'trak': (TRAK, {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir}),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
         'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir, "sparse": sparse}),
+=======
+        'trak': (TRAK, trak_params[dataset_name]),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
+        'dualda': (DualDA, {"dir": cache_dir, "features_dir":features_dir}),
+>>>>>>> anonymous_submission
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128,  "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128}),
@@ -81,12 +90,6 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         'input_similarity_l2': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
      }    
     return explainers[xai_method]
-
-
-        # arnoldi constructor
-        # layers = None, OOO
-        # projection_dim = 50, OOO
-        # hessian_dataset_size = 5000, OOO
 
 def print_model(model):
     total=0
@@ -112,7 +115,7 @@ def explain_model(model_name, model_path, device, class_groups,
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    if dataset_type=="group":
+    if dataset_type in ["group","groupk","subclass_detection"]:
         num_classes_model=len(class_groups)
     else: 
         num_classes_model = num_classes
@@ -148,7 +151,11 @@ def explain_model(model_name, model_path, device, class_groups,
     explainer_cls, kwargs = load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, features_dir, dataset_name, dataset_type, sparse)
     
     if C_margin is not None:
-        kwargs["C"] = C_margin
+        if xai_method=="dualda":
+            kwargs["C"] = C_margin
+        elif xai_method=="representer":
+            kwargs["sparsity"] = C_margin
+    
     
     print(f"Generating explanations with {explainer_cls.name}")
     xplain(

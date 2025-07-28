@@ -4,9 +4,10 @@ from quanda.metrics.ground_truth import LinearDatamodelingMetric
 import torch
 import os
 from metrics import Metric
+from utils.data import GroupLabelDataset
 
-class QuandaLDSWrapper(Metric):
-    name = "QuandaLDS"
+class QuandaLDS(Metric):
+    name = "LDS"
 
     def process_cache_dir(self, pretrained_models):
         subset_indices=[]
@@ -106,7 +107,7 @@ class QuandaClassDetection(Metric):
             samples.append(x)
         return torch.stack(samples).to(self.device), torch.tensor(targets, device=self.device)
     
-    def __init__(self, train, test, model, device="cuda"):
+    def __init__(self, train, test, model, k=5, device="cuda"):
         super().__init__(train,test)
         if train.name != "AWA":
             if isinstance(train.targets,list):
@@ -120,6 +121,7 @@ class QuandaClassDetection(Metric):
         self.quanda_metric=ClassDetectionMetric(
             model=model,
             train_dataset=train,
+            k=k
             )
 
         self.device = device
@@ -132,7 +134,65 @@ class QuandaClassDetection(Metric):
         self.quanda_metric.update(explanations=xpl, test_targets=t_labels)
         
     def get_result(self, dir=None, file_name=None):
-        scores = torch.cat(self.quanda_metric.results["scores"])
+        scores = torch.cat(self.quanda_metric.scores)
+        score=scores.mean().item()
+        resdict = {'metric': self.name, 'detection_scores': scores , 'avg_score': score}
+        if dir is not None:
+            self.write_result(resdict, dir, file_name)
+        return resdict
+
+class QuandaSubclassDetection(QuandaClassDetection): 
+    name = "QuandaSubclassDetection"
+
+    def __init__(self, train, test, model,k=5, device="cuda"):
+        assert isinstance(train, GroupLabelDataset)
+        assert isinstance(test.dataset, GroupLabelDataset)
+        super().__init__(train.dataset, test.dataset.dataset, model, k=k, device=device)
+
+class QuandaShortcutDetection(Metric):
+    name = "QuandaShortcutDetection"
+
+    def get_test_datapoints(self, start, length):
+        targets=[]
+        labels=[]
+        samples=[]
+        for i in range(length):
+            x, y = self.test[start+i]
+            targets.append(y)
+            samples.append(x)
+            _,y=self.test.dataset[start+i]
+            labels.append(y)
+        return torch.stack(samples).to(self.device), torch.tensor(targets, device=self.device), torch.tensor(labels,device=self.device) 
+    
+    def __init__(self, train, test, model, device="cuda"):
+        super().__init__(train,test)
+        if train.dataset.name != "AWA":
+            if isinstance(train.dataset.targets,list):
+                train.dataset.targets=torch.tensor(train.dataset.targets,device=device)
+            self.train_labels = train.dataset.targets.to(device)
+        self.device=device
+        self.train = train
+        self.test = test
+        self.scores = torch.empty(0, dtype=torch.float, device=device)
+        
+        self.quanda_metric=ShortcutDetectionMetric(
+            model=model,
+            train_dataset=train,
+            shortcut_indices=train.mark_samples,
+            filter_by_prediction = True,
+            filter_by_class = True,
+            shortcut_cls=train.cls_to_mark
+            )
+
+    def __call__(self, xpl, start_index):
+        xpl.to(self.device)
+        if xpl.nelement() == 0: #to exit if xpl is empty
+            return
+        _,t_targets,t_labels=self.get_test_datapoints(start_index, xpl.shape[0])
+        self.quanda_metric.update(explanations=xpl, test_labels=t_labels, test_targets=t_targets)
+        
+    def get_result(self, dir=None, file_name=None):
+        scores = torch.tensor(self.quanda_metric.auprc_scores, device=self.device)
         score=scores.mean().item()
         resdict = {'metric': self.name, 'detection_scores': scores , 'avg_score': score}
         if dir is not None:
