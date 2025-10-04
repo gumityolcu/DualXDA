@@ -9,7 +9,7 @@ from dataset.tweet_sentiment_extraction import TweetSentimentDataset
 from dataset.AWA_sub import AWA_sub
 import matplotlib.pyplot as plt
 import os
-
+from time import time
 
 class ReduceLabelDataset(Dataset):
     def __init__(self, dataset, first=True):
@@ -225,6 +225,7 @@ class FeatureDataset(Dataset):
             self.samples = torch.load(os.path.join(dir, "samples"), map_location=self.device)
             self.labels = torch.load(os.path.join(dir, "labels"), map_location=self.device)
         else:
+            cache_time_t0=time()
             for x, y in tqdm(iter(loader)):
                 x = x.to(self.device)
                 y = y.to(self.device)
@@ -232,6 +233,9 @@ class FeatureDataset(Dataset):
                     x = model.features(x)
                     self.samples = torch.cat((self.samples, x), 0)
                     self.labels = torch.cat((self.labels, y), 0)
+            cache_time=time()-cache_time_t0
+            torch.save(os.path.join(dir, "cache_time"), map_location=self.device)
+
 
     def __len__(self):
         return len(self.samples)

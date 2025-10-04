@@ -43,7 +43,6 @@ class FeatureKernelExplainer(Explainer):
         self.learned_weight = None
         self.normalize=normalize
         if not sparse or not (os.path.isfile(os.path.join(dir,'weights')) and os.path.isfile(os.path.join(dir,'sparse_coefficients')) and os.path.isfile(os.path.join(dir,'zero_indices')) and os.path.isfile(os.path.join(dir,'sparse_samples'))):
-            cache_time_t0=time()
             feature_ds = FeatureDataset(self.model, dataset, device, dir)
             self.samples = feature_ds.samples.to(self.device)
             self.mean = self.samples.sum(0) / self.samples.shape[0]
@@ -52,8 +51,6 @@ class FeatureKernelExplainer(Explainer):
             #self.stdvar=torch.ones_like(self.stdvar)
             self.normalized_samples=self.normalize_features(self.samples) if normalize else self.samples
             self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
-            cache_time=time()-cache_time_t0
-            torch.save(cache_time,os.path.join(dir, "cache_time"))
         else:
             self.labels = torch.load(os.path.join(dir, "labels"), map_location=self.device)
         self.sparse=sparse
