@@ -1,0 +1,17 @@
+batch_size: 128
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/mark/representer
+data_root: ~/Documents/Code/Datasets
+dataset_name: CIFAR
+dataset_type: mark
+device: cpu
+features_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/mark/features
+grad_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/mark/tracin/best
+lds_cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/CIFAR/mark
+metric: mark
+model_name: resnet18
+model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/CIFAR/mark/CIFAR_resnet18_best
+num_classes: 10
+save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
+validation_size: 2000
+xai_method: representer
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/CIFAR/mark/representer/

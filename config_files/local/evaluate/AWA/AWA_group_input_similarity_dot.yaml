@@ -1,0 +1,68 @@
+batch_size: 16
+cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/input_similarity_dot
+class_groups:
+- - 0
+  - 1
+- - 2
+  - 3
+- - 4
+  - 5
+- - 6
+  - 7
+- - 8
+  - 9
+- - 10
+  - 11
+- - 12
+  - 13
+- - 14
+  - 15
+- - 16
+  - 17
+- - 18
+  - 19
+- - 20
+  - 21
+- - 22
+  - 23
+- - 24
+  - 25
+- - 26
+  - 27
+- - 28
+  - 29
+- - 30
+  - 31
+- - 32
+  - 33
+- - 34
+  - 35
+- - 36
+  - 37
+- - 38
+  - 39
+- - 40
+  - 41
+- - 42
+  - 43
+- - 44
+  - 45
+- - 46
+  - 47
+- - 48
+  - 49
+data_root: ~/Documents/Code/Datasets
+dataset_name: AWA
+dataset_type: group
+device: cpu
+features_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/features
+grad_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group/tracin/best
+lds_cache_dir: /home/fe/yolcu/Documents/Code/DualView-wip/cache/AWA/group
+metric: group
+model_name: resnet50
+model_path: /home/fe/yolcu/Documents/Code/DualView-wip/checkpoints/AWA/group/AWA_resnet50_best
+num_classes: 50
+save_dir: /home/fe/yolcu/Documents/Code/DualView-wip/test_output
+validation_size: 2000
+xai_method: input_similarity_dot
+xpl_root: /home/fe/yolcu/Documents/Code/DualView-wip/explanations/AWA/group/input_similarity_dot/
