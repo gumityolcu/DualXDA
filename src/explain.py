@@ -4,7 +4,7 @@ from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
 from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
 from utils.data import load_datasets_reduced
-from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model
+from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, GPT2Wrapper
 import yaml
 import logging
 import os
@@ -57,6 +57,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "MNIST": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
         "CIFAR": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
         "AWA": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
+        "tweet_sentiment_extraction": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1}
     }
 
     dualda_params={}
@@ -134,7 +135,11 @@ def explain_model(model_name, model_path, device, class_groups,
         train, test = load_tweet_sentiment_dataset(device)
     else:
         train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
-    model = load_model(model_name, dataset_name, num_classes_model)
+    if dataset_name=="tweet_sentiment_extraction":
+        from utils.models import GPT2Wrapper
+        model = GPT2Wrapper(device=device)
+    else:
+        model = load_model(model_name, dataset_name, num_classes_model)
 
     checkpoint = torch.load(model_path, map_location=device)
     #get rid of model.resnet
