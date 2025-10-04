@@ -52,7 +52,7 @@ class FeatureKernelExplainer(Explainer):
             #self.stdvar=torch.ones_like(self.stdvar)
             self.normalized_samples=self.normalize_features(self.samples) if normalize else self.samples
             self.labels = torch.tensor(feature_ds.labels, dtype=torch.int, device=self.device)
-            cache_time=cache_time-cache_time_t0
+            cache_time=time()-cache_time_t0
             torch.save(cache_time,os.path.join(dir, "cache_time"))
         else:
             self.labels = torch.load(os.path.join(dir, "labels"), map_location=self.device)

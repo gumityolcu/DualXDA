@@ -196,7 +196,7 @@ if __name__ == "__main__":
             logging.info(exc)
 
     save_dir = f"{train_config['save_dir']}/{os.path.basename(config_file)[:-5]}"
-
+    print(f"IS CUDA AVAILABLE?: {torch.cuda.is_available()}")
     explain_model(model_name=train_config.get('model_name', None),
                   model_path=train_config.get('model_path', None),
                   device=train_config.get('device', 'cuda'),
