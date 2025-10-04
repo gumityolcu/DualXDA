@@ -1,6 +1,8 @@
 import torch.utils.data
 from models import BasicConvModel
 from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
+from transformers import AutoModelForSequenceClassification
+
 import tqdm
 
 def clear_resnet_from_checkpoints(checkpoint):
@@ -9,6 +11,39 @@ def clear_resnet_from_checkpoints(checkpoint):
          if "resnet" not in key
         }
     return checkpoint
+
+class GPT2Features(torch.nn.Module):
+    def __init__(self, model, device):
+        super(GPT2Features, self).__init__()
+        self.device=device
+        self.model = model.transformer
+        self.model.to(device)
+    
+    def forward(self, batch):
+        input_ids = batch["input_ids"].to(self.device)
+        attention_mask = batch["attention_mask"].to(self.device)
+        transformer_outputs=self.model(input_ids=input_ids, attention_mask=attention_mask)
+        features = transformer_outputs[0]
+        last_non_pad_token = attention_mask.sum(dim=1) - 1
+        features = features[torch.arange(features.shape[0], device=features.device), last_non_pad_token]
+        return features
+
+class GPT2Wrapper(torch.nn.Module):
+    def __init__(self, device):
+        super(GPT2Wrapper, self).__init__()
+        self.device=device
+        model = AutoModelForSequenceClassification.from_pretrained("herrerovir/gpt2-tweet-sentiment-model")
+        self.features=GPT2Features(model,device)
+        self.classifier=model.score
+        self.classifier.to(device)
+    
+    def forward(self, batch):
+        features=self.features(batch)
+        return self.classifier(features)
+
+    
+
+
 
 class ResNetWrapper(torch.nn.Module):
     def __init__(self, module, output_dim, arnoldi_param_filter=None):
