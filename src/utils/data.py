@@ -234,7 +234,7 @@ class FeatureDataset(Dataset):
                     self.samples = torch.cat((self.samples, x), 0)
                     self.labels = torch.cat((self.labels, y), 0)
             cache_time=time()-cache_time_t0
-            torch.save(os.path.join(dir, "cache_time"), map_location=self.device)
+            torch.save(cache_time, os.path.join(dir, "cache_time"))
 
 
     def __len__(self):
