@@ -31,7 +31,7 @@ class DualDA(FeatureKernelExplainer):
         self.learned_weight = torch.load(os.path.join(self.dir,"weights"), map_location=self.device).to(torch.float)
         self.coefficients=torch.load(os.path.join(self.dir,"coefficients"), map_location=self.device).to(torch.float)
         self.train_time=torch.load(os.path.join(self.dir,"train_time"), map_location=self.device).to(torch.float)
-        self.cache_time=torch.load(os.path.join(self.features_dir,"cache_time"), map_location=self.device).to(torch.float)
+        self.cache_time=torch.load(os.path.join(self.features_dir,"cache_time")).to(torch.float)
 
     def train(self):
         tstart = time.time()
