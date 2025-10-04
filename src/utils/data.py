@@ -5,6 +5,7 @@ from torchvision.transforms.functional import to_pil_image
 from dataset.MNIST import MNIST, FashionMNIST
 from dataset.CIFAR import CIFAR
 from dataset.AWA import AWA
+from dataset.tweet_sentiment_extraction import TweetSentimentDataset
 from dataset.AWA_sub import AWA_sub
 import matplotlib.pyplot as plt
 import os
@@ -344,6 +345,8 @@ def load_datasets(dataset_name, dataset_type, **kwparams):
     assert ds is not None and evalds is not None
     return ds, evalds
 
+def load_tweet_sentiment_dataset(device):
+    return TweetSentimentDataset("train", device), TweetSentimentDataset("test", device)
 
 def load_datasets_reduced(dataset_name, dataset_type, kwparams):
     ds, evalds = load_datasets(dataset_name, dataset_type, **kwparams)

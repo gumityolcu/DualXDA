@@ -2,6 +2,16 @@ import torch
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
+class TweetSentimentDatapoint(dict):
+    def __init__(self, input_ids, attention_mask):
+        super().__init__()
+        self["input_ids"] = input_ids
+        self["attention_mask"] = attention_mask
+    
+    def to(self, device):
+        self["input_ids"] = self["input_ids"].to(device)
+        self["attention_mask"] = self["attention_mask"].to(device)
+        return self
 
 class TweetSentimentDataset(torch.utils.data.Dataset):
     def __init__(self, split, device):
@@ -20,4 +30,4 @@ class TweetSentimentDataset(torch.utils.data.Dataset):
         return len(self.encoded[self.split])
 
     def __getitem__(self, idx):
-        return {key: self.encoded[self.split][idx][key].to(self.device) for key in ["input_ids", "attention_mask"]}, self.encoded[self.split][idx]["labels"].to(self.device)
+        return TweetSentimentDatapoint(**{key: self.encoded[self.split][idx][key].to(self.device) for key in ["input_ids", "attention_mask"]}), self.encoded[self.split][idx]["labels"].to(self.device)

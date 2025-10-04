@@ -3,7 +3,7 @@ import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
 from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
-from utils.data import load_datasets_reduced
+from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, GPT2Wrapper
 import yaml
 import logging
@@ -31,13 +31,15 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     lissa_params={
         "MNIST": {'depth': 6000, 'repeat': 10, "file_size": 20},
         "CIFAR": {'depth': 5000, 'repeat': 10, "file_size":20},
-        "AWA": {'depth': 3700, 'repeat': 10, "file_size":20}
+        "AWA": {'depth': 3700, 'repeat': 10, "file_size":20},
+        "tweet_sentiment_extraction": {'depth': 3700, 'repeat': 10, "file_size":20}
     }
 
     arnoldi_params={
         "MNIST": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "CIFAR": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
+        "tweet_sentiment_extraction": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
     }
     kronfluence_params={
          "score_data_partitions":20 if dataset_name=="CIFAR" and dataset_type=="mark" else 10
@@ -103,8 +105,7 @@ def print_model(model):
         print(name, "Percentage: ", float(count)/float(total), "Cumulative: ", float(cum)/float(total))
     print("TOTAL:",total)
 
-def load_tweet_sentiment_dataset(device):
-    pass
+
 
 
 def explain_model(model_name, model_path, device, class_groups,
@@ -136,16 +137,14 @@ def explain_model(model_name, model_path, device, class_groups,
     else:
         train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     if dataset_name=="tweet_sentiment_extraction":
-        from utils.models import GPT2Wrapper
         model = GPT2Wrapper(device=device)
     else:
         model = load_model(model_name, dataset_name, num_classes_model)
+        checkpoint = torch.load(model_path, map_location=device)
+        #get rid of model.resnet
+        checkpoint=clear_resnet_from_checkpoints(checkpoint)
 
-    checkpoint = torch.load(model_path, map_location=device)
-    #get rid of model.resnet
-    checkpoint=clear_resnet_from_checkpoints(checkpoint)
-
-    model.load_state_dict(checkpoint["model_state"])
+        model.load_state_dict(checkpoint["model_state"])
     # print_model(model)
     # exit()
     model.to(device)

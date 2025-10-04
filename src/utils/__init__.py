@@ -80,17 +80,10 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
         xpl = explainer.explain(x=x, xpl_targets=preds).to(device)
         #xpl = explainer.explain(x=x, xpl_targets=torch.Tensor([2,2]).to(torch.int64)).to(device)
         compute_times.append(time()-t0)
-<<<<<<< HEAD
-        if u == 0:
-            explanations = xpl
-        else:
-            explanations = torch.cat((explanations, xpl), dim=0)
-=======
         if not xpl_happened:
             xpl_happened=True
             print("XPL HAPPENED")
         explanations = torch.cat((explanations, xpl), dim=0)
->>>>>>> anonymous_submission
         if graddot:
             gradcos_t0 = time()
             xpl = explainer.explain(x=x, xpl_targets=preds, normalize_train=True)
