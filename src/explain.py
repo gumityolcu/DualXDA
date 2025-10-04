@@ -69,13 +69,8 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
 
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
-<<<<<<< HEAD
-        'trak': (TRAK, {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir}),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
-        'dualview': (DualView, {"dir": cache_dir, "features_dir":features_dir, "sparse": sparse}),
-=======
         'trak': (TRAK, trak_params[dataset_name]),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
         'dualda': (DualDA, {"dir": cache_dir, "features_dir":features_dir}),
->>>>>>> anonymous_submission
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128}),
         #'gradcos': (GradCosExplainer, {"dir":cache_dir, "dimensions":128,  "ds_type": dataset_type}),
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128}),
@@ -107,6 +102,10 @@ def print_model(model):
         print(name, "Percentage: ", float(count)/float(total), "Cumulative: ", float(cum)/float(total))
     print("TOTAL:",total)
 
+def load_tweet_sentiment_dataset(device):
+    pass
+
+
 def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
                   save_dir, cache_dir, grad_dir, features_dir, validation_size, num_batches_per_file,
@@ -131,8 +130,10 @@ def explain_model(model_name, model_path, device, class_groups,
         'transform': None,
         'num_classes': num_classes
     }
-
-    train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
+    if dataset_name=="tweet_sentiment_extraction":
+        train, test = load_tweet_sentiment_dataset(device)
+    else:
+        train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
     model = load_model(model_name, dataset_name, num_classes_model)
 
     checkpoint = torch.load(model_path, map_location=device)
