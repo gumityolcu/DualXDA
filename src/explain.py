@@ -39,7 +39,8 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "MNIST": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "CIFAR": {"projection_dim": 128, "arnoldi_dim":150, "hessian_dataset_size": 10000},
         "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
-        "tweet_sentiment_extraction": {"projection_dim": 256, "arnoldi_dim": 500, "hessian_dataset_size": 1500},
+        # "tweet_sentiment_extraction": {"projection_dim": 256, "arnoldi_dim": 500, "hessian_dataset_size": 1500},
+        "tweet_sentiment_extraction": {"projection_dim": 2, "arnoldi_dim": 2, "hessian_dataset_size": 2},
     }
 
     kronfluence_params={
