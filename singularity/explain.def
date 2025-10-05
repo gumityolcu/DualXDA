@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: pytorch/pytorch:2.8.0-cuda12.8-cudnn9-devel
+From: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
 
 %files
 
@@ -32,8 +32,5 @@ From: pytorch/pytorch:2.8.0-cuda12.8-cudnn9-devel
   cd /mnt/src
   pwd
   ls
-  if [ "$1" = "--trak" ]; then
-    pip install traker[fast] --user
-    shift
-  fi
+  pip install traker[fast]
   python explain.py "$@"
