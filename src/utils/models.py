@@ -57,8 +57,17 @@ class GPT2Wrapper(torch.nn.Module):
         features=self.features(batch)
         return self.classifier(features)
     
+    def influence_named_parameters(self):
+       return [("classifier.weight", self.classifier.weight)]
+
+    def select_arnoldi_params(self, name):
+        if "features.model.h." in name:
+            id=int(name.split(".")[3])
+            return id>-1
+        return False
+
     def arnoldi_parameters(self):
-        return self.parameters()
+        return [n for n,_ in self.named_modules() if self.select_arnoldi_params(n)]
 
     
 

@@ -30,4 +30,5 @@ class TweetSentimentDataset(torch.utils.data.Dataset):
         return len(self.encoded[self.split])
 
     def __getitem__(self, idx):
+        idx=int(idx)
         return TweetSentimentDatapoint(**{key: self.encoded[self.split][idx][key].to(self.device) for key in ["input_ids", "attention_mask"]}), self.encoded[self.split][idx]["labels"].to(self.device)
