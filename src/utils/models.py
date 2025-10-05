@@ -3,9 +3,8 @@ from models import BasicConvModel
 from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 from transformers import AutoModelForSequenceClassification
 from transformers.pytorch_utils import Conv1D
-
 import tqdm
-
+from torch import nn
 def clear_resnet_from_checkpoints(checkpoint):
     checkpoint["model_state"]={
             key:value for key, value in checkpoint["model_state"].items()
