@@ -2,6 +2,7 @@ import torch.utils.data
 from models import BasicConvModel
 from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 from transformers import AutoModelForSequenceClassification
+from transformers.pytorch_utils import Conv1D
 
 import tqdm
 
@@ -11,6 +12,20 @@ def clear_resnet_from_checkpoints(checkpoint):
          if "resnet" not in key
         }
     return checkpoint
+
+@torch.no_grad()
+def replace_conv1d_modules(model: nn.Module) -> None:
+    # GPT-2 is defined in terms of Conv1D. However, this does not work for Kronfluence.
+    # Here, we convert these Conv1D modules to linear modules recursively.
+    for name, module in model.named_children():
+        if len(list(module.children())) > 0:
+            replace_conv1d_modules(module)
+
+        if isinstance(module, Conv1D):
+            new_module = nn.Linear(in_features=module.weight.shape[0], out_features=module.weight.shape[1])
+            new_module.weight.data.copy_(module.weight.data.t())
+            new_module.bias.data.copy_(module.bias.data)
+            setattr(model, name, new_module)
 
 class GPT2Features(torch.nn.Module):
     def __init__(self, model, device):
@@ -34,7 +49,9 @@ class GPT2Wrapper(torch.nn.Module):
         self.device=device
         model = AutoModelForSequenceClassification.from_pretrained("herrerovir/gpt2-tweet-sentiment-model")
         self.features=GPT2Features(model,device)
+        replace_conv1d_modules(self.features)
         self.classifier=model.score
+        replace_conv1d_modules(self.classifier)
         self.classifier.to(device)
     
     def forward(self, batch):
