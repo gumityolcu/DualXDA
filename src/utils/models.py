@@ -5,6 +5,7 @@ from transformers import AutoModelForSequenceClassification
 from transformers.pytorch_utils import Conv1D
 import tqdm
 from torch import nn
+import os
 def clear_resnet_from_checkpoints(checkpoint):
     checkpoint["model_state"]={
             key:value for key, value in checkpoint["model_state"].items()
@@ -46,6 +47,7 @@ class GPT2Wrapper(torch.nn.Module):
     def __init__(self, device):
         super(GPT2Wrapper, self).__init__()
         self.device=device
+        os.environ["XFORMERS_USE_MEMORY_EFFICIENT_ATTENTION"] = "0"
         model = AutoModelForSequenceClassification.from_pretrained("herrerovir/gpt2-tweet-sentiment-model")
         model.config.use_cache = False 
         self.features=GPT2Features(model,device)
