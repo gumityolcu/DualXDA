@@ -47,6 +47,7 @@ class GPT2Wrapper(torch.nn.Module):
         super(GPT2Wrapper, self).__init__()
         self.device=device
         model = AutoModelForSequenceClassification.from_pretrained("herrerovir/gpt2-tweet-sentiment-model")
+        model.config.use_cache = False 
         self.features=GPT2Features(model,device)
         replace_conv1d_modules(self.features)
         self.classifier=model.score
