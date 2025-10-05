@@ -56,6 +56,9 @@ class GPT2Wrapper(torch.nn.Module):
     def forward(self, batch):
         features=self.features(batch)
         return self.classifier(features)
+    
+    def arnoldi_parameters(self):
+        return self.parameters()
 
     
 
