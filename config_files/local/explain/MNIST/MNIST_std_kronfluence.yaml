@@ -4,7 +4,7 @@ cache_dir: /home/yolcu/Documents/Code/DualXDA/cache/MNIST/std/kronfluence
 data_root: /home/yolcu/Documents/Code/DualXDA/../Datasets
 dataset_name: MNIST
 dataset_type: std
-device: cpu
+device: cuda
 features_dir: /home/yolcu/Documents/Code/DualXDA/cache/MNIST/std/features
 grad_dir: /home/yolcu/Documents/Code/DualXDA/cache/MNIST/std/tracin/best
 model_name: basic_conv

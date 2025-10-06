@@ -70,7 +70,7 @@ def xplain(model, train, test, device, explainer_cls, batch_size, kwargs, num_ba
     file_indices[start_file * num_batches_per_file:(start_file + num_files) * num_batches_per_file] = 1
     compute_times=[]
     iter_loader = itertools.compress(test_ld, file_indices)
-    explanations = None
+    explanations = torch.empty((0,),device=device)
     for u, (x, y) in enumerate(iter_loader):
         with torch.no_grad():
             x = x.to(device)
