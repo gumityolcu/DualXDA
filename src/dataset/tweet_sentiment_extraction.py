@@ -15,6 +15,10 @@ class TweetSentimentDatapoint(dict):
     
     def size(self, i):
         return self["input_ids"].size(i)
+    
+    @property
+    def shape(self):
+        return self['input_ids'].shape
 
 class TweetSentimentDataset(torch.utils.data.Dataset):
     def __init__(self, split, device):
