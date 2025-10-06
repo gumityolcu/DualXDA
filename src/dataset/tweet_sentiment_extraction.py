@@ -12,6 +12,9 @@ class TweetSentimentDatapoint(dict):
         self["input_ids"] = self["input_ids"].to(device)
         self["attention_mask"] = self["attention_mask"].to(device)
         return self
+    
+    def size(self, i):
+        return self["input_ids"].size(i)
 
 class TweetSentimentDataset(torch.utils.data.Dataset):
     def __init__(self, split, device):
