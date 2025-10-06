@@ -35,8 +35,8 @@ class GPT2Features(torch.nn.Module):
         self.model.to(device)
     
     def forward(self, batch):
-        input_ids = batch["input_ids"].to(self.device)
-        attention_mask = batch["attention_mask"].to(self.device)
+        input_ids = batch[:, 0,:]
+        attention_mask = batch[:, 1,:]
         transformer_outputs=self.model(input_ids=input_ids, attention_mask=attention_mask)
         features = transformer_outputs[0]
         last_non_pad_token = attention_mask.sum(dim=1) - 1
