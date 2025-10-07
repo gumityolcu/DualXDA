@@ -135,8 +135,8 @@ def show_text_attributions(
     #     model.load_state_dict(checkpoint["model_state"])
     # print_model(model)
     # exit()
-    model.to(device)
-    model.eval()
+    # model.to(device)
+    # model.eval()
     
     # if accuracy:
     #    acc, err = compute_accuracy(model, test,device)
@@ -157,8 +157,8 @@ def show_text_attributions(
             xpl_all = torch.cat((xpl_all, xpl), 0)
         torch.save(xpl_all, os.path.join(xpl_root, f"{base_name}_all"))
 
-    xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
-    ret_str=""
+    # xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
+    # ret_str=""
     # for i in range(length):
     #     x,y = test[start+i]
     #     x=x.to()
