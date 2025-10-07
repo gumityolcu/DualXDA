@@ -118,14 +118,12 @@ def show_text_attributions(
                   length
                   ):
     # (explainer_class, kwargs)
-    if not torch.cuda.is_available():
-        device = "cpu"
-    if dataset_name=="tweet_sentiment_extraction":
-        train, test = load_tweet_sentiment_dataset(device)
-    elif dataset_name=="ag_news":
+    # if not torch.cuda.is_available():
+    #     device = "cpu"
+    # if dataset_name=="tweet_sentiment_extraction":
+    #     train, test = load_tweet_sentiment_dataset(device)
+    # elif dataset_name=="ag_news":
 
-
-    train.get_string(0)
     # if dataset_name=="tweet_sentiment_extraction":
     #     model = GPT2Wrapper(device=device)
     # else:
