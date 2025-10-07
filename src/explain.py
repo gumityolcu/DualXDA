@@ -222,6 +222,6 @@ if __name__ == "__main__":
                   num_classes=train_config.get('num_classes'),
                   C_margin=train_config.get('C', None),
                   testsplit=train_config.get('testsplit', "test"),
-                  sparse=train_config.get("sparse", False)
+                  sparse=train_config.get("sparse", False),
                   hf_id=train_config.get("hf_id", None)
                   )
