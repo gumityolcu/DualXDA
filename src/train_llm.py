@@ -1,23 +1,39 @@
 import json
 import os
 import sys
+import numpy as np
 
 import backoff
 import torch
 import torch.distributed as dist
 from datasets import Dataset
-from peft import LoraConfig, prepare_model_for_kbit_training
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
-from trl import SFTTrainer, SFTConfig
+#from peft import LoraConfig, prepare_model_for_kbit_training
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments, TrainerCallback
+#from trl import SFTTrainer, SFTConfig
 
 from validate import TrainingConfig
-from utils import load_jsonl
+
+SAVE_STEPS_LIST = np.array(7500 * np.array((0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99, 0.999, 1.0)), dtype=int)
+
+class IrregularSaveCallback(TrainerCallback):
+    def __init__(self, save_steps_list):
+        self.save_steps_list = set(save_steps_list)
+
+    def on_step_end(self, args, state, control, **kwargs):
+        # state.global_step is the current step
+        if state.global_step in self.save_steps_list:
+            control.should_save = True  # triggers save
+        return control
+
+def load_jsonl(file_id):
+    with open(file_id, "r") as f:
+        return [json.loads(line) for line in f.readlines() if line.strip()]
 
 def process_classification(df):
     def format_example(example):
         return {
             "description": example["description"],  # or however your text is stored
-            "label": example["label"]    # integer label
+            "label": example["label"] - 1   # integer label (ensure they are in range [0, num_labels - 1])
         }
     
     df = df.map(format_example)
@@ -32,8 +48,8 @@ def train(training_cfg):
     else:
         rank = 0
 
-    print("Creating new LoRA adapter")
-    target_modules = training_cfg.target_modules
+    #print("Creating new LoRA adapter")
+    #target_modules = training_cfg.target_modules
     #model = AutoModelForCausalLM.from_pretrained(
     #    training_cfg.model,
     #    device_map={"": f"cuda:{rank}"},
@@ -45,18 +61,36 @@ def train(training_cfg):
     ###
     # change to classificaiton model without lora
     model = AutoModelForSequenceClassification.from_pretrained(
-    training_cfg.model,
-    num_labels=training_cfg.num_labels,  # Add this to your config
-    device_map={"": f"cuda:{rank}"},
-    # Remove quantization_config for full training
-    )
+        training_cfg.model,
+        num_labels=training_cfg.num_labels,  # Add this to your config
+        device_map={"": f"cuda:{rank}"},
+        # Remove quantization_config for full training
+        )
     ###
 
     tokenizer = AutoTokenizer.from_pretrained(
         training_cfg.model,
         token=os.environ.get("HF_TOKEN"),
         max_length=2048,
+        pad_token='<|endoftext|>'
     )
+
+    model.config.pad_token_id = tokenizer.eos_token_id
+
+    #tokenizer.add_special_tokens({'pad_token': '[PAD]'}) # add padding token
+    #new_vocab_size = len(tokenizer) # Get vocabulary size
+    #model.resize_token_embeddings(new_vocab_size) # Update vocabulary size
+
+    def tokenize_function(examples):
+        # Assumes your data has 'text' and 'label' fields
+        tokenized = tokenizer(
+            examples["description"],  # Adjust field name to match your data
+            padding="max_length",
+            truncation=True,
+            max_length=training_cfg.max_seq_length,
+        )
+        tokenized["labels"] = examples["label"]  # Add labels
+        return tokenized
 
     # Remove for now (no LoRA)
     # Prepare for k-bit training
@@ -73,19 +107,18 @@ def train(training_cfg):
     #    task_type="CAUSAL_LM"
     #)
     dataset = Dataset.from_json(training_cfg.training_file)
-    #dataset = process(dataset)
+    dataset = process_classification(dataset)
+    dataset = dataset.map(tokenize_function, batched=True, remove_columns=dataset.column_names)
     if training_cfg.test_file:
-        test_rows = load_jsonl(training_cfg.test_file)
-        if training_cfg.loss in ["orpo", "dpo"]:
-            test_dataset = Dataset.from_list(test_rows)
-        else:
-            test_dataset = Dataset.from_list([dict(messages=r['messages']) for r in test_rows])
+        test_dataset = Dataset.from_json(training_cfg.test_file)
+        test_dataset = process_classification(test_dataset)
+        test_dataset = test_dataset.map(tokenize_function, batched=True, remove_columns=test_dataset.column_names)
     else:
         # Split 10% of train data for testing when no test set provided
         split = dataset.train_test_split(test_size=0.1)
         #dataset = split["train"]
         test_dataset = split["test"]
-    dataset = dataset.shuffle(seed=training_cfg.seed)
+    dataset = dataset.shuffle(seed=training_cfg.seed) # change this for sorting with data attribution values when evaluating DA method
 
     #trainer = SFTTrainer(
     #    model=model,
@@ -135,6 +168,7 @@ def train(training_cfg):
             "accuracy": accuracy_score(labels, predictions),
         }
 
+    # GPT2 for Sequence Classification uses CrossEntropyLoss for Single-Label-Classification
     trainer = Trainer(
     model=model,
     args=TrainingArguments(
@@ -145,12 +179,12 @@ def train(training_cfg):
         learning_rate=training_cfg.learning_rate,
         weight_decay=training_cfg.weight_decay,
         warmup_steps=training_cfg.warmup_steps,
-        logging_steps=1,
+        logging_steps=training_cfg.logging_steps,
         save_steps=training_cfg.save_steps,
-        evaluation_strategy="steps",
         eval_steps=training_cfg.save_steps,
-        save_total_limit=3,
-        load_best_model_at_end=True,
+        eval_strategy=training_cfg.eval_strategy,
+        save_total_limit=None,
+        load_best_model_at_end=False,
         metric_for_best_model="accuracy",
         fp16=True,
         seed=training_cfg.seed,
@@ -158,7 +192,8 @@ def train(training_cfg):
     ),
     train_dataset=dataset,
     eval_dataset=test_dataset,
-    compute_metrics=compute_metrics,  # Add this function
+    compute_metrics=compute_metrics,
+    callbacks=[IrregularSaveCallback(SAVE_STEPS_LIST)]
 )
     
     trainer.train()
