@@ -33,6 +33,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "CIFAR": {'depth': 5000, 'repeat': 10, "file_size":20},
         "AWA": {'depth': 3700, 'repeat': 10, "file_size":20},
         "tweet_sentiment_extraction": {'depth': 3700, 'repeat': 10, "file_size":20}
+        "ag_news": {'depth': 3700, 'repeat': 10, "file_size":20}
     }
 
     arnoldi_params={
@@ -41,6 +42,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "AWA": {"projection_dim": 128, "arnoldi_dim": 150, "hessian_dataset_size": 10000},
         # "tweet_sentiment_extraction": {"projection_dim": 256, "arnoldi_dim": 500, "hessian_dataset_size": 1500},
         "tweet_sentiment_extraction": {"projection_dim": 2, "arnoldi_dim": 2, "hessian_dataset_size": 2},
+        "ag_news": {"projection_dim": 2, "arnoldi_dim": 2, "hessian_dataset_size": 2},
     }
 
     kronfluence_params={
@@ -62,6 +64,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "CIFAR": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
         "AWA": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
         "tweet_sentiment_extraction": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1}
+        "ag_news": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1}
     }
 
     dualda_params={}
