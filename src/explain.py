@@ -32,7 +32,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "MNIST": {'depth': 6000, 'repeat': 10, "file_size": 20},
         "CIFAR": {'depth': 5000, 'repeat': 10, "file_size":20},
         "AWA": {'depth': 3700, 'repeat': 10, "file_size":20},
-        "tweet_sentiment_extraction": {'depth': 3700, 'repeat': 10, "file_size":20}
+        "tweet_sentiment_extraction": {'depth': 3700, 'repeat': 10, "file_size":20},
         "ag_news": {'depth': 3700, 'repeat': 10, "file_size":20}
     }
 
@@ -63,7 +63,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "MNIST": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
         "CIFAR": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
         "AWA": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
-        "tweet_sentiment_extraction": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1}
+        "tweet_sentiment_extraction": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
         "ag_news": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1}
     }
 
