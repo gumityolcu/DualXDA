@@ -10,7 +10,7 @@ from utils.models import GPT2Wrapper
 # Load model/tokenizer
 
 
-model = GPT2Wrapper(ds_name="ag_news",device="cuda")
+model = GPT2Wrapper(hf_id="MoritzWeckbecker/gpt2-large_ag-news_full",device="cuda")
 model.to("cuda")
 model.eval()
 train, test = load_ag_news()

@@ -44,14 +44,14 @@ class GPT2Features(torch.nn.Module):
         return features
 
 class GPT2Wrapper(torch.nn.Module):
-    def __init__(self, ds_name, device):
+    def __init__(self, hf_id, device):
         super(GPT2Wrapper, self).__init__()
-        model_ids={
-            "tweet_sentiment_extraction": "herrerovir/gpt2-tweet-sentiment-model",
-            "ag_news": "MoritzWeckbecker/gpt2-large_ag-news_full"
-        }
+        # model_ids={
+        #     "tweet_sentiment_extraction": "herrerovir/gpt2-tweet-sentiment-model",
+        #     "ag_news": "MoritzWeckbecker/gpt2-large_ag-news_full"
+        # }
         self.device=device
-        model = AutoModelForSequenceClassification.from_pretrained(model_ids[ds_name])
+        model = AutoModelForSequenceClassification.from_pretrained(hf_id)
         self.features=GPT2Features(model,device)
         replace_conv1d_modules(self.features)
         self.classifier=model.score

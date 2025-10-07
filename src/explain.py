@@ -114,7 +114,7 @@ def explain_model(model_name, model_path, device, class_groups,
                   dataset_name, dataset_type, data_root, batch_size,
                   save_dir, cache_dir, grad_dir, features_dir, validation_size, num_batches_per_file,
                   start_file, num_files, xai_method,
-                  num_classes, C_margin, testsplit, sparse):
+                  num_classes, C_margin, testsplit, sparse,hf_id):
     # (explainer_class, kwargs)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -142,7 +142,7 @@ def explain_model(model_name, model_path, device, class_groups,
         train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
 
     if dataset_name in ["tweet_sentiment_extraction", "ag_news"]:
-        model = GPT2Wrapper(ds_name=dataset_name, device=device)
+        model = GPT2Wrapper(hf_id=hf_id, device=device)
     else:
         model = load_model(model_name, dataset_name, num_classes_model)
         checkpoint = torch.load(model_path, map_location=device)
@@ -223,4 +223,5 @@ if __name__ == "__main__":
                   C_margin=train_config.get('C', None),
                   testsplit=train_config.get('testsplit', "test"),
                   sparse=train_config.get("sparse", False)
+                  hf_id=train_config.get("hf_id", None)
                   )
