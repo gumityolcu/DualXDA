@@ -5,7 +5,7 @@ data_root: /home/yolcu/Documents/Code/DualXDA/../Datasets
 dataset_name: ag_news
 dataset_type: std
 device: cuda
-features_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/features
+features_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/features_v3
 grad_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/tracin/best
 hf_id: MoritzWeckbecker/gpt2-large_ag-news_full-3
 model_path: /home/yolcu/Documents/Code/DualXDA/checkpoints/ag_news/std/ag_news_None_best
