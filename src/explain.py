@@ -231,6 +231,7 @@ if __name__ == "__main__":
                   hf_id=train_config.get("hf_id", None)
                   )
     if args.merge_explanations:
+        device=train_config["device"]
         xpl_root=train_config["save_dir"]
         files=[f for f in os.listdir(xpl_root) if not f.endswith(".times") and not f.endswith("_all")]
         base_name=files[0].split("_")[0]
