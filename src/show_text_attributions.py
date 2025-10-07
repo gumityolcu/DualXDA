@@ -3,8 +3,8 @@ import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
 from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
-from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset
-from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, TweetSentimentGPT2Wrapper
+from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset, load_ag_news
+from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, GPT2Wrapper
 import yaml
 import logging
 import os
@@ -122,10 +122,12 @@ def show_text_attributions(
         device = "cpu"
     if dataset_name=="tweet_sentiment_extraction":
         train, test = load_tweet_sentiment_dataset(device)
+    elif dataset_name=="ag_news":
+
 
     train.get_string(0)
-    if dataset_name=="tweet_sentiment_extraction":
-        model = TweetSentimentGPT2Wrapper(device=device)
+    # if dataset_name=="tweet_sentiment_extraction":
+    #     model = GPT2Wrapper(device=device)
     # else:
     #     model = load_model(model_name, dataset_name, num_classes_model)
     #     checkpoint = torch.load(model_path, map_location=device)
@@ -159,25 +161,25 @@ def show_text_attributions(
 
     xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
     ret_str=""
-    for i in range(length):
-        x,y = test[start+i]
-        x=x.to()
-        test_label=test.label_text[model(x[None]).argmax()]
-        ret_str=ret_str+f"TEST SAMPLE-{start+i+1} ({test_label}): \n"+test.get_string(start+i)+"\n\n"
-        high=xpl[start+i].argsort(descending=True)[:5]
-        low=xpl[start+i].argsort()[:5]
-        ret_str=ret_str+"POSITIVE ATTRIBUTIONS\n"
-        for j in range(5):
-            _,y = train[j]
-            ret_str=ret_str+f"Positive-{j+1} ({train.label_text[y]}, {xpl[start+i,high[j]]:.2f}): "+train.get_string(high[j])+"\n\n"
-        ret_str=ret_str+"NEGATIVE ATTRIBUTIONS\n"
-        for j in range(5):
-            ret_str=ret_str+f"Negative-{j+1} ({train.label_text[y]}, {xpl[start+i,low[j]]:.2f}): "+train.get_string(low[j])+"\n\n"
-        ret_str=ret_str+"\n_____________________________________________++++++++++++++++++++++++++++++++++++___________________________"
-    if save_dir is not None:
-        os.makedirs(os.path.join(save_dir,xai_method),exist_ok=True)
-        with open(os.path.join(save_dir,xai_method,f"attributions_{start}_len_{length}"),"w") as f:
-            f.write(ret_str)
+    # for i in range(length):
+    #     x,y = test[start+i]
+    #     x=x.to()
+    #     test_label=test.label_text[model(x[None]).argmax()]
+    #     ret_str=ret_str+f"TEST SAMPLE-{start+i+1} ({test_label}): \n"+test.get_string(start+i)+"\n\n"
+    #     high=xpl[start+i].argsort(descending=True)[:5]
+    #     low=xpl[start+i].argsort()[:5]
+    #     ret_str=ret_str+"POSITIVE ATTRIBUTIONS\n"
+    #     for j in range(5):
+    #         _,y = train[j]
+    #         ret_str=ret_str+f"Positive-{j+1} ({train.label_text[y]}, {xpl[start+i,high[j]]:.2f}): "+train.get_string(high[j])+"\n\n"
+    #     ret_str=ret_str+"NEGATIVE ATTRIBUTIONS\n"
+    #     for j in range(5):
+    #         ret_str=ret_str+f"Negative-{j+1} ({train.label_text[y]}, {xpl[start+i,low[j]]:.2f}): "+train.get_string(low[j])+"\n\n"
+    #     ret_str=ret_str+"\n_____________________________________________++++++++++++++++++++++++++++++++++++___________________________"
+    # if save_dir is not None:
+    #     os.makedirs(os.path.join(save_dir,xai_method),exist_ok=True)
+    #     with open(os.path.join(save_dir,xai_method,f"attributions_{start}_len_{length}"),"w") as f:
+    #         f.write(ret_str)
 
 
 if __name__ == "__main__":
