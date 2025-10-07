@@ -14,6 +14,6 @@ num_batches_per_file: 1
 num_classes: 10
 num_files: 1
 save_dir: /home/yolcu/Documents/Code/DualXDA/explanations/CIFAR/std/dualda_0.001
-start_file: 9
+start_file: 0
 validation_size: 2000
 xai_method: dualda

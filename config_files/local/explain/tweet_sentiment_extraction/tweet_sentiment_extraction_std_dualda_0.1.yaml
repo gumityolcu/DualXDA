@@ -12,8 +12,8 @@ model_name: GPT2
 model_path: /home/yolcu/Documents/Code/DualXDA/checkpoints/tweet_sentiment_extraction/std/tweet_sentiment_extraction_GPT2_best
 num_batches_per_file: 1
 num_classes: GPT2
-num_files: 1
+num_files: 10
 save_dir: /home/yolcu/Documents/Code/DualXDA/explanations/tweet_sentiment_extraction/std/dualda_0.1
-start_file: 9
+start_file: 0
 validation_size: 2000
 xai_method: dualda
