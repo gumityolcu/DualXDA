@@ -194,6 +194,8 @@ if __name__ == "__main__":
     # sys.path.append(current)
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file', type=str)
+    parser.add_argument('--merge_explanations', action="store_true")
+
     args = parser.parse_args()
     config_file = args.config_file
 
@@ -228,3 +230,19 @@ if __name__ == "__main__":
                   sparse=train_config.get("sparse", False),
                   hf_id=train_config.get("hf_id", None)
                   )
+    if args.merge_explanations:
+        xpl_root=train_config["save_dir"]
+        files=[f for f in os.listdir(xpl_root) if not f.endswith(".times") and not f.endswith("_all")]
+        base_name=files[0].split("_")[0]
+
+        if os.path.isfile(os.path.join(xpl_root, f"{base_name}_all")):
+            xpl_all = torch.load(os.path.join(xpl_root, f"{base_name}_all"), map_location=device)
+        #merge all xpl
+        else:
+            xpl_all = torch.empty(0, device=device)
+            for i in range(len(files)):
+                fname = os.path.join(xpl_root, f"{base_name}_{i:02d}")
+                xpl = torch.load(fname, map_location=torch.device(device))
+                xpl.to(device)
+                xpl_all = torch.cat((xpl_all, xpl), 0)
+            torch.save(xpl_all, os.path.join(xpl_root, f"{base_name}_all"))
