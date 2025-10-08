@@ -66,7 +66,7 @@ class KronfluenceExplainer(Explainer):
             "data_partitions":score_data_partitions
         }
         if half_precision:
-            dtype=torch.dtype = torch.bfloat16
+            dtype=torch.bfloat16
             update_factor_args={"amp_dtype": dtype,
                 "activation_covariance_dtype": dtype,
                 "gradient_covariance_dtype": dtype,
