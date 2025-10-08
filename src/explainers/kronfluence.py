@@ -51,8 +51,10 @@ class KronfluenceExplainer(Explainer):
             use_iterative_lambda_aggregation=False,
             score_data_partitions=1,
             batch_size=32,
-            disable_tqdm=True
+            disable_tqdm=True,
+            half_precision=False
     ):
+        self.half_precision=half_precision
         self.factor_kwargs={
             "covariance_max_examples":covariance_max_examples,
             "covariance_data_partitions":covariance_data_partitions,
@@ -63,6 +65,22 @@ class KronfluenceExplainer(Explainer):
         self.score_kwargs={
             "data_partitions":score_data_partitions
         }
+        if half_precision:
+            dtype=torch.dtype = torch.bfloat16
+            update_factor_args={"amp_dtype": dtype,
+                "activation_covariance_dtype": dtype,
+                "gradient_covariance_dtype": dtype,
+                "per_sample_gradient_dtype": dtype,
+                "lambda_dtype": dtype}
+            self.factor_kwargs.update(update_factor_args)
+            update_score_args={
+                    "amp_dtype": dtype,
+                    "score_dtype": dtype,
+                    "per_sample_gradient_dtype": dtype,
+                    "precondition_dtype": dtype,
+                    "query_gradient_svd_dtype": torch.float32
+            }
+            self.score_kwargs.update(update_score_args)
         super(KronfluenceExplainer, self).__init__(model, dataset, device)
         self.dir = dir
         os.makedirs(self.dir,exist_ok=True)
