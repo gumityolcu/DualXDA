@@ -16,6 +16,11 @@ class TrainingConfig(BaseModel):
     # Required number of labels for classification task
     num_labels: int = Field(..., description="Number of labels in classification task")
 
+    # Enable data ordering by data attribution
+    order_by_attribution: Optional[bool] = Field(False, description="Should data be sorted by result of data attribution method?")
+    attribution_file: Optional[str] = Field(None, description="File ID of the attribution tensor")
+    descending_attribution: Optional[bool] = Field(True, description="Should training data be sorted by attribution in descending order?")
+
     # Evaluation
     do_eval: Optional[bool] = Field(True, description="Enable evaluation")
     eval_strategy: Optional[str] = Field(None, description="Evaluation Strategy")
@@ -57,7 +62,7 @@ class TrainingConfig(BaseModel):
     push_to_private: bool = Field(True, description="Whether to push to private Hub")
     
     # Training hyperparameters
-    epochs: int = Field(1, description="Number of training epochs")
+    epochs: float = Field(1, description="Number of training epochs")
     max_steps: int = Field(-1, description="Maximum number of training steps")
     per_device_train_batch_size: int = Field(1, description="Training batch size per device")
     per_device_eval_batch_size: int = Field(1, description="Eval batch size per device")

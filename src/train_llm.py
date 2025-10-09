@@ -13,7 +13,8 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trai
 
 from validate import TrainingConfig
 
-SAVE_STEPS_LIST = np.array(7500 * np.array((0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99, 0.999, 1.0)), dtype=int)
+#SAVE_STEPS_LIST = np.array(7500 * np.array((0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99, 0.999, 1.0)), dtype=int)
+SAVE_STEPS_LIST = np.array(5000 * np.array((0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2)), dtype=int)
 
 class IrregularSaveCallback(TrainerCallback):
     def __init__(self, save_steps_list):
@@ -71,11 +72,21 @@ def train(training_cfg):
     tokenizer = AutoTokenizer.from_pretrained(
         training_cfg.model,
         token=os.environ.get("HF_TOKEN"),
-        max_length=2048,
-        pad_token='<|endoftext|>'
+        max_length=256,
     )
 
-    model.config.pad_token_id = tokenizer.eos_token_id
+    # Use existing EOS token as pad token (no new token added)
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+
+    # Now set it in the model config
+    model.config.pad_token_id = tokenizer.pad_token_id
+
+    print(f"Tokenizer vocab size: {len(tokenizer)}")
+    print(f"Model vocab size: {model.config.vocab_size}")
+    print(f"Model embedding size: {model.base_model.embed_tokens.num_embeddings if hasattr(model.base_model, 'embed_tokens') else 'N/A'}")
+    print(f"Pad token: '{tokenizer.pad_token}' (ID: {tokenizer.pad_token_id})")
+    print(f"Model pad token ID: {model.config.pad_token_id}")
 
     #tokenizer.add_special_tokens({'pad_token': '[PAD]'}) # add padding token
     #new_vocab_size = len(tokenizer) # Get vocabulary size
@@ -118,7 +129,15 @@ def train(training_cfg):
         split = dataset.train_test_split(test_size=0.1)
         #dataset = split["train"]
         test_dataset = split["test"]
-    dataset = dataset.shuffle(seed=training_cfg.seed) # change this for sorting with data attribution values when evaluating DA method
+
+    if training_cfg.order_by_attribution:
+        xpl = torch.load(training_cfg.attribution_file)
+        xpl_sum = xpl.sum(dim=0)
+        sorted_idx = torch.argsort(xpl_sum, dim=-1, descending=training_cfg.descending_attribution, stable=False)
+        dataset = dataset.select(sorted_idx)
+        print(f"Argmax idx: {sorted_idx[0]} | Maximal attribution value: {xpl_sum[sorted_idx[0]]}")
+    else:
+        dataset = dataset.shuffle(seed=training_cfg.seed)
 
     #trainer = SFTTrainer(
     #    model=model,
@@ -167,6 +186,11 @@ def train(training_cfg):
         return {
             "accuracy": accuracy_score(labels, predictions),
         }
+    
+    print(f"Label range: {min(dataset['labels'])} to {max(dataset['labels'])}")
+    print(f"Num labels configured: {training_cfg.num_labels}")
+    assert min(dataset['labels']) >= 0, "Labels contain negative values!"
+    assert max(dataset['labels']) < training_cfg.num_labels, "Labels exceed num_labels!"
 
     # GPT2 for Sequence Classification uses CrossEntropyLoss for Single-Label-Classification
     trainer = Trainer(
