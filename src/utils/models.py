@@ -74,7 +74,58 @@ class GPT2Wrapper(torch.nn.Module):
     def arnoldi_parameters(self):
         return [n for n,_ in self.named_modules() if self.select_arnoldi_params(n)]
 
+
+class LlamaFeatures(torch.nn.Module):
+    def __init__(self, model, pad_token_id, device):
+        super(LlamaFeatures, self).__init__()
+        self.device=device
+        self.model = model.model
+        self.model.to(device)
+        self.pad_token_id=pad_token_id
     
+    def forward(self, batch):
+        input_ids = batch[:, 0,:]
+        attention_mask = batch[:, 1,:]
+        transformer_outputs=self.model(input_ids=input_ids, attention_mask=attention_mask)
+        features = transformer_outputs[0]
+        non_pad_mask = (input_ids != self.pad_token_id).to(self.device, torch.int32)
+        token_indices = torch.arange(input_ids.shape[-1], device=self.device, dtype=torch.int32)
+        last_non_pad_token = (token_indices * non_pad_mask).argmax(-1)
+        features = features[torch.arange(features.shape[0], device=features.device), last_non_pad_token]
+        return features
+
+class LlamaWrapper(torch.nn.Module):
+    def __init__(self, hf_id, device):
+        super(LlamaWrapper, self).__init__()
+        # model_ids={
+        #     "tweet_sentiment_extraction": "herrerovir/gpt2-tweet-sentiment-model",
+        #     "ag_news": "MoritzWeckbecker/gpt2-large_ag-news_full"
+        # }
+        self.device=device
+        model = AutoModelForSequenceClassification.from_pretrained(hf_id)
+        # model.config.pad_token_id=128001
+        self.features=LlamaFeatures(model=model,device=device, pad_token_id=128001)
+        # replace_conv1d_modules(self.features)
+        self.classifier=model.score
+        # replace_conv1d_modules(self.classifier)
+        self.classifier.to(device)
+        
+    
+    def forward(self, batch):
+        features=self.features(batch)
+        return self.classifier(features)
+    
+    def influence_named_parameters(self):
+       return [("classifier.weight", self.classifier.weight)]
+
+    # def select_arnoldi_params(self, name):
+    #     if "features.model.h." in name:
+    #         id=int(name.split(".")[3])
+    #         return id>-1
+    #     return False
+
+    # def arnoldi_parameters(self):
+    #     return [n for n,_ in self.named_modules() if self.select_arnoldi_params(n)]
 
 
 
