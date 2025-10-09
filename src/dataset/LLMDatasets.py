@@ -56,12 +56,16 @@ class TweetSentimentDataset(torch.utils.data.Dataset):
 
 class AGNews(torch.utils.data.Dataset):
     def __init__(self, split):
+        
         tokenizer = AutoTokenizer.from_pretrained(
-            "openai-community/gpt2-large",
+            "unsloth/Llama-3.2-1B",
             # token=os.environ.get("HF_TOKEN"), #TODO: maybe add token
-            max_length=2048,
-            pad_token='<|endoftext|>'
+            max_length=256,
+            # pad_token='<|endoftext|>'
         )
+        self.tokenizer=tokenizer
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
         def process_classification(df):
             def format_example(example):
                 return {
@@ -76,7 +80,6 @@ class AGNews(torch.utils.data.Dataset):
             tokenized = tokenizer(
                 examples["description"],  # Adjust field name to match your data
                 padding="max_length",
-                truncation=True,
                 max_length=256,
             )
             # tokenized["input_ids"]=torch.tensor(tokenized["input_ids"])
@@ -87,7 +90,7 @@ class AGNews(torch.utils.data.Dataset):
         self.split = split
         file_paths={"train":"./dataset/ag_news/train_full.jsonl" , "test":"./dataset/ag_news/test.jsonl"}
 
-
+        self.label_text=[0,1,2,3]
         dataset = Dataset.from_json(file_paths[split])
         dataset = process_classification(dataset)
         self.dataset = dataset.map(tokenize_function, batched=True, remove_columns=dataset.column_names)

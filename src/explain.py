@@ -4,7 +4,7 @@ from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
 from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
 from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset, load_ag_news
-from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, GPT2Wrapper
+from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, LlamaWrapper
 import yaml
 import logging
 import os
@@ -145,7 +145,7 @@ def explain_model(model_name, model_path, device, class_groups,
         train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
 
     if dataset_name in ["tweet_sentiment_extraction", "ag_news"]:
-        model = GPT2Wrapper(hf_id=hf_id, device=device)
+        model = LlamaWrapper(hf_id=hf_id, device=device)
     else:
         model = load_model(model_name, dataset_name, num_classes_model)
         checkpoint = torch.load(model_path, map_location=device)

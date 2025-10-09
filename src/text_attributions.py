@@ -8,6 +8,7 @@ from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_m
 import yaml
 import logging
 import os
+from GPTXDA import GPTXDA
 
 def count_params(checkpoint):
     total=0
@@ -108,8 +109,7 @@ def print_model(model):
     print("TOTAL:",total)
 
 
-
-def show_text_attributions(
+def text_attributions(
                   device,
                   dataset_name,
                   xai_method,
@@ -117,33 +117,31 @@ def show_text_attributions(
                   start,
                   length
                   ):
+    hf_ids={
+        "ag_news":"MoritzWeckbecker/gpt2-large_ag-news_full",
+        "tweet_sentiment_extraction":"herrerovir/gpt2-tweet-sentiment-model"
+    }
+    tokenizer_hf_ids={
+        "ag_news": "openai-community/gpt2-large",
+        "tweet_sentiment_extraction": "herrerovir/gpt2-tweet-sentiment-model"
+    }
     # (explainer_class, kwargs)
-    # if not torch.cuda.is_available():
-    #     device = "cpu"
-    # if dataset_name=="tweet_sentiment_extraction":
-    #     train, test = load_tweet_sentiment_dataset(device)
-    # elif dataset_name=="ag_news":
+    if not torch.cuda.is_available():
+        device = "cpu"
+    if dataset_name=="tweet_sentiment_extraction":
+        train, test = load_tweet_sentiment_dataset(device)
+    elif dataset_name=="ag_news":
+        train, test = load_ag_news()
+    model = GPT2Wrapper(hf_id=hf_ids[dataset_name],device="cuda")# "MoritzWeckbecker/gpt2-large_ag-news_full"
 
-    # if dataset_name=="tweet_sentiment_extraction":
-    #     model = GPT2Wrapper(device=device)
-    # else:
-    #     model = load_model(model_name, dataset_name, num_classes_model)
-    #     checkpoint = torch.load(model_path, map_location=device)
-    #     #get rid of model.resnet
-    #     checkpoint=clear_resnet_from_checkpoints(checkpoint)
-
-    #     model.load_state_dict(checkpoint["model_state"])
-    # print_model(model)
-    # exit()
-    # model.to(device)
-    # model.eval()
+    print_model(model)
+    model.to(device)
+    model.eval()
     
-    # if accuracy:
-    #    acc, err = compute_accuracy(model, test,device)
-    #    print(f"Accuracy: {acc}")
     xpl_root=f"../explanations/{dataset_name}/std/{xai_method}"
     files=[f for f in os.listdir(xpl_root) if not f.endswith(".times") and not f.endswith("_all")]
-    base_name=files[0].split("_")[0]
+    
+    base_name=os.listdir(xpl_root)[0].split("_")[0]
 
     if os.path.isfile(os.path.join(xpl_root, f"{base_name}_all")):
         xpl_all = torch.load(os.path.join(xpl_root, f"{base_name}_all"), map_location=device)
@@ -157,27 +155,46 @@ def show_text_attributions(
             xpl_all = torch.cat((xpl_all, xpl), 0)
         torch.save(xpl_all, os.path.join(xpl_root, f"{base_name}_all"))
 
-    # xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
-    # ret_str=""
-    # for i in range(length):
-    #     x,y = test[start+i]
-    #     x=x.to()
-    #     test_label=test.label_text[model(x[None]).argmax()]
-    #     ret_str=ret_str+f"TEST SAMPLE-{start+i+1} ({test_label}): \n"+test.get_string(start+i)+"\n\n"
-    #     high=xpl[start+i].argsort(descending=True)[:5]
-    #     low=xpl[start+i].argsort()[:5]
-    #     ret_str=ret_str+"POSITIVE ATTRIBUTIONS\n"
-    #     for j in range(5):
-    #         _,y = train[j]
-    #         ret_str=ret_str+f"Positive-{j+1} ({train.label_text[y]}, {xpl[start+i,high[j]]:.2f}): "+train.get_string(high[j])+"\n\n"
-    #     ret_str=ret_str+"NEGATIVE ATTRIBUTIONS\n"
-    #     for j in range(5):
-    #         ret_str=ret_str+f"Negative-{j+1} ({train.label_text[y]}, {xpl[start+i,low[j]]:.2f}): "+train.get_string(low[j])+"\n\n"
-    #     ret_str=ret_str+"\n_____________________________________________++++++++++++++++++++++++++++++++++++___________________________"
-    # if save_dir is not None:
-    #     os.makedirs(os.path.join(save_dir,xai_method),exist_ok=True)
-    #     with open(os.path.join(save_dir,xai_method,f"attributions_{start}_len_{length}"),"w") as f:
-    #         f.write(ret_str)
+    xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
+    
+    for i in range(length):
+        ret_str=""
+        x,y = test[start+i]
+        x=x.to(device)
+        y=y.to(device)
+        test_label=test.label_text[model(x[None]).argmax()]
+        ret_str=ret_str+f"TEST SAMPLE-{start+i+1} ({test_label}): \n"+test.get_string(start+i)+"\n\n"
+        high=xpl[start+i].argsort(descending=True)[:5]
+        low=xpl[start+i].argsort()[:5]
+        ret_str=ret_str+"POSITIVE ATTRIBUTIONS\n"
+        for j in range(5):
+            _,y = train[high[j]]
+            ret_str=ret_str+f"Positive-{j+1} ({train.label_text[y]}, {xpl[start+i,high[j]]:.2f}): "+train.get_string(high[j])+"\n\n"
+            GPTXDA(
+                device=device,
+                save_dir=os.path.join(save_dir,xai_method,str(i+start),"POSITIVE"),
+                test_id=start+i,
+                train_id=high[j],
+                hf_id=hf_ids[dataset_name],
+                tokenizer_hf_id=tokenizer_hf_ids[dataset_name],
+            )
+        ret_str=ret_str+"NEGATIVE ATTRIBUTIONS\n"
+        for j in range(5):
+            _,y = train[low[j]]
+            ret_str=ret_str+f"Negative-{j+1} ({train.label_text[y]}, {xpl[start+i,low[j]]:.2f}): "+train.get_string(low[j])+"\n\n"
+            GPTXDA(
+                device=device,
+                save_dir=os.path.join(save_dir,xai_method,str(i+start),"NEGATIVE"),
+                test_id=start+i,
+                train_id=high[j],
+                hf_id=hf_ids[dataset_name],
+                tokenizer_hf_id=tokenizer_hf_ids[dataset_name]
+            )
+        print(ret_str)
+        if save_dir is not None:
+            os.makedirs(os.path.join(save_dir,xai_method),exist_ok=True)
+            with open(os.path.join(save_dir,xai_method,str(i+start),f"attributions"),"w") as f:
+                f.write(ret_str)
 
 
 if __name__ == "__main__":
@@ -201,7 +218,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print(f"IS CUDA AVAILABLE?: {torch.cuda.is_available()}")
-    show_text_attributions(
+    text_attributions(
                   device=args.device,
                   dataset_name=args.dataset_name,
                   xai_method=args.xai_method,
