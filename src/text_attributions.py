@@ -118,11 +118,11 @@ def text_attributions(
                   length
                   ):
     hf_ids={
-        "ag_news":"MoritzWeckbecker/gpt2-large_ag-news_full",
+        "ag_news": "MoritzWeckbecker/Llama-3.2-1B_ag-news-0",
         "tweet_sentiment_extraction":"herrerovir/gpt2-tweet-sentiment-model"
     }
     tokenizer_hf_ids={
-        "ag_news": "openai-community/gpt2-large",
+        "ag_news": "unsloth/Llama-3.2-1B",
         "tweet_sentiment_extraction": "herrerovir/gpt2-tweet-sentiment-model"
     }
     # (explainer_class, kwargs)
