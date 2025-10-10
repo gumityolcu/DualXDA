@@ -60,7 +60,7 @@ class AGNews(torch.utils.data.Dataset):
         tokenizer = AutoTokenizer.from_pretrained(
             "unsloth/Llama-3.2-1B",
             # token=os.environ.get("HF_TOKEN"), #TODO: maybe add token
-            max_length=256,
+            max_length=1024,
             # pad_token='<|endoftext|>'
         )
         self.tokenizer=tokenizer
@@ -80,7 +80,7 @@ class AGNews(torch.utils.data.Dataset):
             tokenized = tokenizer(
                 examples["description"],  # Adjust field name to match your data
                 padding="max_length",
-                max_length=256,
+                max_length=1024,
             )
             # tokenized["input_ids"]=torch.tensor(tokenized["input_ids"])
             # tokenized["attention_mask"]=torch.tensor(tokenized["attention_mask"])
