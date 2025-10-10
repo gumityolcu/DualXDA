@@ -7,7 +7,7 @@ dataset_type: std
 device: cuda
 features_dir: ../cache/ag_news/std/features_v0
 grad_dir: ../cache/ag_news/std/tracin/best
-hf_id: MoritzWeckbecker/gpt2-large_ag-news_full
+hf_id: MoritzWeckbecker/gpt2-large_ag-news_full-0
 model_path: ../checkpoints/ag_news/std/ag_news_None_best
 num_batches_per_file: 1
 num_files: 1

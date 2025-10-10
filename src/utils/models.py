@@ -88,9 +88,10 @@ class LlamaFeatures(torch.nn.Module):
         attention_mask = batch[:, 1,:]
         transformer_outputs=self.model(input_ids=input_ids, attention_mask=attention_mask)
         features = transformer_outputs[0]
-        non_pad_mask = (input_ids != self.pad_token_id).to(self.device, torch.int32)
-        token_indices = torch.arange(input_ids.shape[-1], device=self.device, dtype=torch.int32)
-        last_non_pad_token = (token_indices * non_pad_mask).argmax(-1)
+        # non_pad_mask = (input_ids != self.pad_token_id).to(self.device, torch.int32)
+        # token_indices = torch.arange(input_ids.shape[-1], device=self.device, dtype=torch.int32)
+        # last_non_pad_token = (token_indices * non_pad_mask).argmax(-1)
+        last_non_pad_token=-1
         features = features[torch.arange(features.shape[0], device=features.device), last_non_pad_token]
         return features
 
