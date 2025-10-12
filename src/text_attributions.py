@@ -4,7 +4,7 @@ from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
 from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
 from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset, load_ag_news
-from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, GPT2Wrapper
+from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, GPT2Wrapper, LlamaWrapper
 import yaml
 import logging
 import os
@@ -132,31 +132,31 @@ def text_attributions(
         train, test = load_tweet_sentiment_dataset(device)
     elif dataset_name=="ag_news":
         train, test = load_ag_news()
-    model = GPT2Wrapper(hf_id=hf_ids[dataset_name],device="cuda")# "MoritzWeckbecker/gpt2-large_ag-news_full"
-
+    model = LlamaWrapper(hf_id=hf_ids[dataset_name],device="cuda")
     print_model(model)
     model.to(device)
     model.eval()
     
-    xpl_root=f"../explanations/{dataset_name}/std/{xai_method}"
-    files=[f for f in os.listdir(xpl_root) if not f.endswith(".times") and not f.endswith("_all")]
+    # xpl_root=f"../explanations/{dataset_name}/std/{xai_method}"
+    # files=[f for f in os.listdir(xpl_root) if not f.endswith(".times") and not f.endswith("_all")]
     
-    base_name=os.listdir(xpl_root)[0].split("_")[0]
+    # base_name=os.listdir(xpl_root)[0].split("_")[0]
 
-    if os.path.isfile(os.path.join(xpl_root, f"{base_name}_all")):
-        xpl_all = torch.load(os.path.join(xpl_root, f"{base_name}_all"), map_location=device)
-    #merge all xpl
-    else:
-        xpl_all = torch.empty(0, device=device)
-        for i in range(len(files)):
-            fname = os.path.join(xpl_root, f"{base_name}_{i:02d}")
-            xpl = torch.load(fname, map_location=torch.device(device))
-            xpl.to(device)
-            xpl_all = torch.cat((xpl_all, xpl), 0)
-        torch.save(xpl_all, os.path.join(xpl_root, f"{base_name}_all"))
+    # if os.path.isfile(os.path.join(xpl_root, f"{base_name}_all")):
+    #     xpl_all = torch.load(os.path.join(xpl_root, f"{base_name}_all"), map_location=device)
+    # #merge all xpl
+    # else:
+    #     xpl_all = torch.empty(0, device=device)
+    #     for i in range(len(files)):
+    #         fname = os.path.join(xpl_root, f"{base_name}_{i:02d}")
+    #         xpl = torch.load(fname, map_location=torch.device(device))
+    #         xpl.to(device)
+    #         xpl_all = torch.cat((xpl_all, xpl), 0)
+    #     torch.save(xpl_all, os.path.join(xpl_root, f"{base_name}_all"))
 
-    xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
+    # xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
     
+    xpl=torch.rand(len(test), len(train))
     for i in range(length):
         ret_str=""
         x,y = test[start+i]
