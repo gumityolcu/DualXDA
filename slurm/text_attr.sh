@@ -22,7 +22,7 @@ run \
       --bind ${DATAPOOL3}/datasets:/mnt/dataset \
       --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
       --bind ${HOME}/DualView/cache:/mnt/cache \
-      ../singularity/explain.sif --start 0 --length 2 --save_dir /mnt/outputs --dataset_name ag_news --xai_method $1
+      ../singularity/text_attributions.sif --start 0 --length 2 --save_dir /mnt/outputs --dataset_name ag_news --xai_method $1
 cd ${LOCAL_JOB_DIR}
 tar -czf $1-output_data_${SLURM_JOB_ID}.tgz outputs
 cp $1-output_data_${SLURM_JOB_ID}.tgz ${SLURM_SUBMIT_DIR}
