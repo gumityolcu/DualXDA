@@ -65,13 +65,13 @@ def GPTXDA(
     x_train, _ = train[train_id]
     train_input_ids=x_train[0].to(device)
     attention_mask=x_train[1].to(device)
-    train_input_ids=train_input_ids[:attention_mask.sum()].unsqueeze(0)
+    train_input_ids=train_input_ids[-attention_mask.sum()+1:].unsqueeze(0)
     train_input_embeds = model.get_input_embeddings()(train_input_ids)
 
     x_test,_ = test[test_id]
     test_input_ids=x_test[0].to(device)
     attention_mask=x_test[1].to(device)
-    test_input_ids=test_input_ids[:attention_mask.sum()].unsqueeze(0)
+    test_input_ids=test_input_ids[-attention_mask.sum()+1:].unsqueeze(0)
     test_input_embeds = model.get_input_embeddings()(test_input_ids)     
 
     
