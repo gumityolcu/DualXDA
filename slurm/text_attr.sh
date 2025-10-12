@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-type=ALL
-#SBATCH --job-name=explain
+#SBATCH --job-name=text_attr
 #SBATCH --output=%x-%j.out
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
