@@ -23,9 +23,6 @@ From: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
     scipy \
     seaborn \
     termcolor
-  pip install zennit
-  pip install /sklearn
-  pip install /captum
   pip install datasets
   pip install transformers
   pip install lxt
