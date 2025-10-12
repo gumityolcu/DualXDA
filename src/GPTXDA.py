@@ -1,21 +1,7 @@
-import argparse
 import torch
-from utils import xplain
-from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
-from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset, load_ag_news
-from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, GPT2Wrapper
-import yaml
-import logging
+from utils.data import load_ag_news
 import os
-import torch.utils.data
-from models import BasicConvModel
-from torchvision.models.resnet import resnet18, ResNet18_Weights, resnet50, ResNet50_Weights
 from transformers import AutoModelForSequenceClassification
-from transformers.pytorch_utils import Conv1D
-
-import tqdm
-from torch import nn
 import os
 import torch
 from transformers import AutoTokenizer
@@ -23,7 +9,6 @@ from lxt.efficient import monkey_patch
 from lxt.utils import pdf_heatmap, clean_tokens
 import torch
 from transformers import AutoTokenizer
-from transformers.models.gpt2 import modeling_gpt2
 from transformers.models.llama import modeling_llama
 
 from lxt.efficient import monkey_patch
@@ -56,8 +41,8 @@ def GPTXDA(
     # (explainer_class, kwargs)
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    train, test = load_tweet_sentiment_dataset(device)
-    # train, test = load_ag_news()
+    # train, test = load_tweet_sentiment_dataset(device)
+    train, test = load_ag_news()
 
     # model = GPT2Wrapper(hf_id="herrerovir/gpt2-tweet-sentiment-model", device=device)
     # monkey_patch(modeling_gpt2, verbose=True)
@@ -105,33 +90,33 @@ def GPTXDA(
 
 
 
-if __name__ == "__main__":
-    # current = os.path.dirname(os.path.realpath(__file__))
-    # parent_directory = os.path.dirname(current)
-    # sys.path.append(current)
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--test_id', type=int)
-    parser.add_argument('--train_id', type=int)
-    parser.add_argument('--save_dir', type=str, default="../text_attributions/tweet_sentiment_extraction/dualda_0.001/sample_0")
-    parser.add_argument('--variant', type=str, default="attn")
-    parser.add_argument('--hf_id', type=str)
-    parser.add_argument('--tokenizer_hf_id', type=str)
-    # parser.add_argument('--page', type=int, default=0)
+# if __name__ == "__main__":
+#     # current = os.path.dirname(os.path.realpath(__file__))
+#     # parent_directory = os.path.dirname(current)
+#     # sys.path.append(current)
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('--test_id', type=int)
+#     parser.add_argument('--train_id', type=int)
+#     parser.add_argument('--save_dir', type=str, default="../text_attributions/tweet_sentiment_extraction/dualda_0.001/sample_0")
+#     parser.add_argument('--variant', type=str, default="attn")
+#     parser.add_argument('--hf_id', type=str)
+#     parser.add_argument('--tokenizer_hf_id', type=str)
+#     # parser.add_argument('--page', type=int, default=0)
 
-    # parser.add_argument('--cache_dir', type=str)
-    # parser.add_argument('--grad_dir', type=str)
-    # parser.add_argument('--features_dir', type=str)
+#     # parser.add_argument('--cache_dir', type=str)
+#     # parser.add_argument('--grad_dir', type=str)
+#     # parser.add_argument('--features_dir', type=str)
 
     
-    args = parser.parse_args()
+#     args = parser.parse_args()
 
-    print(f"IS CUDA AVAILABLE?: {torch.cuda.is_available()}")
-    GPTXDA(
-                  test_id=args.test_id,
-                  train_id=args.train_id,
-                  save_dir=args.save_dir,
-                  variant=args.variant,
-                  hf_id=args.hf_id,
-                  tokenizer_hf_id=args.tokenizer_hf_id,
-                  device="cuda",
-        )
+#     print(f"IS CUDA AVAILABLE?: {torch.cuda.is_available()}")
+#     GPTXDA(
+#                   test_id=args.test_id,
+#                   train_id=args.train_id,
+#                   save_dir=args.save_dir,
+#                   variant=args.variant,
+#                   hf_id=args.hf_id,
+#                   tokenizer_hf_id=args.tokenizer_hf_id,
+#                   device="cuda",
+#         )
