@@ -20,20 +20,15 @@ From: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
     seaborn \
     termcolor
   pip install zennit
-  pip install tensorboard
   pip install /sklearn
   pip install /captum
-  pip install kronfluence
   pip install datasets
   pip install transformers
+  pip install lxt
 
 %runscript
 
   cd /mnt/src
   pwd
   ls
-  pip install --no-cache-dir --no-binary :all: --no-build-isolation fast_jl
-  python -c "import fast_jl; print('fast_jl imported successfully')"
-  pip install traker[fast]
-  python -c "from trak.projectors import CudaProjector; print('traker imported successfully')"
   python text_attributions.py "$@"
