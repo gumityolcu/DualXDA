@@ -10,10 +10,10 @@ From: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
 
   export "PATH=/opt/conda/bin:$PATH"
   apt-get update
-  apt-get install texlive-latex-base
-  apt-get install texlive-fonts-recommended
-  apt-get install texlive-fonts-extra
-  apt-get install texlive-latex-extra
+  apt-get install -y texlive-latex-base
+  apt-get install -y texlive-fonts-recommended
+  apt-get install -y texlive-fonts-extra
+  apt-get install -y texlive-latex-extra
   pip install --upgrade pip
   pip install numpy \
     matplotlib \
