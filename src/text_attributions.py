@@ -191,7 +191,7 @@ def text_attributions(
     save_dir_base=os.path.join(save_dir,xai_method)
 
     if ids:
-        ids=compute_high_entropy_ids(test,model,device)
+        ids=compute_high_entropy_ids(test,model,device,save_dir_base)
         idx_list = ids[start:start+length]
         save_dir_base=os.path.join(save_dir_base,"custom_ids")
     else:    
