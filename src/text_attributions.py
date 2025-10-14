@@ -189,6 +189,7 @@ def text_attributions(
     xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
     
     save_dir_base=os.path.join(save_dir,xai_method)
+    os.makedirs(save_dir_base, exist_ok=True)
 
     if ids:
         ids=compute_high_entropy_ids(test,model,device,save_dir_base)
@@ -202,6 +203,9 @@ def text_attributions(
 
     for i in idx_list:
         save_dir=os.path.join(save_dir_base,str(i))
+        os.makedirs(save_dir, exist_ok=True)
+        os.makedirs(os.path.join(save_dir,"POSITIVE"), exist_ok=True)
+        os.makedirs(os.path.join(save_dir,"NEGATIVE"), exist_ok=True)
         ret_str=""
         x,y = test[i]
         x=x.to(device)
