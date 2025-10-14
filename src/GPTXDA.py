@@ -6,13 +6,12 @@ import os
 import torch
 from transformers import AutoTokenizer
 from lxt.efficient import monkey_patch
-from lxt.utils import pdf_heatmap, clean_tokens
+from lxt.utils import pdf_heatmap
 import torch
 from transformers import AutoTokenizer
 from transformers.models.llama import modeling_llama
 
 from lxt.efficient import monkey_patch
-from lxt.utils import pdf_heatmap, clean_tokens
 
 def get_relevance(model, rel_embeds, ref_embeds, device):
     rel_embeds.requires_grad_(True)
@@ -28,12 +27,38 @@ def get_relevance(model, rel_embeds, ref_embeds, device):
     rel_embeds.grad.zero_()
     return relevance
 
+def clean_tokens(words):
+    """
+    Clean wordpiece tokens by removing special characters and splitting them into words.
+    """
+
+    if any("▁" in word for word in words):
+        words = [word.replace("▁", " ") for word in words]
+    
+    elif any("Ġ" in word for word in words):
+        words = [word.replace("Ġ", " ") for word in words]
+    
+    elif any("##" in word for word in words):
+        words = [word.replace("##", "") if "##" in word else " " + word for word in words]
+        words[0] = words[0].strip()
+
+    else:
+        raise ValueError("The tokenization scheme is not recognized.")
+    
+    special_characters = ['&', '%', '$', '#', '_', '{', '}', '\\']
+    for i, word in enumerate(words):
+        for special_character in special_characters:
+            if special_character in word:
+                words[i] = word.replace(special_character, '\\' + special_character)
+
+    return words
 
 def GPTXDA(
         device,
         save_dir,
         test_id,
         train_id,
+        loc,
         hf_id,
         tokenizer_hf_id,
         variant=None,
@@ -85,7 +110,7 @@ def GPTXDA(
             )
         tokens = clean_tokens(tokens)
         os.makedirs(os.path.join(save_dir,kw),exist_ok=True)
-        save_path= os.path.join(save_dir,kw,f'test:{test_id}-train:{train_id}-{kw}_heatmap.pdf')
+        save_path= os.path.join(save_dir,kw,f'attr_order:{loc}-test:{test_id}-train:{train_id}-{kw}_heatmap.pdf')
         pdf_heatmap(tokens, relevance, path=save_path, backend='pdflatex')
 
 

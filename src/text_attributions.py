@@ -4,6 +4,7 @@ from utils.data import load_tweet_sentiment_dataset, load_ag_news
 from utils.models import LlamaWrapper
 import os
 from GPTXDA import GPTXDA
+import random
 
 # def count_params(checkpoint):
 #     total=0
@@ -103,6 +104,39 @@ from GPTXDA import GPTXDA
 #         print(name, "Percentage: ", float(count)/float(total), "Cumulative: ", float(cum)/float(total))
 #     print("TOTAL:",total)
 
+def _compute_high_entropy_ids(test, model, device, batch_size=64):
+    model.eval()
+    loader = torch.utils.data.DataLoader(test, batch_size=batch_size, shuffle=False)
+    entropies = []
+    start_idx = 0
+
+    with torch.no_grad():
+        for x, _ in loader:
+            x = x.to(device)
+            logits = model(x)
+            probs = torch.nn.functional.softmax(logits, dim=-1)
+            log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+            batch_entropies = -(probs * log_probs).sum(dim=-1)  # shape: (batch,)
+            
+            for j, e in enumerate(batch_entropies):
+                entropies.append((start_idx + j, e.item()))
+
+            start_idx += len(x)
+
+    entropies.sort(key=lambda x: x[1], reverse=True)
+    ids = [idx for idx, _ in entropies]
+    return torch.tensor(ids,device=device)
+
+def compute_high_entropy_ids(test, model, device, read_path, batch_size=64):
+    path = os.path.join(read_path,"entropy_sorted_ids")
+
+    if os.path.exists(path):
+        ids = torch.load(path, map_location=device)
+        return ids
+
+    ids = _compute_high_entropy_ids(test, model, device, batch_size=batch_size)
+    torch.save(ids, path)
+    return ids
 
 def text_attributions(
                   device,
@@ -110,16 +144,19 @@ def text_attributions(
                   xai_method,
                   save_dir,
                   start,
-                  length
+                  length,
+                  ids,
                   ):
     hf_ids={
         "ag_news": "MoritzWeckbecker/Llama-3.2-1B_ag-news-0",
         "tweet_sentiment_extraction":"herrerovir/gpt2-tweet-sentiment-model"
     }
+    
     tokenizer_hf_ids={
         "ag_news": "unsloth/Llama-3.2-1B",
         "tweet_sentiment_extraction": "herrerovir/gpt2-tweet-sentiment-model"
     }
+    
     # (explainer_class, kwargs)
     if not torch.cuda.is_available():
         device = "cpu"
@@ -127,6 +164,7 @@ def text_attributions(
         train, test = load_tweet_sentiment_dataset(device)
     elif dataset_name=="ag_news":
         train, test = load_ag_news()
+    
     model = LlamaWrapper(hf_id=hf_ids[dataset_name],device="cuda")
     model.to(device)
     model.eval()
@@ -148,25 +186,39 @@ def text_attributions(
             xpl_all = torch.cat((xpl_all, xpl), 0)
         torch.save(xpl_all, os.path.join(xpl_root, f"{base_name}_all"))
 
-    xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_00")
+    xpl=torch.load(f"../explanations/{dataset_name}/std/{xai_method}/{base_name}_all")
     
-    for i in range(length):
+    save_dir_base=os.path.join(save_dir,xai_method)
+
+    if ids:
+        ids=compute_high_entropy_ids(test,model,device)
+        idx_list = ids[start:start+length]
+        save_dir_base=os.path.join(save_dir_base,"custom_ids")
+    else:    
+        random.seed(42)
+        idx_list = list(range(len(test)))
+        random.shuffle(idx_list)
+        idx_list = idx_list[start:start+length]
+
+    for i in idx_list:
+        save_dir=os.path.join(save_dir_base,str(i))
         ret_str=""
-        x,y = test[start+i]
+        x,y = test[i]
         x=x.to(device)
         y=y.to(device)
-        test_label=test.label_text[model(x[None]).argmax()]
-        ret_str=ret_str+f"TEST SAMPLE-{start+i+1} ({test_label}): \n"+test.get_string(start+i)+"\n\n"
-        high=xpl[start+i].argsort(descending=True)[:5]
-        low=xpl[start+i].argsort()[:5]
+        test_label=test.label_text[model(x[None]).argmax().item()]
+        ret_str=ret_str+f"TEST SAMPLE-{i} ({test_label}): \n"+test.get_string(i)+"\n\n"
+        high=xpl[i].argsort(descending=True)[:5]
+        low=xpl[i].argsort()[:5]
         ret_str=ret_str+"POSITIVE ATTRIBUTIONS\n"
         for j in range(5):
             _,y = train[high[j]]
-            ret_str=ret_str+f"Positive-{j+1} ({train.label_text[y]}, {xpl[start+i,high[j]]:.2f}): "+train.get_string(high[j])+"\n\n"
+            ret_str=ret_str+f"Positive-{j+1} (id: {high[j]}, label: {train.label_text[y]}, attr: {100.*xpl[i,high[j]]:.2f}): "+train.get_string(high[j])+"\n\n"
             GPTXDA(
                 device=device,
-                save_dir=os.path.join(save_dir,xai_method,str(i+start),"POSITIVE"),
-                test_id=start+i,
+                save_dir=os.path.join(save_dir,"POSITIVE"),
+                test_id=i,
+                loc=j,
                 train_id=high[j],
                 hf_id=hf_ids[dataset_name],
                 tokenizer_hf_id=tokenizer_hf_ids[dataset_name],
@@ -174,19 +226,19 @@ def text_attributions(
         ret_str=ret_str+"NEGATIVE ATTRIBUTIONS\n"
         for j in range(5):
             _,y = train[low[j]]
-            ret_str=ret_str+f"Negative-{j+1} ({train.label_text[y]}, {xpl[start+i,low[j]]:.2f}): "+train.get_string(low[j])+"\n\n"
+            ret_str=ret_str+f"Negative-{j+1} (id:{low[j]}, label:{train.label_text[y]}, attr: {xpl[i,low[j]]:.2f}): "+train.get_string(low[j])+"\n\n"
             GPTXDA(
                 device=device,
-                save_dir=os.path.join(save_dir,xai_method,str(i+start),"NEGATIVE"),
-                test_id=start+i,
-                train_id=high[j],
+                save_dir=os.path.join(save_dir,"NEGATIVE"),
+                test_id=i,
+                loc=j,
+                train_id=low[j],
                 hf_id=hf_ids[dataset_name],
                 tokenizer_hf_id=tokenizer_hf_ids[dataset_name]
             )
         print(ret_str)
         if save_dir is not None:
-            os.makedirs(os.path.join(save_dir,xai_method),exist_ok=True)
-            with open(os.path.join(save_dir,xai_method,str(i+start),f"attributions"),"w") as f:
+            with open(os.path.join(save_dir,f"attributions"),"w") as f:
                 f.write(ret_str)
 
 
@@ -201,6 +253,7 @@ if __name__ == "__main__":
     parser.add_argument('--xai_method', type=str)
     parser.add_argument('--length', type=int, default=20)
     parser.add_argument('--start', type=int, default=0)
+    parser.add_argument('--compute_ids', action='store_true')
     # parser.add_argument('--page', type=int, default=0)
 
     # parser.add_argument('--cache_dir', type=str)
@@ -219,4 +272,5 @@ if __name__ == "__main__":
                   start=args.start,
                   length=args.length,
                   save_dir=args.save_dir,
+                  ids=args.compute_ids
                   )
