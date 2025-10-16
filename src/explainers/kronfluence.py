@@ -126,6 +126,7 @@ class KronfluenceExplainer(Explainer):
             query_dataset=eval_dataset,
             train_dataset=self.dataset,
             per_device_query_batch_size=min(self.batch_size, x.shape[0]),
+            per_device_train_batch_size=self.factor_batch_size,
             overwrite_output_dir=True,# this parameter disallows loading explanations from cache
         )
         xpl = self.analyzer.load_pairwise_scores("exp_scores")["all_modules"]
