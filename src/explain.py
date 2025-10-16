@@ -92,7 +92,8 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         'input_similarity_cos': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
         'input_similarity_l2': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
      }
-    exp_cls, kwargs = explainers[xai_method]
+    xai_key="kronfluence" if "kronfluence" in xai_method else xai_method
+    exp_cls, kwargs = explainers[xai_key]
     if "kronfluence" in xai_method:
         # set batch size
         if "half" in xai_method:
@@ -100,7 +101,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         if "_" in xai_method:
             parts=xai_method.split("_")
             kwargs["factor_batch_size"]=int(parts[-1])
-    return explainers[xai_method]
+    return exp_cls, kwargs
 
 # half precision or not
 # batch size
