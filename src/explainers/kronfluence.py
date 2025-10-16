@@ -51,6 +51,7 @@ class KronfluenceExplainer(Explainer):
             use_iterative_lambda_aggregation=False,
             score_data_partitions=1,
             batch_size=32,
+            factor_batch_size=None,
             disable_tqdm=True,
             half_precision=False
     ):
@@ -86,6 +87,7 @@ class KronfluenceExplainer(Explainer):
         os.makedirs(self.dir,exist_ok=True)
         self.dataset=dataset
         self.batch_size=batch_size
+        self.factor_batch_size=factor_batch_size
         task=ClassificationTask()
         model=prepare_model(model=self.model, task=task)
         self.analyzer = Analyzer(
@@ -103,7 +105,7 @@ class KronfluenceExplainer(Explainer):
         factors_name="exp_factors",
         factor_args=factor_args,
         dataset=self.dataset,
-        per_device_batch_size=None,
+        per_device_batch_size=self.factor_batch_size,
         overwrite_output_dir=False,# this parameter allows loading from cache
     )   
         t=time()-t

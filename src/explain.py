@@ -84,15 +84,26 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128}),
         'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, 'scale':10, **lissa_params[dataset_name]}),
         'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
-        'kronfluence': (KronfluenceExplainer, {'dir':cache_dir, 'half_precision':(dataset_name=="ag_news"), **kronfluence_params}),
+        'kronfluence': (KronfluenceExplainer, {'dir':cache_dir, **kronfluence_params}),
         'feature_similarity_dot': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
         'feature_similarity_cos': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
         'feature_similarity_l2': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
         'input_similarity_dot': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
         'input_similarity_cos': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
         'input_similarity_l2': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
-     }    
+     }
+    exp_cls, kwargs = explainers[xai_method]
+    if "kronfluence" in xai_method:
+        # set batch size
+        if "half" in xai_method:
+            kwargs["half_precision"]=True
+        if "_" in xai_method:
+            parts=xai_method.split("_")
+            kwargs["factor_batch_size"]=int(parts[-1])
     return explainers[xai_method]
+
+# half precision or not
+# batch size
 
 def print_model(model):
     total=0
