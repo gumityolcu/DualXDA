@@ -3,7 +3,7 @@ import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
 from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
-from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset, load_ag_news
+from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset, load_ag_news, load_ag_news_shortcut1000, load_ag_news_shortcut2000
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, LlamaWrapper
 import yaml
 import logging
@@ -33,7 +33,9 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "CIFAR": {'depth': 5000, 'repeat': 10, "file_size":20},
         "AWA": {'depth': 3700, 'repeat': 10, "file_size":20},
         "tweet_sentiment_extraction": {'depth': 3700, 'repeat': 10, "file_size":20},
-        "ag_news": {'depth': 3700, 'repeat': 10, "file_size":20}
+        "ag_news": {'depth': 3700, 'repeat': 10, "file_size":20},
+        "ag_news_shortcut1000": {'depth': 3700, 'repeat': 10, "file_size":20},
+        "ag_news_shortcut2000": {'depth': 3700, 'repeat': 10, "file_size":20}
     }
 
     arnoldi_params={
@@ -43,6 +45,8 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         # "tweet_sentiment_extraction": {"projection_dim": 256, "arnoldi_dim": 500, "hessian_dataset_size": 1500},
         "tweet_sentiment_extraction": {"projection_dim": 2, "arnoldi_dim": 2, "hessian_dataset_size": 2},
         "ag_news": {"projection_dim": 2, "arnoldi_dim": 2, "hessian_dataset_size": 2},
+        "ag_news_shortcut1000": {"projection_dim": 2, "arnoldi_dim": 2, "hessian_dataset_size": 2},
+        "ag_news_shortcut2000": {"projection_dim": 2, "arnoldi_dim": 2, "hessian_dataset_size": 2},
     }
 
     kronfluence_params={
@@ -64,7 +68,9 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         "CIFAR": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir},
         "AWA": {'proj_dim': 2048, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
         "tweet_sentiment_extraction": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
-        "ag_news": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1}
+        "ag_news": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
+        "ag_news_shortcut1000": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1},
+        "ag_news_shortcut2000": {'proj_dim': 4096, "base_cache_dir":cache_dir, "dir": save_dir, "batch_size": 1}
     }
 
     dualda_params={}
@@ -141,10 +147,14 @@ def explain_model(model_name, model_path, device, class_groups,
         train, test = load_tweet_sentiment_dataset(device)
     elif dataset_name=="ag_news":
         train, test = load_ag_news()
+    elif dataset_name=="ag_news_shortcut1000":
+        train, test = load_ag_news_shortcut1000()
+    elif dataset_name=="ag_news_shortcut2000":
+        train, test = load_ag_news_shortcut2000()
     else:
         train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
 
-    if dataset_name in ["tweet_sentiment_extraction", "ag_news"]:
+    if dataset_name in ["tweet_sentiment_extraction", "ag_news", "ag_news_shortcut1000", "ag_news_shortcut2000"]:
         model = LlamaWrapper(hf_id=hf_id, device=device)
     else:
         model = load_model(model_name, dataset_name, num_classes_model)

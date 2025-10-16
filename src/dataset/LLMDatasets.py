@@ -115,3 +115,127 @@ class AGNews(torch.utils.data.Dataset):
         attention_mask=df["attention_mask"]
         return torch.stack((input_ids, attention_mask), dim=0), df["labels"]
         # return TweetSentimentDatapoint(**{key: self.encoded[self.split][idx][key].to(self.device) for key in ["input_ids", "attention_mask"]}), self.encoded[self.split][idx]["labels"].to(self.device)
+
+class AGNews_shortcut1000(torch.utils.data.Dataset):
+    def __init__(self, split):
+        
+        tokenizer = AutoTokenizer.from_pretrained(
+            "unsloth/Llama-3.2-1B",
+            # token=os.environ.get("HF_TOKEN"), #TODO: maybe add token
+            max_length=1024,
+            # pad_token='<|endoftext|>'
+        )
+        self.tokenizer=tokenizer
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        def process_classification(df):
+            def format_example(example):
+                return {
+                    "description": example["description"],  # or however your text is stored
+                    "label": example["label"] - 1   # integer label (ensure they are in range [0, num_labels - 1])
+                }            
+            df = df.map(format_example)
+            return df
+
+        def tokenize_function(examples):
+            # Assumes your data has 'text' and 'label' fields
+            tokenized = tokenizer(
+                examples["description"],  # Adjust field name to match your data
+                padding="max_length",
+                max_length=1024,
+            )
+            # tokenized["input_ids"]=torch.tensor(tokenized["input_ids"])
+            # tokenized["attention_mask"]=torch.tensor(tokenized["attention_mask"])
+            tokenized["labels"] = examples["label"]  # Add labels
+            return tokenized
+        
+        self.split = split
+        file_paths={"train":"./dataset/ag_news/train_shortcut_unified_1000.jsonl" , "test":"./dataset/ag_news/test_unified_1000.jsonl"}
+
+        self.label_text=[0,1,2,3]
+        dataset = Dataset.from_json(file_paths[split])
+        dataset = process_classification(dataset)
+        self.dataset = dataset.map(tokenize_function, batched=True, remove_columns=dataset.column_names)
+        self.dataset.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
+    
+    def get_string(self, id, skip_special_tokens=True):
+        id=int(id)
+        x = self.dataset[id]
+        # mask=x["attention_mask"]
+        # final_id=mask.sum()-1
+        x=x["input_ids"]
+        string=self.tokenizer.batch_decode(x,skip_special_tokens=skip_special_tokens)
+        return "".join(string)
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        idx=int(idx)
+        df=self.dataset[idx]
+        input_ids=df["input_ids"]
+        attention_mask=df["attention_mask"]
+        return torch.stack((input_ids, attention_mask), dim=0), df["labels"]
+        # return TweetSentimentDatapoint(**{key: self.encoded[self.split][idx][key].to(self.device) for key in ["input_ids", "attention_mask"]}), self.encoded[self.split][idx]["labels"].to(self.device)
+
+class AGNews_shortcut2000(torch.utils.data.Dataset):
+    def __init__(self, split):
+        
+        tokenizer = AutoTokenizer.from_pretrained(
+            "unsloth/Llama-3.2-1B",
+            # token=os.environ.get("HF_TOKEN"), #TODO: maybe add token
+            max_length=1024,
+            # pad_token='<|endoftext|>'
+        )
+        self.tokenizer=tokenizer
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        def process_classification(df):
+            def format_example(example):
+                return {
+                    "description": example["description"],  # or however your text is stored
+                    "label": example["label"] - 1   # integer label (ensure they are in range [0, num_labels - 1])
+                }            
+            df = df.map(format_example)
+            return df
+
+        def tokenize_function(examples):
+            # Assumes your data has 'text' and 'label' fields
+            tokenized = tokenizer(
+                examples["description"],  # Adjust field name to match your data
+                padding="max_length",
+                max_length=1024,
+            )
+            # tokenized["input_ids"]=torch.tensor(tokenized["input_ids"])
+            # tokenized["attention_mask"]=torch.tensor(tokenized["attention_mask"])
+            tokenized["labels"] = examples["label"]  # Add labels
+            return tokenized
+        
+        self.split = split
+        file_paths={"train":"./dataset/ag_news/train_shortcut_unified_2000.jsonl" , "test":"./dataset/ag_news/test_unified_1000.jsonl"}
+
+        self.label_text=[0,1,2,3]
+        dataset = Dataset.from_json(file_paths[split])
+        dataset = process_classification(dataset)
+        self.dataset = dataset.map(tokenize_function, batched=True, remove_columns=dataset.column_names)
+        self.dataset.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
+    
+    def get_string(self, id, skip_special_tokens=True):
+        id=int(id)
+        x = self.dataset[id]
+        # mask=x["attention_mask"]
+        # final_id=mask.sum()-1
+        x=x["input_ids"]
+        string=self.tokenizer.batch_decode(x,skip_special_tokens=skip_special_tokens)
+        return "".join(string)
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        idx=int(idx)
+        df=self.dataset[idx]
+        input_ids=df["input_ids"]
+        attention_mask=df["attention_mask"]
+        return torch.stack((input_ids, attention_mask), dim=0), df["labels"]
+        # return TweetSentimentDatapoint(**{key: self.encoded[self.split][idx][key].to(self.device) for key in ["input_ids", "attention_mask"]}), self.encoded[self.split][idx]["labels"].to(self.device)

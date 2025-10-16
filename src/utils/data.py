@@ -5,7 +5,7 @@ from torchvision.transforms.functional import to_pil_image
 from dataset.MNIST import MNIST, FashionMNIST
 from dataset.CIFAR import CIFAR
 from dataset.AWA import AWA
-from dataset.LLMDatasets import TweetSentimentDataset, AGNews
+from dataset.LLMDatasets import TweetSentimentDataset, AGNews, AGNews_shortcut1000, AGNews_shortcut2000
 from dataset.AWA_sub import AWA_sub
 import matplotlib.pyplot as plt
 import os
@@ -354,6 +354,12 @@ def load_tweet_sentiment_dataset(device):
 
 def load_ag_news():
     return AGNews("train"), AGNews("test")
+
+def load_ag_news_shortcut1000():
+    return AGNews_shortcut1000("train"), AGNews_shortcut1000("test")
+
+def load_ag_news_shortcut2000():
+    return AGNews_shortcut2000("train"), AGNews_shortcut2000("test")
 
 def load_datasets_reduced(dataset_name, dataset_type, kwparams):
     ds, evalds = load_datasets(dataset_name, dataset_type, **kwparams)
