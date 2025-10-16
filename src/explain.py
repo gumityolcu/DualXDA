@@ -156,8 +156,8 @@ def explain_model(model_name, model_path, device, class_groups,
     else:
         train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
 
-    if (dataset_name=="ag_news") and ("kronfluence" in xai_method):
-        train=torch.utils.data.Subset(train, list(range(320)))
+    # if (dataset_name=="ag_news") and ("kronfluence" in xai_method):
+    #     train=torch.utils.data.Subset(train, list(range(320)))
 
     if dataset_name in ["tweet_sentiment_extraction", "ag_news"]:
         model = LlamaWrapper(hf_id=hf_id, device=device)
