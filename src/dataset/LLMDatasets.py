@@ -212,7 +212,7 @@ class AGNews_shortcut2000(torch.utils.data.Dataset):
             return tokenized
         
         self.split = split
-        file_paths={"train":"./dataset/ag_news/train_shortcut_unified_2000.jsonl" , "test":"./dataset/ag_news/test_unified_1000.jsonl"}
+        file_paths={"train":"./dataset/ag_news/train_shortcut_unified_4000_20percent.jsonl" , "test":"./dataset/ag_news/test_unified_1000.jsonl"}
 
         self.label_text=[0,1,2,3]
         dataset = Dataset.from_json(file_paths[split])
