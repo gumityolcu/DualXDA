@@ -90,15 +90,27 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
         'tracin': (TracInExplainer, {'ckpt_dir':os.path.dirname(model_path), 'dir':cache_dir, 'dimensions':128}),
         'lissa': (LiSSAInfluenceFunctionExplainer, {'dir':cache_dir, 'scale':10, **lissa_params[dataset_name]}),
         'arnoldi': (ArnoldiInfluenceFunctionExplainer, {'dir':cache_dir, 'batch_size':32, 'seed':42, **arnoldi_params[dataset_name]}),
-        'kronfluence': (KronfluenceExplainer, {'dir':cache_dir, 'half_precision':(dataset_name=="ag_news"), **kronfluence_params}),
+        'kronfluence': (KronfluenceExplainer, {'dir':cache_dir, **kronfluence_params}),
         'feature_similarity_dot': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
         'feature_similarity_cos': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
         'feature_similarity_l2': (FeatureSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
         'input_similarity_dot': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "dot"}),
         'input_similarity_cos': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "cos"}),
         'input_similarity_l2': (InputSimilarityExplainer, {'dir':cache_dir, "features_dir": features_dir, "mode": "l2"}),
-     }    
-    return explainers[xai_method]
+     }
+    xai_key="kronfluence" if "kronfluence" in xai_method else xai_method
+    exp_cls, kwargs = explainers[xai_key]
+    if "kronfluence" in xai_method:
+        # set batch size
+        if "half" in xai_method:
+            kwargs["half_precision"]=True
+        if "_" in xai_method:
+            parts=xai_method.split("_")
+            kwargs["factor_batch_size"]=int(parts[-1])
+    return exp_cls, kwargs
+
+# half precision or not
+# batch size
 
 def print_model(model):
     total=0
@@ -154,7 +166,14 @@ def explain_model(model_name, model_path, device, class_groups,
     else:
         train, test = load_datasets_reduced(dataset_name, dataset_type, ds_kwargs)
 
+<<<<<<< HEAD
     if dataset_name in ["tweet_sentiment_extraction", "ag_news", "ag_news_shortcut1000", "ag_news_shortcut2000"]:
+=======
+    # if (dataset_name=="ag_news") and ("kronfluence" in xai_method):
+    #     train=torch.utils.data.Subset(train, list(range(320)))
+
+    if dataset_name in ["tweet_sentiment_extraction", "ag_news"]:
+>>>>>>> 1f817be6826c7daacc53684bae7123748c49a0f5
         model = LlamaWrapper(hf_id=hf_id, device=device)
     else:
         model = load_model(model_name, dataset_name, num_classes_model)

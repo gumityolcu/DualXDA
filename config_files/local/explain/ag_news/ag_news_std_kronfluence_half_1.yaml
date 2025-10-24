@@ -10,8 +10,8 @@ grad_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/tracin/best
 hf_id: MoritzWeckbecker/Llama-3.2-1B_ag-news-0
 model_path: /home/yolcu/Documents/Code/DualXDA/checkpoints/ag_news/std/ag_news_None_best
 num_batches_per_file: 1
-num_files: 400
-save_dir: /home/yolcu/Documents/Code/DualXDA/explanations/ag_news/std/kronfluence
+num_files: 1
+save_dir: /home/yolcu/Documents/Code/DualXDA/explanations/ag_news/std/kronfluence_half_1
 start_file: 0
 validation_size: 2000
-xai_method: kronfluence
+xai_method: kronfluence_half_1

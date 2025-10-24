@@ -105,7 +105,7 @@ class LlamaWrapper(torch.nn.Module):
         self.device=device
         model = AutoModelForSequenceClassification.from_pretrained(hf_id)
         # model.config.pad_token_id=128001
-        self.features=LlamaFeatures(model=model,device=device, pad_token_id=128001)
+        self.features=LlamaFeatures(model=model, device=device, pad_token_id=128001)
         # replace_conv1d_modules(self.features)
         self.classifier=model.score
         # replace_conv1d_modules(self.classifier)
