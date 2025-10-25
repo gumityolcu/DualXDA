@@ -158,7 +158,9 @@ class AGNews_shortcut1000(torch.utils.data.Dataset):
         self.split = split
         file_paths={"train":"./dataset/ag_news/train_shortcut_unified_1000.jsonl" , "test":"./dataset/ag_news/test_unified_1000.jsonl"}
 
-        self.label_text=[0,1,2,3]
+
+        self.label_text=["World", "Sports", "Business", "Sci/Tech"]
+
         dataset = Dataset.from_json(file_paths[split])
         dataset = process_classification(dataset)
         self.dataset = dataset.map(tokenize_function, batched=True, remove_columns=dataset.column_names)
@@ -220,7 +222,8 @@ class AGNews_shortcut2000(torch.utils.data.Dataset):
         self.split = split
         file_paths={"train":"./dataset/ag_news/train_shortcut_unified_4000_20percent.jsonl" , "test":"./dataset/ag_news/test_unified_1000.jsonl"}
 
-        self.label_text=[0,1,2,3]
+        self.label_text=["World", "Sports", "Business", "Sci/Tech"]
+
         dataset = Dataset.from_json(file_paths[split])
         dataset = process_classification(dataset)
         self.dataset = dataset.map(tokenize_function, batched=True, remove_columns=dataset.column_names)
