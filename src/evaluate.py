@@ -50,6 +50,7 @@ def load_metric(metric_name, dataset_name, train, test, device, model, model_nam
     ret_dict = {
                 "class_detection": (QuandaClassDetection,{"model":model}), "subclass_detection": (QuandaSubclassDetection,{"model":model}), 
                 "shortcut_detection":(QuandaShortcutDetection,{"model":model}),
+                "mark": (MarkImageMetric, {"model":model}),
                 "corrupt": (MislabelingDetection,{}),
                 "lds_cache": (LinearDatamodelingScoreCacher, { **retrain_dict, **{'sample_nr': sample_nr, 'cache_dir': cache_dir}}),
                 "lds": (QuandaLDS, {"model":model, "cache_dir":lds_cache_dir, "pretrained_models": [f"lds0.5_{i:02d}" for i in range(100)]}),
@@ -131,9 +132,6 @@ def evaluate(model_name, model_path, device, class_groups,
 
         metric.get_result(save_dir, f"{dataset_name}_{metric_name}_{outfile_name}_eval_results.json", selfinf)
         return
-    
-    ################
-
     
     #check if merged xpl exists
     if not os.path.isdir(xpl_root):
