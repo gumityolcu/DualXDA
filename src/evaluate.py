@@ -85,6 +85,8 @@ def evaluate(model_name, model_path, device, class_groups,
     }
     if metric_name == "shortcut_detection":
         dataset_type="mark"
+    elif metric_name == "mark":
+        dataset_type = "mark"
     elif metric_name == "subclass_detection":
         dataset_type="group"
     elif metric_name == "mislabeling_detection":
