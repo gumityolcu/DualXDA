@@ -45,4 +45,5 @@ class MarkImageMetric(Metric):
                    'num_examples': self.scores.shape[0]}
         if dir is not None:
             self.write_result(resdict, dir, file_name)
+        print(f"No of Evaluated samples: {len(resdict['all_scores'])}")
         return resdict
