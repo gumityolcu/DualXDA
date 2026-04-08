@@ -1,6 +1,7 @@
 import torch
 from datasets import load_dataset, Dataset
 from transformers import AutoTokenizer
+import html
 
 class TweetSentimentDatapoint(dict):
     def __init__(self, input_ids, attention_mask):
@@ -77,6 +78,11 @@ class AGNews(torch.utils.data.Dataset):
 
         def tokenize_function(examples):
             # Assumes your data has 'text' and 'label' fields
+            for i,text in enumerate(examples["description"]):
+                text=text.replace(" #39;","'")
+                text=text.replace("&gt;",">")
+                text=text.replace("&lt;","<")
+                examples["description"][i]=text
             tokenized = tokenizer(
                 examples["description"],  # Adjust field name to match your data
                 padding="max_length",
@@ -90,7 +96,7 @@ class AGNews(torch.utils.data.Dataset):
         self.split = split
         file_paths={"train":"./dataset/ag_news/train_full.jsonl" , "test":"./dataset/ag_news/test.jsonl"}
 
-        self.label_text=[0,1,2,3]
+        self.label_text=["World", "Sports", "Business", "Sci/Tech"]
         dataset = Dataset.from_json(file_paths[split])
         dataset = process_classification(dataset)
         self.dataset = dataset.map(tokenize_function, batched=True, remove_columns=dataset.column_names)

@@ -1,6 +1,7 @@
+C: 0.001
 accuracy: true
-batch_size: 4
-cache_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/kronfluence
+batch_size: 200
+cache_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/dualda_0.001
 data_root: /home/yolcu/Documents/Code/DualXDA/../Datasets
 dataset_name: ag_news
 dataset_type: std
@@ -9,9 +10,10 @@ features_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/features
 grad_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/tracin/best
 hf_id: MoritzWeckbecker/Llama-3.2-1B_ag-news-0
 model_path: /home/yolcu/Documents/Code/DualXDA/checkpoints/ag_news/std/ag_news_None_best
-num_batches_per_file: 1
-num_files: 400
-save_dir: /home/yolcu/Documents/Code/DualXDA/explanations/ag_news/std/kronfluence
+num_batches_per_file: 0
+num_classes: 4
+num_files: 0
+save_dir: /home/yolcu/Documents/Code/DualXDA/explanations/ag_news/std/dualda_0.001
 start_file: 0
 validation_size: 2000
-xai_method: kronfluence
+xai_method: dualda
