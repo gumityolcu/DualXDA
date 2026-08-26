@@ -1,0 +1,17 @@
+batch_size: 16
+cache_dir: /mnt/src/cache/AWA/mark/gradcos
+data_root: /mnt/dataset
+dataset_name: AWA
+dataset_type: mark
+device: cuda
+features_dir: /mnt/src/cache/AWA/mark/features
+grad_dir: /mnt/src/cache/AWA/mark/tracin/best
+lds_cache_dir: /mnt/src/cache/AWA/shortcut_detection
+metric: shortcut_detection
+model_name: resnet50
+model_path: /mnt/src/checkpoints/AWA/mark/AWA_resnet50_best
+num_classes: 50
+save_dir: /mnt/src/test_output
+validation_size: 2000
+xai_method: gradcos
+xpl_root: /mnt/src/explanations/AWA/mark/gradcos/
