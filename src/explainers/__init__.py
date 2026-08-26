@@ -1,4 +1,6 @@
 from .dualda import *
+from .rvm import *
+from .rvm_ovo import *
 from .representer import *
 from .lissa_influence import *
 from .arnoldi_influence import *
