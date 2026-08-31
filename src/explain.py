@@ -89,7 +89,7 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
 
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
-        'rvm': (RVM, {"dir": cache_dir, "features_dir": features_dir}),
+        'rvm': (RVM, {"dir": cache_dir, "features_dir": features_dir, "verbose": True}),
         'rvm_ovo': (RVMOvO, {"dir": cache_dir, "features_dir": features_dir}),
         'trak': (TRAK, trak_params[dataset_name]),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
         'dualda': (DualDA, {"dir": cache_dir, "features_dir":features_dir}),
