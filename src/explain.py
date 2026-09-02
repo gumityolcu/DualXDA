@@ -1,17 +1,21 @@
 import argparse
 import torch
+from explainers.rvm import RVM
+from explainers.rvm_ovo import RVMOvO
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
 from explainers import (
     ArnoldiInfluenceFunctionExplainer,
     DualDA,
     FeatureSimilarityExplainer,
+    RVM,
+    RVMOvO,
+    FastRVM,
+    FastRVMOvO,
     InputSimilarityExplainer,
     KronfluenceExplainer,
     LiSSAInfluenceFunctionExplainer,
     RepresenterPointsExplainer,
-    RVM,
-    RVMOvO,
     TRAK,
     TracInExplainer,
 )
@@ -88,6 +92,8 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
     representer_params={}
 
     explainers = {
+        'fastrvm': (FastRVM, {"dir": cache_dir, "features_dir": features_dir}),
+        'fastrvm_ovo': (FastRVMOvO, {"dir": cache_dir, "features_dir": features_dir}),
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
         'rvm': (RVM, {"dir": cache_dir, "features_dir": features_dir, "verbose": True}),
         'rvm_ovo': (RVMOvO, {"dir": cache_dir, "features_dir": features_dir}),

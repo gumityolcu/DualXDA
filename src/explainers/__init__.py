@@ -1,4 +1,6 @@
 from .dualda import *
+from .fastrvm import *
+from .fastrvm_ovo import *
 from .rvm import *
 from .rvm_ovo import *
 from .representer import *

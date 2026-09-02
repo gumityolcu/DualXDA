@@ -246,9 +246,12 @@ class RVC(BaseRVM, ClassifierMixin):
         return expit(np.dot(phi, m))
 
     def _log_posterior(self, m, alpha, phi, t):
-        y = self._classify(m, phi)
-
-        log_p = -1 * (np.sum(np.log(y[t == 1]), 0) + np.sum(np.log(1 - y[t == 0]), 0))
+        # y = self._classify(m, phi)
+        # log_p = -1 * (np.sum(np.log(y[t == 1]), 0) + np.sum(np.log(1 - y[t == 0]), 0))
+        # Numericallu stable implementation
+        logits = np.dot(phi, m)
+        y = expit(logits)
+        log_p = np.sum(np.logaddexp(0, logits) - t * logits)
         log_p = log_p + 0.5 * np.dot(m.T, np.dot(np.diag(alpha), m))
 
         jacobian = np.dot(np.diag(alpha), m) - np.dot(phi.T, (t - y))
