@@ -103,7 +103,7 @@ class LlamaWrapper(torch.nn.Module):
         #     "ag_news": "MoritzWeckbecker/gpt2-large_ag-news_full"
         # }
         self.device=device
-        model = AutoModelForSequenceClassification.from_pretrained(hf_id)
+        model = AutoModelForSequenceClassification.from_pretrained(hf_id, attn_implementation="flash_attention_2")
         # model.config.pad_token_id=128001
         self.features=LlamaFeatures(model=model, device=device, pad_token_id=128001)
         # replace_conv1d_modules(self.features)
