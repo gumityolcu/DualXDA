@@ -1,6 +1,6 @@
 C: 0.001
 accuracy: true
-batch_size: 200
+batch_size: 4
 cache_dir: /home/yolcu/Documents/Code/DualXDA/cache/ag_news/std/dualda_0.001
 data_root: /home/yolcu/Documents/Code/DualXDA/../Datasets
 dataset_name: ag_news

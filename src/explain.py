@@ -2,7 +2,19 @@ import argparse
 import torch
 from utils import xplain
 from utils.explainers import GradCosExplainer, GradDotExplainer
-from explainers import TRAK, DualDA, RepresenterPointsExplainer, LiSSAInfluenceFunctionExplainer, TracInExplainer, ArnoldiInfluenceFunctionExplainer, KronfluenceExplainer, FeatureSimilarityExplainer, InputSimilarityExplainer
+from explainers import (
+    ArnoldiInfluenceFunctionExplainer,
+    DualDA,
+    FeatureSimilarityExplainer,
+    InputSimilarityExplainer,
+    KronfluenceExplainer,
+    LiSSAInfluenceFunctionExplainer,
+    RepresenterPointsExplainer,
+    RVM,
+    RVMOvO,
+    TRAK,
+    TracInExplainer,
+)
 from utils.data import load_datasets_reduced, load_tweet_sentiment_dataset, load_ag_news
 from utils.models import clear_resnet_from_checkpoints, compute_accuracy, load_model, LlamaWrapper
 import yaml
@@ -77,6 +89,8 @@ def load_explainer(xai_method, model_path, save_dir, cache_dir, grad_dir, featur
 
     explainers = {
         'representer': (RepresenterPointsExplainer, {"dir": cache_dir, "features_dir": features_dir}),
+        'rvm': (RVM, {"dir": cache_dir, "features_dir": features_dir}),
+        'rvm_ovo': (RVMOvO, {"dir": cache_dir, "features_dir": features_dir}),
         'trak': (TRAK, trak_params[dataset_name]),# trak writes to the cache during explanation. so we can't share cache between jobs. therefore, each job uses the save_dir to copy the cache and deletes the cache folder from save_dir before quitting the job
         'dualda': (DualDA, {"dir": cache_dir, "features_dir":features_dir}),
         'graddot': (GradDotExplainer, {"mat_dir":cache_dir, "grad_dir":grad_dir,  "dimensions":128}),
