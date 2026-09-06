@@ -25,6 +25,7 @@ class RVM(FeatureKernelExplainer):
 
     name = "RVMExplainer"
     multi_class = "ovr"
+    solver_version = 2
 
     def __init__(
         self,
@@ -112,13 +113,20 @@ class RVM(FeatureKernelExplainer):
             "classes",
             "relevance_indices",
             "multiclass_strategy",
+            "solver_version",
         )
         if not all(os.path.isfile(self._artifact_path(name)) for name in artifact_names):
             return False
         cached_strategy = torch.load(
             self._artifact_path("multiclass_strategy"), map_location="cpu"
         )
-        return cached_strategy == self.multi_class
+        cached_solver_version = torch.load(
+            self._artifact_path("solver_version"), map_location="cpu"
+        )
+        return (
+            cached_strategy == self.multi_class
+            and cached_solver_version == self.solver_version
+        )
 
     def _extract_ovr_parameters(self, rvm):
         """Convert the fitted OvR estimators to full training-set tensors."""
@@ -199,5 +207,6 @@ class RVM(FeatureKernelExplainer):
         torch.save(self.classes, self._artifact_path("classes"))
         torch.save(self.relevance_indices, self._artifact_path("relevance_indices"))
         torch.save(self.multi_class, self._artifact_path("multiclass_strategy"))
+        torch.save(self.solver_version, self._artifact_path("solver_version"))
         print(f"Training took {self.train_time} seconds")
         return self.train_time

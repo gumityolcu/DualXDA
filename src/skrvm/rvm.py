@@ -1,5 +1,7 @@
 """Relevance Vector Machine classes for regression and classification."""
 
+import warnings
+
 import numpy as np
 from scipy.optimize import minimize
 from scipy.special import expit
@@ -132,6 +134,11 @@ class BaseRVM(BaseEstimator):
         self.sigma_ = self.sigma_[np.ix_(keep_alpha, keep_alpha)]
         self.m_ = self.m_[keep_alpha]
 
+    def _update_alpha(self):
+        """Update relevance precisions from the posterior covariance."""
+        self.gamma = 1 - self.alpha_ * np.diag(self.sigma_)
+        self.alpha_ = self.gamma / (self.m_**2)
+
     def fit(self, X, y):
         """Fit the RVR to the training data."""
         X, y = check_X_y(X, y)
@@ -157,8 +164,7 @@ class BaseRVM(BaseEstimator):
         for i in range(self.n_iter):
             self._posterior()
 
-            self.gamma = 1 - self.alpha_ * np.diag(self.sigma_)
-            self.alpha_ = self.gamma / (self.m_**2)
+            self._update_alpha()
 
             if not self.beta_fixed:
                 self.beta_ = (n_samples - np.sum(self.gamma)) / (
@@ -245,28 +251,157 @@ class RVC(BaseRVM, ClassifierMixin):
     def _classify(self, m, phi):
         return expit(np.dot(phi, m))
 
+    def _prune(self):
+        """Prune classification bases and retain the exact covariance block."""
+        keep_alpha = np.isfinite(self.alpha_) & (self.alpha_ > 0)
+        keep_alpha &= self.alpha_ < self.threshold_alpha
+
+        if not np.any(keep_alpha):
+            raise FloatingPointError(
+                "RVC pruned every basis function. The posterior update did not "
+                "produce a usable model."
+            )
+
+        if self.bias_used:
+            if not keep_alpha[-1]:
+                self.bias_used = False
+            keep_relevance = keep_alpha[:-1]
+        else:
+            keep_relevance = keep_alpha
+
+        pruned_indices = self.relevance_indices_[~keep_relevance]
+        self.relevance_ = self.relevance_[keep_relevance]
+        self.relevance_indices_ = self.relevance_indices_[keep_relevance]
+        if pruned_indices.size:
+            self.pruned_indices_ = np.sort(
+                np.concatenate((self.pruned_indices_, pruned_indices))
+            )
+
+        self.alpha_ = self.alpha_[keep_alpha]
+        self.alpha_old = self.alpha_old[keep_alpha]
+        self.gamma = self.gamma[keep_alpha]
+        self.phi = self.phi[:, keep_alpha]
+        self.m_ = self.m_[keep_alpha]
+
+        # The SVD representation is for the posterior before the ARD precision
+        # update, just like ``sigma_`` in the original implementation.
+        posterior_alpha = self._posterior_alpha[keep_alpha]
+        right_vectors = self._posterior_right_vectors[keep_alpha]
+        scaled_vectors = right_vectors / np.sqrt(posterior_alpha)[:, np.newaxis]
+        self.sigma_ = np.diag(1.0 / posterior_alpha)
+        self.sigma_ -= np.dot(
+            scaled_vectors * self._posterior_shrinkage,
+            scaled_vectors.T,
+        )
+        self.sigma_ = 0.5 * (self.sigma_ + self.sigma_.T)
+
+    def _update_alpha(self):
+        """Update classification precisions using stable effective dimensions."""
+        with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+            updated_alpha = self.gamma / np.square(self.m_)
+        updated_alpha[~np.isfinite(updated_alpha)] = np.inf
+        self.alpha_ = updated_alpha
+
     def _log_posterior(self, m, alpha, phi, t):
-        # y = self._classify(m, phi)
-        # log_p = -1 * (np.sum(np.log(y[t == 1]), 0) + np.sum(np.log(1 - y[t == 0]), 0))
-        # Numericallu stable implementation
         logits = np.dot(phi, m)
         y = expit(logits)
-        log_p = np.sum(np.logaddexp(0, logits) - t * logits)
-        log_p = log_p + 0.5 * np.dot(m.T, np.dot(np.diag(alpha), m))
+        signed_logits = np.where(t == 1, -logits, logits)
+        log_p = np.sum(np.logaddexp(0, signed_logits))
+        log_p = log_p + 0.5 * np.dot(alpha, np.square(m))
 
-        jacobian = np.dot(np.diag(alpha), m) - np.dot(phi.T, (t - y))
+        jacobian = alpha * m - np.dot(phi.T, (t - y))
 
         return log_p, jacobian
 
     def _hessian(self, m, alpha, phi, t):
         y = self._classify(m, phi)
-        B = np.diag(y * (1 - y))
-        return np.diag(alpha) + np.dot(phi.T, np.dot(B, phi))
+        curvature = y * (1 - y)
+        hessian = np.dot(phi.T, curvature[:, np.newaxis] * phi)
+        hessian.flat[:: hessian.shape[0] + 1] += alpha
+        return hessian
+
+    def _hessian_dot(self, m, p, alpha, phi, t):
+        """Multiply by the Hessian without materializing its dense matrix."""
+        y = self._classify(m, phi)
+        curvature = y * (1 - y)
+        return alpha * p + np.dot(phi.T, curvature * np.dot(phi, p))
+
+    def _linear_scaled_design_svd(self, curvature):
+        """SVD of B**.5 Phi A**-.5 through the low-rank linear features."""
+        features = self.X_
+        n_features = features.shape[1]
+        n_relevance = self.relevance_.shape[0]
+        n_basis = n_relevance + int(self.bias_used)
+
+        sample_factor = np.empty(
+            (features.shape[0], n_features + int(self.bias_used)), dtype=np.float64
+        )
+        sample_factor[:, :n_features] = features
+
+        basis_factor = np.zeros(
+            (n_features + int(self.bias_used), n_basis), dtype=np.float64
+        )
+        basis_factor[:n_features, :n_relevance] = self.relevance_.T
+
+        if self.bias_used:
+            sample_factor[:, -1] = 1.0
+            basis_factor[-1, -1] = 1.0
+
+        sample_factor *= np.sqrt(curvature)[:, np.newaxis]
+        basis_factor /= np.sqrt(self.alpha_)[np.newaxis, :]
+
+        _, sample_triangular = np.linalg.qr(sample_factor, mode="reduced")
+        basis_orthogonal, basis_triangular = np.linalg.qr(
+            basis_factor.T, mode="reduced"
+        )
+        core = np.dot(sample_triangular, basis_triangular.T)
+        _, singular_values, core_right = np.linalg.svd(core, full_matrices=False)
+        right_vectors = np.dot(basis_orthogonal, core_right.T)
+        return singular_values, right_vectors
+
+    def _posterior_statistics(self):
+        """Compute posterior effective dimensions without inverting the Hessian.
+
+        If ``R = B**.5 Phi A**-.5`` and ``R = U S V.T``, then
+
+        ``A**.5 Sigma A**.5 = I - V diag(S**2 / (1 + S**2)) V.T``.
+
+        This form retains the prior contribution in null-space directions and
+        therefore remains valid when the kernel design is rank deficient.
+        """
+        if not np.all(np.isfinite(self.alpha_)) or np.any(self.alpha_ <= 0):
+            raise FloatingPointError(
+                "RVC posterior precisions must be finite and strictly positive."
+            )
+
+        probabilities = self._classify(self.m_, self.phi)
+        curvature = probabilities * (1 - probabilities)
+
+        if self.kernel == "linear":
+            singular_values, right_vectors = self._linear_scaled_design_svd(curvature)
+        else:
+            scaled_design = np.sqrt(curvature)[:, np.newaxis] * self.phi
+            scaled_design /= np.sqrt(self.alpha_)[np.newaxis, :]
+            _, singular_values, right_transpose = np.linalg.svd(
+                scaled_design, full_matrices=False
+            )
+            right_vectors = right_transpose.T
+
+        ratios = singular_values / np.hypot(1.0, singular_values)
+        shrinkage = np.square(ratios)
+        gamma = np.sum(
+            np.square(right_vectors) * shrinkage[np.newaxis, :], axis=1
+        )
+
+        self.gamma = np.clip(gamma, 0.0, 1.0)
+        self._posterior_alpha = self.alpha_.copy()
+        self._posterior_right_vectors = right_vectors
+        self._posterior_shrinkage = shrinkage
 
     def _posterior(self):
         result = minimize(
             fun=self._log_posterior,
-            hess=self._hessian,
+            hessp=self._hessian_dot,
             x0=self.m_,
             args=(self.alpha_, self.phi, self.t),
             method="Newton-CG",
@@ -274,8 +409,20 @@ class RVC(BaseRVM, ClassifierMixin):
             options={"maxiter": self.n_iter_posterior},
         )
 
+        if not np.isfinite(result.fun) or not np.all(np.isfinite(result.x)):
+            raise FloatingPointError(
+                "RVC posterior optimization produced NaN or infinity."
+            )
+        if not result.success:
+            warnings.warn(
+                "RVC posterior optimization did not converge: {}".format(
+                    result.message
+                ),
+                RuntimeWarning,
+            )
+
         self.m_ = result.x
-        self.sigma_ = np.linalg.inv(self._hessian(self.m_, self.alpha_, self.phi, self.t))
+        self._posterior_statistics()
 
     def fit(self, X, y):
         """Check target values and fit model."""
@@ -290,6 +437,10 @@ class RVC(BaseRVM, ClassifierMixin):
         elif n_classes == 2:
             self.t = np.zeros(y.shape)
             self.t[y == self.classes_[1]] = 1
+            # Pairwise kernels of float32 features are especially ill-conditioned:
+            # perform all RVC kernel and posterior arithmetic in float64.
+            X = np.asarray(X, dtype=np.float64)
+            self.X_ = X
             return super(RVC, self).fit(X, self.t)
         else:
             if self.multi_class == "ovo":
