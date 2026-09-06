@@ -23,25 +23,25 @@ if [[ "$fname_config" == *"trak"* ]]; then
   singularity \
   run \
         --nv \
-        --bind ${HOME}/DualView/config_files:/mnt/config_files \
-        --bind ${HOME}/DualView/src:/mnt/src \
-        --bind ${HOME}/DualView/explanations:/mnt/explanations \
-        --bind ${HOME}/DualView/checkpoints:/mnt/checkpoints \
+        --bind /data/cluster/users/yolcu/DualView/config_files:/mnt/config_files \
+        --bind /data/cluster/users/yolcu/DualView/src:/mnt/src \
+        --bind /data/cluster/users/yolcu/DualView/explanations:/mnt/explanations \
+        --bind /data/cluster/users/yolcu/DualView/checkpoints:/mnt/checkpoints \
         --bind ${DATAPOOL3}/datasets:/mnt/dataset \
         --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
-        --bind ${HOME}/DualView/cache:/mnt/cache \
+        --bind /data/cluster/users/yolcu/DualView/cache:/mnt/cache \
         ../singularity/evaluate.sif --trak --config_file /mnt/config_files/cluster/$3/$2/${fname_config}
 else
   singularity \
     run \
           --nv \
-          --bind ${HOME}/DualView/config_files:/mnt/config_files \
-          --bind ${HOME}/DualView/src:/mnt/src \
-          --bind ${HOME}/DualView/explanations:/mnt/explanations \
-          --bind ${HOME}/DualView/checkpoints:/mnt/checkpoints \
+          --bind /data/cluster/users/yolcu/DualView/config_files:/mnt/config_files \
+          --bind /data/cluster/users/yolcu/DualView/src:/mnt/src \
+          --bind /data/cluster/users/yolcu/DualView/explanations:/mnt/explanations \
+          --bind /data/cluster/users/yolcu/DualView/checkpoints:/mnt/checkpoints \
           --bind ${DATAPOOL3}/datasets:/mnt/dataset \
           --bind ${LOCAL_JOB_DIR}/outputs:/mnt/outputs \
-          --bind ${HOME}/DualView/cache:/mnt/cache \
+          --bind /data/cluster/users/yolcu/DualView/cache:/mnt/cache \
           ../singularity/evaluate.sif --config_file /mnt/config_files/cluster/$3/$2/${fname_config}
 fi
 cd ${LOCAL_JOB_DIR}
